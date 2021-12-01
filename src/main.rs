@@ -5,8 +5,14 @@ use std::num::ParseIntError;
 use std::path::Path;
 use std::str::FromStr;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, PartialOrd)]
 struct Depth(i16);
+
+impl From<i16> for Depth {
+    fn from(d: i16) -> Self {
+        Depth(d)
+    }
+}
 
 #[derive(Debug)]
 struct Measurement {
@@ -25,25 +31,31 @@ impl FromStr for Depth {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let i: i16 = s.parse()?;
-        Ok(Depth(i))
+        Ok(i.into())
+    }
+}
+
+impl<'a> Sum<&'a Depth> for Depth {
+    fn sum<I: Iterator<Item = &'a Depth>>(iter: I) -> Self {
+        iter.map(|d|d.0).sum::<i16>().into()
     }
 }
 
 fn main() -> io::Result<()>{
-    let lines = read_lines("./input/1.b.txt")?;
+    let lines = read_lines("./input/1.b.test.txt")?;
     let it = lines
         .map(|l| l.unwrap())
         .map(|l| l.parse::<Depth>().unwrap())
         .collect::<Vec<_>>()
         .windows(3)
         .fold(Measurement::default(), |accum, depths| {
-            let sum = depths.iter().map(|d|d.0).sum();
+            let sum = depths.iter().sum();
             match accum.prev_depth {
-                None => Measurement{ prev_depth: Some(Depth(sum)), count: 0},
-                Some(previous) => if sum > previous.0 {
-                    Measurement{ prev_depth: Some(Depth(sum)), count: accum.count + 1 }
+                None => Measurement{ prev_depth: Some(sum), count: 0},
+                Some(previous) => if sum > previous {
+                    Measurement{ prev_depth: Some(sum), count: accum.count + 1 }
                 } else {
-                    Measurement{ prev_depth: Some(Depth(sum)), count: accum.count }
+                    Measurement{ prev_depth: Some(sum), count: accum.count }
                 }
             }
         });
