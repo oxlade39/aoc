@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::{self, BufRead};
+use std::iter::Sum;
 use std::num::ParseIntError;
 use std::path::Path;
 use std::str::FromStr;
@@ -29,16 +30,21 @@ impl FromStr for Depth {
 }
 
 fn main() -> io::Result<()>{
-    let lines = read_lines("./input/1.txt")?;
+    let lines = read_lines("./input/1.b.txt")?;
     let it = lines
         .map(|l| l.unwrap())
         .map(|l| l.parse::<Depth>().unwrap())
-        .fold(Measurement::default(), |accum, item| match accum.prev_depth {
-            None => Measurement{ prev_depth: Some(item), count: 0},
-            Some(previous) => if item.0 > previous.0 {
-                Measurement{ prev_depth: Some(item), count: accum.count + 1 }
-            } else {
-                Measurement{ prev_depth: Some(item), count: accum.count }
+        .collect::<Vec<_>>()
+        .windows(3)
+        .fold(Measurement::default(), |accum, depths| {
+            let sum = depths.iter().map(|d|d.0).sum();
+            match accum.prev_depth {
+                None => Measurement{ prev_depth: Some(Depth(sum)), count: 0},
+                Some(previous) => if sum > previous.0 {
+                    Measurement{ prev_depth: Some(Depth(sum)), count: accum.count + 1 }
+                } else {
+                    Measurement{ prev_depth: Some(Depth(sum)), count: accum.count }
+                }
             }
         });
 
