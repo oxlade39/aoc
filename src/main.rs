@@ -1,79 +1,42 @@
 use std::fs::File;
 use std::io::{self, BufRead};
-use std::iter::Sum;
-use std::num::ParseIntError;
 use std::path::Path;
 use std::str::FromStr;
-
-#[derive(Debug, PartialEq, PartialOrd)]
-struct Depth(i16);
-
-impl From<i16> for Depth {
-    fn from(d: i16) -> Self {
-        Depth(d)
-    }
-}
-
-#[derive(Debug)]
-struct Measurement {
-    prev_depth: Option<Depth>,
-    count: i16
-}
-
-impl Default for Measurement {
-    fn default() -> Self {
-        Self { prev_depth: None, count: 0 }
-    }
-}
 
 #[derive(Debug)]
 struct Position {
     vertical: i32,
-    horizontal: i32
+    horizontal: i32,
+    aim: i32
 }
 
 impl Default for Position {
     fn default() -> Self {
-        Self { vertical: 0, horizontal: 0 }
-    }
-}
-
-impl FromStr for Depth {
-    type Err = ParseIntError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let i: i16 = s.parse()?;
-        Ok(i.into())
-    }
-}
-
-impl<'a> Sum<&'a Depth> for Depth {
-    fn sum<I: Iterator<Item = &'a Depth>>(iter: I) -> Self {
-        iter.map(|d|d.0).sum::<i16>().into()
+        Self { vertical: 0, horizontal: 0, aim: 0 }
     }
 }
 
 #[derive(Debug)]
 enum ParseInstructionError {
-    BADTEXT
+    BadText
 }
 
 #[derive(Debug)]
 enum Instruction {
-    FORWARD(i32),
-    UP(i32),
-    DOWN(i32),
+    Forward(i32),
+    Up(i32),
+    Down(i32),
 }
 
 impl Position {
     fn up(self, n: i32) -> Self {
-        return Position{ horizontal: self.horizontal, vertical: self.vertical - n}
+        return Position{ horizontal: self.horizontal, vertical: self.vertical, aim: self.aim - n}
     }
     fn down(self, n: i32) -> Self {
-        return Position{ horizontal: self.horizontal, vertical: self.vertical + n}
+        return Position{ horizontal: self.horizontal, vertical: self.vertical, aim: self.aim + n}
     }
     fn forward(self, n: i32) -> Self {
-        return Position{ horizontal: self.horizontal + n, vertical: self.vertical}
+        return Position{ horizontal: self.horizontal + n, vertical: self.vertical + self.aim * n, aim: self.aim}
     }
 }
 
@@ -83,30 +46,29 @@ impl FromStr for Instruction {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts: Vec<_> = s.split(" ").into_iter().collect();
         if parts.len() != 2 {
-            return Result::Err(ParseInstructionError::BADTEXT);
+            return Result::Err(ParseInstructionError::BadText);
         }
         let instruction = parts[0];
-        let quantity: i32 = parts[1].parse().map_err(|_| ParseInstructionError::BADTEXT)?;
+        let quantity: i32 = parts[1].parse().map_err(|_| ParseInstructionError::BadText)?;
         match instruction {            
-            "forward" => Result::Ok(Instruction::FORWARD(quantity)),
-            "up" => Result::Ok(Instruction::UP(quantity)),
-            "down" => Result::Ok(Instruction::DOWN(quantity)),
-            _ => Result::Err(ParseInstructionError::BADTEXT)
+            "forward" => Result::Ok(Instruction::Forward(quantity)),
+            "up" => Result::Ok(Instruction::Up(quantity)),
+            "down" => Result::Ok(Instruction::Down(quantity)),
+            _ => Result::Err(ParseInstructionError::BadText)
         }        
     }
 }
 
 fn main() -> io::Result<()>{
-    let lines = read_lines("./input/2.a.txt")?;
+    let lines = read_lines("./input/2.b.txt")?;
     let it = lines
         .map(|l| l.unwrap())
         .map(|l| l.parse::<Instruction>().unwrap())
         .fold(Position::default(), |accum, instruction| {
-            println!("{:?} -> {:?}", accum, instruction);
             match instruction {
-                Instruction::UP(n) => accum.up(n),
-                Instruction::DOWN(n) => accum.down(n),
-                Instruction::FORWARD(n) => accum.forward(n)
+                Instruction::Up(n) => accum.up(n),
+                Instruction::Down(n) => accum.down(n),
+                Instruction::Forward(n) => accum.forward(n)
             }
         });
 
