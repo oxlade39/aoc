@@ -26,6 +26,18 @@ impl Default for Measurement {
     }
 }
 
+#[derive(Debug)]
+struct Position {
+    vertical: i32,
+    horizontal: i32
+}
+
+impl Default for Position {
+    fn default() -> Self {
+        Self { vertical: 0, horizontal: 0 }
+    }
+}
+
 impl FromStr for Depth {
     type Err = ParseIntError;
 
@@ -41,26 +53,64 @@ impl<'a> Sum<&'a Depth> for Depth {
     }
 }
 
+#[derive(Debug)]
+enum ParseInstructionError {
+    BADTEXT
+}
+
+#[derive(Debug)]
+enum Instruction {
+    FORWARD(i32),
+    UP(i32),
+    DOWN(i32),
+}
+
+impl Position {
+    fn up(self, n: i32) -> Self {
+        return Position{ horizontal: self.horizontal, vertical: self.vertical - n}
+    }
+    fn down(self, n: i32) -> Self {
+        return Position{ horizontal: self.horizontal, vertical: self.vertical + n}
+    }
+    fn forward(self, n: i32) -> Self {
+        return Position{ horizontal: self.horizontal + n, vertical: self.vertical}
+    }
+}
+
+impl FromStr for Instruction {
+    type Err = ParseInstructionError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let parts: Vec<_> = s.split(" ").into_iter().collect();
+        if parts.len() != 2 {
+            return Result::Err(ParseInstructionError::BADTEXT);
+        }
+        let instruction = parts[0];
+        let quantity: i32 = parts[1].parse().map_err(|_| ParseInstructionError::BADTEXT)?;
+        match instruction {            
+            "forward" => Result::Ok(Instruction::FORWARD(quantity)),
+            "up" => Result::Ok(Instruction::UP(quantity)),
+            "down" => Result::Ok(Instruction::DOWN(quantity)),
+            _ => Result::Err(ParseInstructionError::BADTEXT)
+        }        
+    }
+}
+
 fn main() -> io::Result<()>{
-    let lines = read_lines("./input/1.b.test.txt")?;
+    let lines = read_lines("./input/2.a.txt")?;
     let it = lines
         .map(|l| l.unwrap())
-        .map(|l| l.parse::<Depth>().unwrap())
-        .collect::<Vec<_>>()
-        .windows(3)
-        .fold(Measurement::default(), |accum, depths| {
-            let sum = depths.iter().sum();
-            match accum.prev_depth {
-                None => Measurement{ prev_depth: Some(sum), count: 0},
-                Some(previous) => if sum > previous {
-                    Measurement{ prev_depth: Some(sum), count: accum.count + 1 }
-                } else {
-                    Measurement{ prev_depth: Some(sum), count: accum.count }
-                }
+        .map(|l| l.parse::<Instruction>().unwrap())
+        .fold(Position::default(), |accum, instruction| {
+            println!("{:?} -> {:?}", accum, instruction);
+            match instruction {
+                Instruction::UP(n) => accum.up(n),
+                Instruction::DOWN(n) => accum.down(n),
+                Instruction::FORWARD(n) => accum.forward(n)
             }
         });
 
-    println!("result: {:?}", it);
+    println!("result: {:?}", it.vertical * it.horizontal);
     Ok(())
 }
 
