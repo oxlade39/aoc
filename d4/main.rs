@@ -1,4 +1,4 @@
-use std::{collections::HashMap, slice::Chunks};
+use std::{collections::{HashMap, HashSet}, slice::Chunks};
 
 
 fn main() {
@@ -16,8 +16,8 @@ fn main() {
         .collect::<Vec<_>>();
     let board_lines = remaining.chunks(5);
 
-    println!("winner: {:?}", find_winner(numbers, parse_boards(board_lines)));
-    
+    // println!("part one winner: {:?}", part_one(numbers, parse_boards(board_lines)));
+    println!("part two winner: {:?}", part_two(numbers, parse_boards(board_lines)));
 }
 
 fn parse_boards(boards: Chunks<&str>) -> Vec<Board> {
@@ -36,7 +36,7 @@ fn parse_boards(boards: Chunks<&str>) -> Vec<Board> {
     parsed_boards
 }
 
-fn find_winner(numbers: Vec<i32>, mut boards: Vec<Board>) -> Option<i32> {
+fn part_one(numbers: Vec<i32>, mut boards: Vec<Board>) -> Option<i32> {
     for n in numbers {
         for b in &mut boards {
             if let Some(winner) = b.remove(n) {
@@ -45,6 +45,30 @@ fn find_winner(numbers: Vec<i32>, mut boards: Vec<Board>) -> Option<i32> {
         }
     }
     None
+}
+
+fn part_two(numbers: Vec<i32>, mut boards: Vec<Board>) -> Option<i32> {
+    let mut result = None;
+    let mut count;
+    let mut winning_boards = HashSet::with_capacity(boards.len());
+    for n in numbers {
+        count = 0;
+        
+        for b in &mut boards {
+            if winning_boards.contains(&count) {
+                count += 1;
+                continue;
+            }
+
+            if let Some(winner) = b.remove(n) {
+                result = Some(winner * n);
+                winning_boards.insert(count);
+                println!("board {} won with {:?}", count+1, result);
+            }
+            count += 1;
+        }
+    }
+    result
 }
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
