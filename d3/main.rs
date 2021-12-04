@@ -5,7 +5,7 @@ use std::path::Path;
 const WIDTH: usize = 12;
 
 fn main() -> io::Result<()>{
-    let lines = read_lines("./input/3.a.txt")?;
+    let lines = read_lines("./d3/input.txt")?;
     
     let mut bits: [i32; WIDTH] = [0; WIDTH];
     let mut count: i32 = 0;
