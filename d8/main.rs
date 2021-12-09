@@ -29,4 +29,14 @@ fn part1() {
 }
 
 fn part2() {
+    let mut numbers: Vec<HashSet<&str>> = Vec::with_capacity(10);
+    numbers[0] = HashSet::from_iter(["a", "b", "c", "e", "f", "g"]);
+    numbers[1] = HashSet::from_iter(["c", "f"]);
+    numbers[2] = HashSet::from_iter(["a", "c", "d", "e", "g"]);
+    numbers[3] = HashSet::from_iter(["a", "c", "d", "f", "g"]);
+    numbers[4] = HashSet::from_iter(["b", "d", "c", "f"]);
+    numbers[5] = HashSet::from_iter(["a", "b", "d", "f", "g"]);
+    numbers[6] = HashSet::from_iter(["a", "b", "d", "e", "f", "g"]);
+    numbers[7] = HashSet::from_iter(["a", "c", "f"]);
+    numbers[8] = HashSet::from_iter(["a", "b", "c", "d", "e", "f", "g"]);
 }
