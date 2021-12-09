@@ -1,4 +1,4 @@
-use std::{collections::HashSet, slice::Split};
+use std::{collections::{HashSet, HashMap}, slice::Split, hash::Hash};
 
 
 fn main() {
@@ -29,14 +29,186 @@ fn part1() {
 }
 
 fn part2() {
-    let mut numbers: Vec<HashSet<&str>> = Vec::with_capacity(10);
-    numbers[0] = HashSet::from_iter(["a", "b", "c", "e", "f", "g"]);
-    numbers[1] = HashSet::from_iter(["c", "f"]);
-    numbers[2] = HashSet::from_iter(["a", "c", "d", "e", "g"]);
-    numbers[3] = HashSet::from_iter(["a", "c", "d", "f", "g"]);
-    numbers[4] = HashSet::from_iter(["b", "d", "c", "f"]);
-    numbers[5] = HashSet::from_iter(["a", "b", "d", "f", "g"]);
-    numbers[6] = HashSet::from_iter(["a", "b", "d", "e", "f", "g"]);
-    numbers[7] = HashSet::from_iter(["a", "c", "f"]);
-    numbers[8] = HashSet::from_iter(["a", "b", "c", "d", "e", "f", "g"]);
+    let input = include_str!("input.txt");
+
+    let mut sum = 0;
+    for line in input.lines() {
+        sum += line_to_number(line);
+    }
+    println!("part2: {}", sum)
 }
+
+#[test]
+fn test_mapping() {
+    let line = "acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf";
+    println!("output: {}", line_to_number(line));
+}
+
+fn line_to_number(line: &str) -> i64 {
+    let parts: Vec<_> = line.split(" | ").collect();
+    let left = parts[0];
+    let positions = build_positions(left);
+    let numbers = create_mappings(positions);
+
+    let right = parts[1];
+    let right_chucks: Vec<_> = right.split(" ")
+        .map(|str_item| {
+            let letters: HashSet<char> = HashSet::from_iter(str_item.chars());
+            letters
+        })
+        .collect();
+
+    let mut output_n: i64 = 0;
+    for (i, chunk) in right_chucks.iter().enumerate() {
+        for (j, num) in numbers.iter().enumerate() {
+            if num.eq(chunk) {
+                let exp = right_chucks.len() - i - 1;
+                let value = (10 as i64).pow(exp as u32) * j as i64;
+                output_n += value;
+            }
+        }
+    }
+    output_n
+}
+
+fn create_mappings(positions: [char; 7]) -> Vec<HashSet<char>> {
+    let mut numbers: Vec<HashSet<char>> = Vec::with_capacity(10);
+
+    numbers.insert(0, HashSet::from_iter([
+        positions[0],
+        positions[1],
+        positions[2],
+        positions[4],
+        positions[5],
+        positions[6],
+    ]));
+    numbers.insert(1, HashSet::from_iter([positions[2], positions[5]]));
+    numbers.insert(2, HashSet::from_iter([
+        positions[0],
+        positions[2],
+        positions[3],
+        positions[4],
+        positions[6],
+    ]));
+    numbers.insert(3, HashSet::from_iter([
+        positions[0],
+        positions[2],
+        positions[3],
+        positions[5],
+        positions[6],
+]));
+    numbers.insert(4, HashSet::from_iter([
+        positions[1],
+        positions[2],
+        positions[3],
+        positions[5],
+    ]));
+    numbers.insert(5, HashSet::from_iter([
+        positions[0],
+        positions[1],
+        positions[3],
+        positions[5],
+        positions[6],
+    ]));
+    numbers.insert(6, HashSet::from_iter([
+        positions[0],
+        positions[1],
+        positions[3],
+        positions[4],
+        positions[5],
+        positions[6],
+    ]));
+    numbers.insert(7, HashSet::from_iter([
+        positions[0],
+        positions[2],
+        positions[5],
+    ]));
+    numbers.insert(8, HashSet::from_iter(positions));
+    numbers.insert(9, HashSet::from_iter([
+        positions[0],
+        positions[1],
+        positions[2],
+        positions[3],
+        positions[5],
+        positions[6],
+    ]));
+
+    return numbers;
+}
+
+fn build_positions(left: &str) -> [char; 7]{
+    let numbersa: Vec<_> = left.split(" ")
+        .map(|str_item| {
+            let letters: HashSet<char> = HashSet::from_iter(str_item.chars());
+            letters
+        })
+        .collect();
+
+    let mut known_positions: [char; 7] = ['-'; 7];
+    let mut known_numbers: Vec<&HashSet<char>> = vec![&numbersa[0]; 9];
+
+    for item in &numbersa {
+        let item_len = item.len();
+        match item_len {
+            2 => known_numbers[1] = item,
+            3 => known_numbers[7] = item,
+            4 => known_numbers[4] = item,
+            7 => known_numbers[8] = item,
+            _ => ()
+        }
+    }
+
+    known_positions[0] = *known_numbers[1].symmetric_difference(&known_numbers[7]).next().unwrap();   
+
+    let fives = intersect_all_of_length(5, &numbersa);
+    known_positions[3] = *intersection_all(vec![&fives, known_numbers[4]]).iter().next().unwrap();
+
+    let sixes = intersect_all_of_length(6, &numbersa);
+    known_positions[5] = *intersection_all(vec![&sixes, known_numbers[1]]).iter().next().unwrap();
+
+    let mut one = known_numbers[1].clone();
+    one.remove(&known_positions[5]);
+    known_positions[2] = *one.iter().next().unwrap();
+
+    let mut four = known_numbers[4].clone();
+    four.remove(&known_positions[2]);
+    four.remove(&known_positions[3]);
+    four.remove(&known_positions[5]);
+    known_positions[1] = *four.iter().next().unwrap();
+
+    let mut fives_cp = fives.clone();
+    fives_cp.remove(&known_positions[0]);
+    fives_cp.remove(&known_positions[3]);
+    known_positions[6] = *fives_cp.iter().next().unwrap();
+
+    let mut eight = known_numbers[8].clone();
+    for pos in known_positions {
+        eight.remove(&pos);
+    }
+    known_positions[4] = *eight.iter().next().unwrap();
+
+    println!("  {} ", known_positions[0]);
+    println!("{}  {}", known_positions[1], known_positions[2]);
+    println!("  {} ", known_positions[3]);
+    println!("{}  {}", known_positions[4], known_positions[5]);
+    println!("  {} ", known_positions[6]);
+
+    return known_positions;
+}
+
+fn intersect_all_of_length(n: usize, values: &Vec<HashSet<char>>) -> HashSet<char> {
+    let selected: Vec<_> = values.iter()
+        .filter(|item| item.len() == n)
+        .collect();
+    intersection_all(selected)
+}
+
+fn intersection_all(sets: Vec<&HashSet<char>>) -> HashSet<char> {
+    let mut first: HashSet<char> = sets[0].clone();
+    for next in sets.iter().skip(1) {
+        first = first.intersection(*next).map(|c|*c).collect();
+    }
+
+    first
+}
+
