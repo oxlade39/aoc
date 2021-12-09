@@ -1,4 +1,4 @@
-use std::{collections::{HashSet, HashMap}, slice::Split, hash::Hash};
+use std::{collections::{HashSet, HashMap, BTreeSet}, slice::Split, hash::Hash};
 
 
 fn main() {
@@ -38,11 +38,6 @@ fn part2() {
     println!("part2: {}", sum)
 }
 
-#[test]
-fn test_mapping() {
-    let line = "acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf";
-    println!("output: {}", line_to_number(line));
-}
 
 fn line_to_number(line: &str) -> i64 {
     let parts: Vec<_> = line.split(" | ").collect();
@@ -53,87 +48,89 @@ fn line_to_number(line: &str) -> i64 {
     let right = parts[1];
     let right_chucks: Vec<_> = right.split(" ")
         .map(|str_item| {
-            let letters: HashSet<char> = HashSet::from_iter(str_item.chars());
+            let letters: BTreeSet<char> = BTreeSet::from_iter(str_item.chars());
             letters
         })
         .collect();
 
     let mut output_n: i64 = 0;
     for (i, chunk) in right_chucks.iter().enumerate() {
-        for (j, num) in numbers.iter().enumerate() {
-            if num.eq(chunk) {
-                let exp = right_chucks.len() - i - 1;
-                let value = (10 as i64).pow(exp as u32) * j as i64;
-                output_n += value;
-            }
+        if let Some(it) = numbers.get(chunk) {
+            let exp = right_chucks.len() - i - 1;
+            let value = (10 as i64).pow(exp as u32) * *it as i64;
+            output_n += value;
         }
     }
     output_n
 }
 
-fn create_mappings(positions: [char; 7]) -> Vec<HashSet<char>> {
-    let mut numbers: Vec<HashSet<char>> = Vec::with_capacity(10);
+fn create_mappings(positions: [char; 7]) -> HashMap<BTreeSet<char>, i32> {
+    let mut layout_to_number: HashMap<BTreeSet<char>, i32> = HashMap::new();
 
-    numbers.insert(0, HashSet::from_iter([
+    layout_to_number.insert(BTreeSet::from_iter([
         positions[0],
         positions[1],
         positions[2],
         positions[4],
         positions[5],
         positions[6],
-    ]));
-    numbers.insert(1, HashSet::from_iter([positions[2], positions[5]]));
-    numbers.insert(2, HashSet::from_iter([
-        positions[0],
-        positions[2],
-        positions[3],
-        positions[4],
-        positions[6],
-    ]));
-    numbers.insert(3, HashSet::from_iter([
-        positions[0],
-        positions[2],
-        positions[3],
-        positions[5],
-        positions[6],
-]));
-    numbers.insert(4, HashSet::from_iter([
-        positions[1],
-        positions[2],
-        positions[3],
-        positions[5],
-    ]));
-    numbers.insert(5, HashSet::from_iter([
-        positions[0],
-        positions[1],
-        positions[3],
-        positions[5],
-        positions[6],
-    ]));
-    numbers.insert(6, HashSet::from_iter([
-        positions[0],
-        positions[1],
-        positions[3],
-        positions[4],
-        positions[5],
-        positions[6],
-    ]));
-    numbers.insert(7, HashSet::from_iter([
-        positions[0],
-        positions[2],
-        positions[5],
-    ]));
-    numbers.insert(8, HashSet::from_iter(positions));
-    numbers.insert(9, HashSet::from_iter([
-        positions[0],
-        positions[1],
-        positions[2],
-        positions[3],
-        positions[5],
-        positions[6],
-    ]));
+    ]), 0);
+    layout_to_number.insert(BTreeSet::from_iter([
+        positions[2], 
+        positions[5]
+    ]), 1);
 
-    return numbers;
+    layout_to_number.insert(BTreeSet::from_iter([
+        positions[0],
+        positions[2],
+        positions[3],
+        positions[4],
+        positions[6],
+    ]), 2);
+    layout_to_number.insert(BTreeSet::from_iter([
+        positions[0],
+        positions[2],
+        positions[3],
+        positions[5],
+        positions[6],
+    ]), 3);
+    layout_to_number.insert(BTreeSet::from_iter([
+        positions[1],
+        positions[2],
+        positions[3],
+        positions[5],
+    ]), 4);
+    layout_to_number.insert(BTreeSet::from_iter([
+        positions[0],
+        positions[1],
+        positions[3],
+        positions[5],
+        positions[6],
+    ]), 5);
+    layout_to_number.insert(BTreeSet::from_iter([
+        positions[0],
+        positions[1],
+        positions[3],
+        positions[4],
+        positions[5],
+        positions[6],
+    ]), 6);
+    layout_to_number.insert(BTreeSet::from_iter([
+        positions[0],
+        positions[2],
+        positions[5],
+    ]), 7);
+    layout_to_number.insert(BTreeSet::from_iter(positions), 8);
+    layout_to_number.insert(BTreeSet::from_iter([
+        positions[0],
+        positions[1],
+        positions[2],
+        positions[3],
+        positions[5],
+        positions[6],
+    ]), 9);
+
+    return layout_to_number;
 }
 
 fn build_positions(left: &str) -> [char; 7]{
@@ -187,11 +184,13 @@ fn build_positions(left: &str) -> [char; 7]{
     }
     known_positions[4] = *eight.iter().next().unwrap();
 
+    println!("");
     println!("  {} ", known_positions[0]);
     println!("{}  {}", known_positions[1], known_positions[2]);
     println!("  {} ", known_positions[3]);
     println!("{}  {}", known_positions[4], known_positions[5]);
     println!("  {} ", known_positions[6]);
+    println!("");
 
     return known_positions;
 }
