@@ -62,8 +62,12 @@ fn neighbours(row: i32, col: i32) -> Vec<(i32, i32)> {
 
 struct Grid(Vec<Vec<i32>>);
 
-#[derive(Debug)]
-struct GridParseErr;
+#[derive(Debug, PartialEq, Eq)]
+struct GridParseErr {
+    line: usize,
+    col: usize,
+    value: char
+}
 
 impl FromStr for Grid {
     type Err = GridParseErr;
@@ -75,8 +79,11 @@ impl FromStr for Grid {
 
         for (i, line) in s.lines().enumerate() {
             for (j, c) in line.chars().enumerate() {
-                let error = format!("{}", c);
-                grid[i][j] = c.to_digit(RADIX).expect(&error) as i32;
+                if let Some(value) = c.to_digit(RADIX) {
+                    grid[i][j] = value as i32;
+                } else {
+                    return Err(GridParseErr{ line: i, col: j, value: c });
+                }
             }
         }
         Ok(Grid(grid))
@@ -132,4 +139,13 @@ impl Grid {
 
         flashed
     }
+}
+
+#[test]
+fn test_parse_grid() {
+    let line = "123A34";
+    let g = line.parse::<Grid>().err().unwrap();
+
+    let expected = GridParseErr{ line: 0, col: 3, value: 'A'};
+    assert_eq!(g, expected);
 }
