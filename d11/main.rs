@@ -1,0 +1,157 @@
+use std::collections::{HashMap, HashSet};
+
+fn main() {
+    part1();
+    part2();
+}
+
+fn part1() {
+    const RADIX: u32 = 10;
+
+    let mut grid: Vec<Vec<i32>> = vec![vec![0; 10]; 10];
+
+    let input = include_str!("input.txt");
+    for (i, line) in input.lines().enumerate() {
+        for (j, c) in line.chars().enumerate() {
+            let error = format!("{}", c);
+            grid[i][j] = c.to_digit(RADIX).expect(&error) as i32;
+        }
+    }
+
+    let steps = 100;
+    let mut flask_count = 0;
+
+    for step in 0..steps {
+        let mut to_flash: HashSet<(i32, i32)> = HashSet::new();
+        for i in 0..10 {
+            for j in 0..10 {
+                grid[i][j] += 1;
+
+                if grid[i][j] > 9 {
+                    to_flash.insert((i as i32, j as i32));
+                }
+            }
+        }
+        let mut flashed: HashSet<(i32, i32)> = HashSet::new();
+        loop {
+            if let Some(item) = to_flash.clone().iter().next() {
+                let row = item.0;
+                let col = item.1;
+                to_flash.remove(item);
+
+                if flashed.insert(item.clone()) {
+                    let neighbours = neighbours(row, col);
+                    // println!("{:?} neighbours: {:?}", item, neighbours);
+
+                    for n in neighbours {
+                        grid[n.0 as usize][n.1 as usize] += 1;
+                        // println!("{:?} inc from {:?}", n, item);
+                        if grid[n.0 as usize][n.1 as usize] > 9 {
+                            to_flash.insert(n);
+                        }
+                    }
+                }
+            } else {
+                break;
+            }
+        }
+
+        for flasher in flashed {
+            grid[flasher.0 as usize][flasher.1 as usize] = 0;
+            flask_count += 1;
+        }
+        println!("{}", step + 1);
+        for i in 0..10 {
+            println!("{:?}", grid[i]);
+        }
+        println!("");
+    }
+    println!("part1: {}", flask_count);
+}
+
+fn part2() {
+    const RADIX: u32 = 10;
+
+    let mut grid: Vec<Vec<i32>> = vec![vec![0; 10]; 10];
+
+    let input = include_str!("input.txt");
+    for (i, line) in input.lines().enumerate() {
+        for (j, c) in line.chars().enumerate() {
+            let error = format!("{}", c);
+            grid[i][j] = c.to_digit(RADIX).expect(&error) as i32;
+        }
+    }
+
+    let mut flask_count = 0;
+    let mut step = 0;
+
+    loop {
+        let mut to_flash: HashSet<(i32, i32)> = HashSet::new();
+        for i in 0..10 {
+            for j in 0..10 {
+                grid[i][j] += 1;
+
+                if grid[i][j] > 9 {
+                    to_flash.insert((i as i32, j as i32));
+                }
+            }
+        }
+        let mut flashed: HashSet<(i32, i32)> = HashSet::new();
+        loop {
+            if let Some(item) = to_flash.clone().iter().next() {
+                let row = item.0;
+                let col = item.1;
+                to_flash.remove(item);
+
+                if flashed.insert(item.clone()) {
+                    let neighbours = neighbours(row, col);
+                    // println!("{:?} neighbours: {:?}", item, neighbours);
+
+                    for n in neighbours {
+                        grid[n.0 as usize][n.1 as usize] += 1;
+                        // println!("{:?} inc from {:?}", n, item);
+                        if grid[n.0 as usize][n.1 as usize] > 9 {
+                            to_flash.insert(n);
+                        }
+                    }
+                }
+            } else {
+                break;
+            }
+
+        }
+
+        for flasher in &flashed {
+            grid[flasher.0 as usize][flasher.1 as usize] = 0;
+            flask_count += 1;
+        }
+        println!("{}", step + 1);
+        for i in 0..10 {
+            println!("{:?}", grid[i]);
+        }
+        println!("");
+
+        step += 1;
+
+        let num_flashed = flashed.len();
+        if num_flashed == 100 {
+            println!("part2: {}", step);
+            break;
+        }
+    }    
+}
+
+fn neighbours(row: i32, col: i32) -> Vec<(i32, i32)> {
+    let all = [
+        (row - 1, col - 1), (row - 1, col), (row - 1, col + 1),
+        (row, col - 1), (row, col + 1),
+        (row + 1, col -1), (row + 1, col), (row + 1, col + 1),
+    ];
+    all.iter()
+        .filter(|item| {
+            let (y, x) = item;
+            !(*y < 0 || *x < 0 || *y > 9 || *x > 9)
+        })
+        .map(|item| *item)
+        .collect()
+}
