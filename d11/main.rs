@@ -60,7 +60,7 @@ fn neighbours(row: i32, col: i32) -> Vec<(i32, i32)> {
         .collect()
 }
 
-struct Grid(Vec<Vec<i32>>);
+struct Grid(Vec<Vec<i32>>, usize, usize);
 
 #[derive(Debug, PartialEq, Eq)]
 struct GridParseErr {
@@ -75,7 +75,7 @@ impl FromStr for Grid {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         const RADIX: u32 = 10;
 
-        let mut grid: Vec<Vec<i32>> = vec![vec![0; 10]; 10];
+        let mut grid: Vec<Vec<i32>> = Vec::new();
 
         for (i, line) in s.lines().enumerate() {
             for (j, c) in line.chars().enumerate() {
@@ -86,7 +86,9 @@ impl FromStr for Grid {
                 }
             }
         }
-        Ok(Grid(grid))
+        let rows = grid.len();
+        let cols = grid[0].len();
+        Ok(Grid(grid, rows, cols))
     }
 }
 
@@ -138,6 +140,18 @@ impl Grid {
         }
 
         flashed
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+struct Position {
+    row: i32,
+    col: i32
+}
+
+impl From<(i32, i32)> for Position {
+    fn from(pair: (i32, i32)) -> Self {
+        Position { row: pair.0, col: pair.1 }
     }
 }
 
