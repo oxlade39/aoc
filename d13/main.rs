@@ -11,45 +11,26 @@ fn part1() {
     let mut positions: HashSet<(i64, i64)> = HashSet::new();
     let mut folds: Vec<Fold> = Vec::new();
 
-    for line in input.lines() {
-        if line.len() < 3 {
-            continue;
-        }
-
-        if line.chars().nth(0).unwrap() != 'f' {
-            let parts: Vec<_> = line.split(",").collect();
-            let x: i64 = parts[0].parse().unwrap();
-            let y: i64 = parts[1].parse().unwrap();
-            positions.insert((x, y));
-        } else {
-            let fold: Fold = line.parse().unwrap();
-            folds.push(fold);
-        }
-    }
-
-    // println!("postions: {:?}", positions);
-    // println!("folds: {:?}", folds);
+    parse(input, &mut positions, &mut folds);    
 
     print_grid(&positions);
 
     let result = folds.iter()
         .take(1)
         .fold(positions.clone(), |accum, item| fold(accum, item));
-    // println!("part1: {:?}", result.len());
 
     print_grid(&result);
 
     let result2 = folds.iter()
         .take(2)
         .fold(positions.clone(), |accum, item| fold(accum, item));
-// println!("part1: {:?}", result.len());
 
     print_grid(&result2);
 }
 
 fn print_grid(result: &HashSet<(i64, i64)>) {
-    let max_x = result.iter().map(|(x,y)| *x).max().unwrap();
-    let max_y = result.iter().map(|(x,y)| *y).max().unwrap();
+    let max_x = result.iter().map(|(x,_y)| *x).max().unwrap();
+    let max_y = result.iter().map(|(_x,y)| *y).max().unwrap();
 
     println!("");
     for y in 0..max_y + 1 {
@@ -151,6 +132,15 @@ fn part2() {
     let mut positions: HashSet<(i64, i64)> = HashSet::new();
     let mut folds: Vec<Fold> = Vec::new();
 
+    parse(input, &mut positions, &mut folds);
+
+    let result = folds.iter()
+        .fold(positions, |accum, item| fold(accum, item));
+    
+    print_grid(&result);
+}
+
+fn parse(input: &str, positions: &mut HashSet<(i64, i64)>, folds: &mut Vec<Fold>) {
     for line in input.lines() {
         if line.len() < 3 {
             continue;
@@ -166,11 +156,4 @@ fn part2() {
             folds.push(fold);
         }
     }
-
-    println!("postions: {:?}", positions);
-    println!("folds: {:?}", folds);
-    let result = folds.iter()
-        .fold(positions, |accum, item| fold(accum, item));
-    
-    print_grid(&result);
 }
