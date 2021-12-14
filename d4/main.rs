@@ -36,6 +36,7 @@ fn parse_boards(boards: Chunks<&str>) -> Vec<Board> {
     parsed_boards
 }
 
+#[allow(dead_code)]
 fn part_one(numbers: Vec<i32>, mut boards: Vec<Board>) -> Option<i32> {
     for n in numbers {
         for b in &mut boards {

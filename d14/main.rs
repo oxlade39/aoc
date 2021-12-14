@@ -26,8 +26,9 @@ fn part1() {
     let mut counts: HashMap<char, i64> = HashMap::new();
 
     for c in &input {
-        let i = counts.get(&c).unwrap_or(&0);
-        counts.insert(c.clone(), i+1);
+        if let Some(existing) = counts.insert(c.clone(), 1) {
+            counts.insert(c.clone(), existing + 1);
+        }
     }
 
     let (_, max_count) = counts.iter()
@@ -96,12 +97,12 @@ fn part2() {
     }
 
     let mut pairs: HashMap<[char; 2], i64> = HashMap::new();
-    let mut input: Vec<_> = chain.chars().collect();
+    let input: Vec<_> = chain.chars().collect();
     for pair in input.windows(2) {
         let left = pair[0];
         let right = pair[1];
         let item = [left, right];
-        if let Some(existing) = pairs.get(&item) {
+        if let Some(existing) = pairs.insert(item, 1) {
             pairs.insert(item, existing + 1);
         } else {
             pairs.insert(item, 1);
@@ -111,7 +112,7 @@ fn part2() {
     let n = 40;
 
 
-    for step_n in 0..n {
+    for _ in 0..n {
         pairs = step2(&pairs, &insertions);
     }
 
