@@ -16,18 +16,7 @@ fn part1() {
         insertions.insert(i.chain, i);
     }
 
-    println!("insertions: {:?}", insertions);
 
-
-    // let mut result: Vec<char> = Vec::new();
-    // result.push(chain.chars().nth(0).unwrap());
-    // for chunk in chain.chars().collect::<Vec<char>>().windows(2) {        
-    //     if let Some(insertion) = insertions.get(chunk) {
-    //         let next = insertion.insert();
-    //         result.push(next[1]);
-    //         result.push(next[2]);
-    //     }
-    // }
     let mut input: Vec<_> = chain.chars().collect();
     let n = 10;
     for _ in 0..n {
@@ -41,13 +30,14 @@ fn part1() {
         counts.insert(c.clone(), i+1);
     }
 
-    let (max, max_count) = counts.iter()
+    let (_, max_count) = counts.iter()
         .max_by(|left, right| left.1.cmp(right.1))
         .unwrap();
 
-    let (min, min_count) = counts.iter()
+    let (_, min_count) = counts.iter()
         .min_by(|left, right| left.1.cmp(right.1))
-        .unwrap();        
+        .unwrap();  
+
     println!("after n {}: len: {:?}", n, input.len());
     println!("pt1: {}", max_count - min_count);
 
@@ -95,5 +85,86 @@ impl FromStr for Insertion {
 
 
 fn part2() {
+    let input = include_str!("input.txt");
+    
+    let chain = input.lines().nth(0).unwrap();
+    let mut insertions: HashMap<[char; 2], Insertion> = HashMap::new();
 
+    for line in input.lines().skip(2) {
+        let i: Insertion = line.parse().unwrap();
+        insertions.insert(i.chain, i);
+    }
+
+    let mut pairs: HashMap<[char; 2], i64> = HashMap::new();
+    let mut input: Vec<_> = chain.chars().collect();
+    for pair in input.windows(2) {
+        let left = pair[0];
+        let right = pair[1];
+        let item = [left, right];
+        if let Some(existing) = pairs.get(&item) {
+            pairs.insert(item, existing + 1);
+        } else {
+            pairs.insert(item, 1);
+        }
+    }
+    
+    let n = 40;
+
+
+    for step_n in 0..n {
+        pairs = step2(&pairs, &insertions);
+    }
+
+
+    let mut counts: HashMap<char, i64> = HashMap::new();
+    let mut all_chars: HashSet<char> = HashSet::new();
+
+    for item in pairs.keys() {
+        all_chars.insert(item[0]);
+        all_chars.insert(item[1]);
+    }
+
+    for c in all_chars {
+        let mut sum = if chain.ends_with(c) { 1 } else { 0 };
+        for k in pairs.keys() {
+            if k[0] == c {
+                sum += pairs.get(k).unwrap();
+            }
+        }
+        counts.insert(c, sum);
+    }
+
+    let (max, max_count) = counts.iter()
+        .max_by(|left, right| left.1.cmp(right.1))
+        .unwrap();
+
+    let (min, min_count) = counts.iter()
+        .min_by(|left, right| left.1.cmp(right.1))
+        .unwrap();        
+
+    println!("pt2: {} ({} -> {}, {} -> {})", max_count - min_count, min, min_count, max, max_count);
+}
+
+fn step2(input: &HashMap<[char; 2], i64>, insertions: &HashMap<[char; 2], Insertion>) -> HashMap<[char; 2], i64> {
+    let mut result: HashMap<[char; 2], i64> = HashMap::new();
+
+    for (k, v) in input {
+        let left = k[0];
+        let right = k[1];
+        if let Some(rule) = insertions.get(k) {
+            let new_left = [left, rule.element];
+            let new_right = [rule.element, right];
+
+            if let Some(existing) = result.insert(new_left, *v) {
+                result.insert(new_left, v + existing);
+            }
+            if let Some(existing) = result.insert(new_right, *v) {
+                result.insert(new_right, v + existing);
+            }
+        } else {
+            result.insert(k.clone(), *v);
+        }
+    }
+
+    result
 }
