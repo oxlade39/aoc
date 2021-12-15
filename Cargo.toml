@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+fast_paths = "0.2.0"
 
 [[bin]]
 name = "d3"
@@ -54,3 +55,7 @@ path = "d13/main.rs"
 [[bin]]
 name = "d14"
 path = "d14/main.rs"
+
+[[bin]]
+name = "d15"
+path = "d15/main.rs"
