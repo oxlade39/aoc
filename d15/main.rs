@@ -1,7 +1,5 @@
 use std::{str::FromStr, fmt::Debug, collections::{HashSet, HashMap}};
 
-use fast_paths::InputGraph;
-
 const INFINITY: i64 = 1000000;
 
 fn main() {
@@ -14,70 +12,14 @@ fn part1() {
     let grid: Grid = input.parse().unwrap();
     let height: i64 = grid.1 as i64;
     let width: i64 = grid.2 as i64;
-    let neighbours: [(i64, i64); 4] = [(0, -1), (0, 1), (-1, 0), (1, 0)];
-    
-    let mut input_graph = InputGraph::new();
-
-    for (row_n, row)  in grid.0.iter().enumerate() {
-        for (col_n, _) in row.iter().enumerate() {
-            let curr_index = index((row_n as i64, col_n as i64), &grid);
-            for position in neighbours {
-                let neighbour_row = row_n as i64 - position.0;
-                let neighbour_col = col_n as i64 - position.1;                
-
-                if neighbour_row >= 0 && neighbour_row < height && neighbour_col >= 0 && neighbour_col < width {
-                    let neighbour_weight = grid.0[neighbour_row as usize][neighbour_col as usize];
-                    let neighbour_index = index((neighbour_row, neighbour_col), &grid);
-                    // println!("[{:?}]{:?} -> [{:?}]{:?} = {:?}", curr_index, (row_n, col_n), neighbour_index, (neighbour_row, neighbour_col), neighbour_weight);
-                    input_graph.add_edge(curr_index as usize, neighbour_index as usize, neighbour_weight as usize);
-                }                
-            }
-            
-        }
-    }
-    input_graph.freeze();
-    let fast_graph = fast_paths::prepare(&input_graph);
-    let from = index((0, 0), &grid);
-    let to = index((height - 1, width - 1), &grid);
-    let shortest_path = fast_paths::calc_path(&fast_graph, from, to);
-
-    if let Some(x) = shortest_path {
-        println!("g:\n{:?}", x.get_weight());
-        // let nodes = x.get_nodes();
-        // let total: usize = nodes.iter().sum();
-        
-    }    
-}
-
-fn index(pos: (i64, i64), grid: &Grid) -> usize {
-    let y = pos.0;
-    let x = pos.1;
-    let width = grid.2 as i64;
-
-    ((y * width) + x) as usize
-}
-
-#[test]
-fn test_index() {
-    let items = vec![
-        vec![1, 2, 3],
-        vec![4, 5, 6],
-        vec![7, 8, 9],
-    ];
-    let g = Grid(items, 3, 3);
-
-    assert_eq!(0, index((0,0), &g));
-    assert_eq!(1, index((0,1), &g));
-    assert_eq!(2, index((0,2), &g));
-    assert_eq!(3, index((1,0), &g));
-    assert_eq!(6, index((2,0), &g));
+    let result = astar(&grid, (0, 0), (height - 1, width - 1));
+    println!("result: {}", result);
 }
 
 fn part2() {
     let input = include_str!("input.txt");
     let mut grid: Grid = input.parse().unwrap();
     grid = expand(&grid, 5);
-    // println!("expanded: {:?}", grid);
     let height: i64 = grid.1 as i64;
     let width: i64 = grid.2 as i64;
     
@@ -85,6 +27,7 @@ fn part2() {
     println!("result: {}", result);
 }
 
+/// Based on https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
 fn astar(grid: &Grid, start: (i64, i64), end: (i64, i64)) -> i64 {
 
     let mut open_set: HashSet<(i64, i64)> = HashSet::new();
@@ -103,6 +46,7 @@ fn astar(grid: &Grid, start: (i64, i64), end: (i64, i64)) -> i64 {
             break;
         }
 
+        // this is slow, optimise to use a priority queue
         let curr_node = open_set.iter().min_by(|left, right| {
             let left_score = f_scores.get(left).unwrap_or(&INFINITY);
             let right_score = f_scores.get(right).unwrap_or(&INFINITY);
@@ -125,7 +69,6 @@ fn astar(grid: &Grid, start: (i64, i64), end: (i64, i64)) -> i64 {
         }
 
         open_set.remove(&curr_node);
-        // println!("removing: {:?}", curr_node);
 
         for neighbour_coord in [(-1, 0), (1, 0), (0, 1), (0, -1)] {
             let neighbour = (curr_node.0 + neighbour_coord.0, curr_node.1 + neighbour_coord.1);
@@ -137,7 +80,6 @@ fn astar(grid: &Grid, start: (i64, i64), end: (i64, i64)) -> i64 {
             let neighbour_cost = neighbour_row[neighbour.1 as usize];
             let neighbour_g_score = g_scores.get(&neighbour).unwrap_or(&INFINITY);
             let tentative_g_score = g_scores.get(&curr_node).unwrap_or(&INFINITY) + neighbour_cost;
-            // println!("tentative_g_score vs neighbour_g_score : {} vs {}", tentative_g_score, neighbour_g_score);
             if tentative_g_score < *neighbour_g_score {
                 came_from.insert(neighbour, curr_node);
                 g_scores.insert(neighbour, tentative_g_score);
@@ -146,7 +88,6 @@ fn astar(grid: &Grid, start: (i64, i64), end: (i64, i64)) -> i64 {
                 let hueristic = i64::abs(end.0 - neighbour.0) + i64::abs(end.1 - neighbour.1);                
                 f_scores.insert(neighbour, tentative_g_score + hueristic);
                 open_set.insert(neighbour);
-                // println!("adding: {:?}", neighbour);
             }
         }
     }
