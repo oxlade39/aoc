@@ -1,10 +1,17 @@
-use std::{str::FromStr, fmt::Debug, collections::{HashSet, HashMap}};
+#![feature(map_first_last)]
+use std::collections::BTreeSet;
 
+use std::time::Instant;
+use std::{str::FromStr, fmt::Debug, collections::HashMap};
+
+/// Use sufficiently high number that a real hueristic wouldn't be above
 const INFINITY: i64 = 1000000;
 
 fn main() {
+    let start = Instant::now();
     part1();
     part2();
+    println!("took: {}ms", start.elapsed().as_millis())
 }
 
 fn part1() {
@@ -27,17 +34,40 @@ fn part2() {
     println!("result: {}", result);
 }
 
+#[derive(Clone, Debug)]
+struct Candidate((i64, i64), i64);
+
+impl PartialEq for Candidate {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.eq(&other.0)
+    }
+}
+
+impl Eq for Candidate {}
+
+impl PartialOrd for Candidate {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.1.partial_cmp(&other.1)
+    }
+}
+
+impl Ord for Candidate {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.0.cmp(&other.0)
+    }
+}
+
 /// Based on https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
 fn astar(grid: &Grid, start: (i64, i64), end: (i64, i64)) -> i64 {
 
-    let mut open_set: HashSet<(i64, i64)> = HashSet::new();
+    let mut open_set: BTreeSet<Candidate> = BTreeSet::new();
     let mut came_from: HashMap<(i64, i64), (i64, i64)> = HashMap::new();
 
     let mut g_scores: HashMap<(i64, i64), i64> = HashMap::new();
     let mut f_scores: HashMap<(i64, i64), i64> = HashMap::new();
 
 
-    open_set.insert(start);
+    open_set.insert(Candidate(start, (grid.1 * grid.2) as i64));
     g_scores.insert(start, 0);
     f_scores.insert(start, (grid.1 * grid.2) as i64);
 
@@ -47,11 +77,8 @@ fn astar(grid: &Grid, start: (i64, i64), end: (i64, i64)) -> i64 {
         }
 
         // this is slow, optimise to use a priority queue
-        let curr_node = open_set.iter().min_by(|left, right| {
-            let left_score = f_scores.get(left).unwrap_or(&INFINITY);
-            let right_score = f_scores.get(right).unwrap_or(&INFINITY);
-            left_score.cmp(right_score)
-        }).unwrap().clone();
+        let curr_candid = open_set.first().unwrap().clone();
+        let curr_node = curr_candid.0;
 
         if curr_node.0 == end.0 && curr_node.1 == end.1 {
             let mut path_node = Some(curr_node);
@@ -60,7 +87,6 @@ fn astar(grid: &Grid, start: (i64, i64), end: (i64, i64)) -> i64 {
                 if let Some(x)  = path_node {
                     let cost = grid.0[x.0 as usize][x.1 as usize];
                     sum += cost;
-                    println!("{:?} -> {}", x, cost);
                     path_node = came_from.get(&x).map(|item|*item);
                 } else {
                     return sum - grid.0[start.0 as usize][start.1 as usize];
@@ -68,7 +94,7 @@ fn astar(grid: &Grid, start: (i64, i64), end: (i64, i64)) -> i64 {
             }
         }
 
-        open_set.remove(&curr_node);
+        open_set.remove(&curr_candid);
 
         for neighbour_coord in [(-1, 0), (1, 0), (0, 1), (0, -1)] {
             let neighbour = (curr_node.0 + neighbour_coord.0, curr_node.1 + neighbour_coord.1);
@@ -87,7 +113,7 @@ fn astar(grid: &Grid, start: (i64, i64), end: (i64, i64)) -> i64 {
                 // distance to target
                 let hueristic = i64::abs(end.0 - neighbour.0) + i64::abs(end.1 - neighbour.1);                
                 f_scores.insert(neighbour, tentative_g_score + hueristic);
-                open_set.insert(neighbour);
+                open_set.insert(Candidate(neighbour, tentative_g_score + hueristic));
             }
         }
     }
