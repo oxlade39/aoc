@@ -12,7 +12,7 @@ fn part1() {
     let input = include_str!("input.txt");
     let input_as_bin = hex_to_bin(input);
     let result = parse(&input_as_bin);
-    println!("part1: {:?}", result);
+    println!("part1: {:?}", sum(&result));
 }
 
 fn part2() {
@@ -69,14 +69,15 @@ fn parse_literal(s: &str, version: i16, to_append: &mut Vec<Instruction>) -> usi
 }
 
 fn parse(s: &str) -> Vec<Instruction> {
-    parse_internal(s, None)
+    let mut instructions: Vec<Instruction> = Vec::new();
+    parse_internal(s, None, &mut instructions);
+    instructions
 }
 
 
-fn parse_internal(s: &str, max: Option<usize>) -> Vec<Instruction> {
+fn parse_internal(s: &str, max: Option<usize>, instructions: &mut Vec<Instruction>) -> usize {
     println!("parse: {}", s);
     let mut position = 0;
-    let mut instructions = Vec::new();
 
     let mut remaining = max.clone();
 
@@ -87,7 +88,7 @@ fn parse_internal(s: &str, max: Option<usize>) -> Vec<Instruction> {
 
         if let Some(remaining) = remaining {
             if remaining == 0 {
-                return instructions;
+                return position;
             }
         }
         remaining = remaining.map(|i| i-1);
@@ -99,7 +100,7 @@ fn parse_internal(s: &str, max: Option<usize>) -> Vec<Instruction> {
 
         position += 6;
         if t == 4 {        
-            let inc = parse_literal(&s[position..], v, &mut instructions);
+            let inc = parse_literal(&s[position..], v, instructions);
             position += inc;
         } else {
             if let Some(i) = s.chars().nth(position) {
@@ -113,7 +114,7 @@ fn parse_internal(s: &str, max: Option<usize>) -> Vec<Instruction> {
                     position += 15;
                     if position + length > s.len() {
                         continue;
-                    }
+                    }                    
                     let children = parse(&s[position..position+length]);
                     instructions.push(Instruction::Operator(v, children));
                     position += length;
@@ -127,14 +128,15 @@ fn parse_internal(s: &str, max: Option<usize>) -> Vec<Instruction> {
 
                     println!("looking for {} subpackets in {}", length, &s[position..]);
                     
-                    let children = parse_internal(&s[position..], Some(length));
+                    let mut children = Vec::new();
+                    let inc = parse_internal(&s[position..], Some(length), &mut children);
                     instructions.push(Instruction::Operator(v, children));
-                    position += length;
+                    position += inc;
                 }
             }            
         }
     }
-    instructions
+    position
 }
 
 fn sum(i: &Vec<Instruction>) -> i64 {
@@ -160,18 +162,26 @@ fn test_parse_literal() {
 }
 
 #[test]
-fn test_parse_operator() {
-    // parse("110100010100101001000100100");    
-    println!("{:?}", parse("00111000000000000110111101000101001010010001001000000000"));
+fn test_parse_operator_15() {
+    let result = parse("00111000000000000110111101000101001010010001001000000000");
+    println!("{:?}", result);
+    assert_eq!(result.len(), 1);
+}
+
+
+#[test]
+fn test_parse_operator_11() {
+    let result = parse("11101110000000001101010000001100100000100011000001100000");
+    println!("{:?}", result);
 }
 
 #[test]
 fn test_pt1_examples() {
-    // let mut result = parse(&hex_to_bin("8A004A801A8002F478"));
-    // println!("****{:?} -> {}", &result, sum(&result));
-    // assert_eq!(16, sum(&result));
+    let mut result = parse(&hex_to_bin("8A004A801A8002F478"));
+    println!("****{:?} -> {}", &result, sum(&result));
+    assert_eq!(16, sum(&result));
 
-    let mut result = parse(&hex_to_bin("620080001611562C8802118E34"));
+    result = parse(&hex_to_bin("620080001611562C8802118E34"));
     println!("****{:?} -> {}", &result, sum(&result));
     assert_eq!(12, sum(&result));
 
