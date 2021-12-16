@@ -154,12 +154,3 @@ impl From<(i32, i32)> for Position {
         Position { row: pair.0, col: pair.1 }
     }
 }
-
-#[test]
-fn test_parse_grid() {
-    let line = "123A34";
-    let g = line.parse::<Grid>().err().unwrap();
-
-    let expected = GridParseErr{ line: 0, col: 3, value: 'A'};
-    assert_eq!(g, expected);
-}
