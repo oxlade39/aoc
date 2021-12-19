@@ -1,10 +1,10 @@
-use std::{collections::{HashSet, HashMap}, str::FromStr, time::Instant};
+use std::{str::FromStr, time::Instant};
 
 fn main() {
     let start = Instant::now();
     part1();
     part2();
-    println!("took: {} μs", start.elapsed().as_micros())
+    println!("took: {} ms", start.elapsed().as_millis())
 }
 
 fn part1() {
@@ -12,28 +12,42 @@ fn part1() {
 
     let snp: SnailFishPair = input.lines().nth(0).unwrap().parse().unwrap();
     let mut accum: Vec<(i8, Item)> = Vec::new();
-    flatten(snp, &mut accum, 0);
+    flatten(&snp, &mut accum, 0);
 
     for line in input.lines().skip(1) {
         let next: SnailFishPair = line.parse().unwrap();
         let mut next_accum: Vec<(i8, Item)> = Vec::new();
-        flatten(next, &mut next_accum, 0);
+        flatten(&next, &mut next_accum, 0);
 
-        println!("  {:?}", accum);
-        println!("+ {:?}", next_accum);
-        
         let combined = combine(&accum, &next_accum);
         let result = step(&combined);
         accum = result;
-        println!("= {:?}", accum);
     }
 
-    println!("result: {:?}", accum);
-    println!("result: {:?}", magnitude(&accum, 3));
+    println!("part1: {:?}", to_num(&magnitude(&accum, 3)[0].1));
 }
 
 fn part2() {
-    let _input = include_str!("input.txt");
+    let items: Vec<_> = include_str!("input.txt").lines()
+        .map(|line| line.parse::<SnailFishPair>().unwrap())
+        .collect();
+
+    let mut max: i64 = 0;
+    for left in &items {
+        for right in &items {
+            let mut flatten_left: Vec<(i8, Item)> = Vec::new();
+            let mut flatten_right: Vec<(i8, Item)> = Vec::new();
+            flatten(left, &mut flatten_left, 0);
+            flatten(right, &mut flatten_right, 0);
+            
+            let combined = combine(&flatten_left, &flatten_right);
+            let result = step(&combined);
+            let mag = to_num(&magnitude(&result, 3)[0].1);
+            max = i64::max(max, mag);
+        }
+    }
+    
+    println!("part2: {}", max);
 }
 
 #[test]
@@ -108,7 +122,7 @@ fn test_explode() {
 
     
     let mut flattened: Vec<(i8, Item)> = Vec::new();
-    flatten(snf, &mut flattened, 0);
+    flatten(&snf, &mut flattened, 0);
 
     println!("before ->\n{:?}", flattened);
 
@@ -122,7 +136,7 @@ fn test_split() {
     let snf: SnailFishPair = "[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]".parse().unwrap();
 
     let mut flattened: Vec<(i8, Item)> = Vec::new();
-    flatten(snf, &mut flattened, 0);
+    flatten(&snf, &mut flattened, 0);
     let exploded = explode(&mut flattened);
 
     println!("before split:\n{:?}", exploded);
@@ -136,26 +150,26 @@ fn test_split() {
 fn test_step() {
     let snf: SnailFishPair = "[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]".parse().unwrap();
     let mut flattened: Vec<(i8, Item)> = Vec::new();
-    flatten(snf, &mut flattened, 0);
+    flatten(&snf, &mut flattened, 0);
     
     let results = step(&flattened);
 
     println!("after step:\n{:?}", results);
 }
 
-fn flatten(snf: SnailFishPair, accum: &mut Vec<(i8, Item)>, depth: i8) {
-    let l = *snf.left;
-    let r = *snf.right;
+fn flatten(snf: &SnailFishPair, accum: &mut Vec<(i8, Item)>, depth: i8) {
+    let l = snf.left.as_ref();
+    let r = snf.right.as_ref();
 
     flatten_item(l, accum, depth);
     flatten_item(r, accum, depth);
 }
 
-fn flatten_item(item: Item, accum: &mut Vec<(i8, Item)>, depth: i8) {
+fn flatten_item(item: &Item, accum: &mut Vec<(i8, Item)>, depth: i8) {
     match item {
         Item::Pair(snf) => flatten(snf, accum, depth + 1),
         other => {
-            accum.push((depth, other));
+            accum.push((depth, other.clone()));
         },        
     }
 }
@@ -163,7 +177,7 @@ fn flatten_item(item: Item, accum: &mut Vec<(i8, Item)>, depth: i8) {
 fn to_num(item: &Item) -> i64 {
     match item {
         Item::RegularNumber(n) => *n,
-        _ => 0
+        _ => panic!("expected RegularNumber but found Pair")
     }
 }
 
@@ -224,7 +238,6 @@ fn explode(flattened: &Vec<(i8, Item)>) -> Vec<(i8, Item)> {
     }
 
     if !done_explode && left_right.len() == 2 {
-        println!("adding leftover");
         let last = to_return.pop().unwrap();
         let _ = left_right.pop().unwrap();
         let left = left_right.pop().unwrap();
@@ -247,7 +260,6 @@ fn split(to_split: &Vec<(i8, Item)>) -> Vec<(i8, Item)> {
         if !has_split && n > 9 {
             let half_down = n / 2;
             let half_up = (n / 2) + (n % 2);
-            // println!("splitting {} to {} and {}", n, half_down, half_up);
             to_return.push((*depth + 1, Item::RegularNumber(half_down)));
             to_return.push((*depth + 1, Item::RegularNumber(half_up)));
             has_split = true;
@@ -264,7 +276,7 @@ fn test_magnitude() {
     // let snf: SnailFishPair = "[[1,2],[[3,4],5]]".parse().unwrap();
     let snf: SnailFishPair = "[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]".parse().unwrap();
     let mut flattened: Vec<(i8, Item)> = Vec::new();
-    flatten(snf, &mut flattened, 0);
+    flatten(&snf, &mut flattened, 0);
 
     println!("flattened\n{:?}", flattened);
 
@@ -320,10 +332,10 @@ fn test_combine() {
     let sfp_r: SnailFishPair = right.parse().unwrap();
 
     let mut flattened_l: Vec<(i8, Item)> = Vec::new();
-    flatten(sfp_l, &mut flattened_l, 0);
+    flatten(&sfp_l, &mut flattened_l, 0);
 
     let mut flattened_r: Vec<(i8, Item)> = Vec::new();
-    flatten(sfp_r, &mut flattened_r, 0);
+    flatten(&sfp_r, &mut flattened_r, 0);
 
     let combined = combine(&flattened_l, &flattened_r);
     println!("comb: {:?}", combined);
@@ -334,10 +346,6 @@ fn test_combine() {
 
 #[test]
 fn test_combine2() {
-    // THIS IS BROKEN
-    // gives      [[[[0,0],[5,3]],[4,4]],[5,5]]
-    // instead of [[[[3,0],[5,3]],[4,4]],[5,5]]
-
     let left = "[[[[1,1],[2,2]],[3,3]],[4,4]]";
     let right = "[5,5]";
 
@@ -345,11 +353,11 @@ fn test_combine2() {
     let sfp_r: SnailFishPair = right.parse().unwrap();
 
     let mut flattened_l: Vec<(i8, Item)> = Vec::new();
-    flatten(sfp_l, &mut flattened_l, 0);
+    flatten(&sfp_l, &mut flattened_l, 0);
     println!("left\n{:?}", flattened_l);
 
     let mut flattened_r: Vec<(i8, Item)> = Vec::new();
-    flatten(sfp_r, &mut flattened_r, 0);
+    flatten(&sfp_r, &mut flattened_r, 0);
     println!("right\n{:?}", flattened_r);
 
     let combined = combine(&flattened_l, &flattened_r);
