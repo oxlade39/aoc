@@ -8,7 +8,7 @@ fn main() {
 }
 
 fn part1() {
-    let input = include_str!("input.test2.txt");
+    let input = include_str!("input.txt");
 
     let snp: SnailFishPair = input.lines().nth(0).unwrap().parse().unwrap();
     let mut accum: Vec<(i8, Item)> = Vec::new();
@@ -101,18 +101,20 @@ fn test_parse() {
 fn test_explode() {
     // let snf: SnailFishPair = "[[[[[9,8],1],2],3],4]".parse().unwrap();
     // let snf: SnailFishPair = "[7,[6,[5,[4,[3,2]]]]]".parse().unwrap();
-    // let snf: SnailFishPair = "[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]".parse().unwrap();
-    let snf: SnailFishPair = "[[6,[5,[4,[3,2]]]],1]".parse().unwrap();
+    let snf: SnailFishPair = "[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]".parse().unwrap();
+    // let snf: SnailFishPair = "[[6,[5,[4,[3,2]]]],1]".parse().unwrap();
     // let snf: SnailFishPair = "[[[[4,3],4],4],[7,[[8,4],9]]]".parse().unwrap();
+    // let snf: SnailFishPair = "[[[[[1,1],[2,2]],[3,3]],[4,4]],[5,5]]".parse().unwrap();
+
     
     let mut flattened: Vec<(i8, Item)> = Vec::new();
     flatten(snf, &mut flattened, 0);
 
-    println!("before -> {:?}", flattened);
+    println!("before ->\n{:?}", flattened);
 
     let exploded = explode(&mut flattened);
 
-    println!("after -> {:?}", exploded);
+    println!("after ->\n{:?}", exploded);
 }
 
 #[test]
@@ -168,7 +170,7 @@ fn to_num(item: &Item) -> i64 {
 fn step(items: &Vec<(i8, Item)>) -> Vec<(i8, Item)> {
     let mut initial = items.clone();
     loop {
-        let after_explode = explode(&mut initial);
+        let after_explode = explode_all(&initial);
         let after_split = split(&after_explode);
         if after_explode.len() == initial.len() && after_split.len() == initial.len() {
             return after_split;
@@ -177,39 +179,62 @@ fn step(items: &Vec<(i8, Item)>) -> Vec<(i8, Item)> {
     }
 }
 
-fn explode(flattened: &mut Vec<(i8, Item)>) -> Vec<(i8, Item)> {
-    let mut on_left = false;
-    for (index, (depth, item)) in flattened.clone().iter().enumerate() {
-        if *depth == 4 {
-            on_left = !on_left;
-            if on_left {
-                println!("left 4: {:?}", item);
-                if index > 0 {
-                    let left_of = &flattened[index - 1].1;
-                    let sum = to_num(item) + to_num(left_of);
-                    println!("left of -> {:?} - sum -> {:?}", left_of, sum);
-                    flattened[index - 1].1 = Item::RegularNumber(sum);
-                }
-                flattened[index] = (3, Item::RegularNumber(0));
+fn explode_all(items: &Vec<(i8, Item)>) -> Vec<(i8, Item)> {
+    let result = explode(&items);
+    if result.len() == items.len() {
+        result
+    } else {
+        explode_all(&result)
+    }
+}
+
+fn explode(flattened: &Vec<(i8, Item)>) -> Vec<(i8, Item)> {
+    let mut to_return: Vec<(i8, Item)> = Vec::new();
+    let mut left_right: Vec<(i8, Item)> = Vec::new();
+
+    let mut done_explode = false;
+
+    for (depth, item) in flattened {
+
+        if done_explode {
+            to_return.push((*depth, item.clone()));
+        } else if left_right.len() == 2 {
+            let right = left_right.pop().unwrap();
+            let left = left_right.pop().unwrap();
+
+            if let Some(left_of_left) = to_return.pop() {
+                let sum = to_num(&left_of_left.1) + to_num(&left.1);
+                to_return.push((left_of_left.0, Item::RegularNumber(sum)));
+            }
+
+            to_return.push((3, Item::RegularNumber(0)));
+
+            let right_of_right = item;
+            let sum = to_num(right_of_right) + to_num(&right.1);
+            to_return.push((*depth, Item::RegularNumber(sum)));
+            done_explode = true;
+        } else {
+            if *depth == 4 {
+                left_right.push((*depth, item.clone()));
             } else {
-                println!("right 4: {:?}", item);
-                if index + 1 < flattened.len() {
-                    let right_of = &flattened[index + 1].1;
-                    let sum = to_num(item) + to_num(right_of);
-                    println!("right of -> {:?} - sum -> {:?}", right_of, sum);
-                    flattened[index + 1].1 = Item::RegularNumber(sum);
-                }
+                to_return.push((*depth, item.clone()));
             }
         }
+
     }
 
-    let mut filtered: Vec<(i8, Item)> = Vec::new();
-    for (depth, item) in flattened {
-        if *depth < 4 {
-            filtered.push((*depth, item.clone()));
-        }
+    if !done_explode && left_right.len() == 2 {
+        println!("adding leftover");
+        let last = to_return.pop().unwrap();
+        let _ = left_right.pop().unwrap();
+        let left = left_right.pop().unwrap();
+
+        let sum = to_num(&last.1) + to_num(&left.1);
+        to_return.push((last.0, Item::RegularNumber(sum)));
+        to_return.push((3, Item::RegularNumber(0)));
     }
-    filtered
+    
+    to_return
 }
 
 fn split(to_split: &Vec<(i8, Item)>) -> Vec<(i8, Item)> {
