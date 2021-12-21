@@ -113,7 +113,7 @@ impl InputImage {
     }
 
     fn pixel_str(&self, p: &Position) -> &str {
-        if self.light_pixels.contains(&Position{ x: p.x - 1, y: p.y - 1}) {
+        if self.light_pixels.contains(&Position{ x: p.x, y: p.y}) {
             "1"
         } else {
             "0"
