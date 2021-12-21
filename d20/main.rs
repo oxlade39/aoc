@@ -235,3 +235,12 @@ fn test_bin() {
     let result = bin_to_i16(example);
     assert_eq!(34, result);
 }
+
+#[test]
+fn test_parse_ieb() {
+    let input = include_str!("input.test.txt");
+
+    let image_enhancement_algo = ImageEnhancementBits::new(input.lines().next().unwrap());
+    assert_eq!(image_enhancement_algo.0.contains(&34), true);
+    assert_eq!(image_enhancement_algo.0.contains(&70), false);
+}
