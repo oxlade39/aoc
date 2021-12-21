@@ -1,3 +1,4 @@
+use core::panic;
 use std::{time::Instant, collections::HashSet, hash::Hash, fmt::{Debug, Pointer}};
 
 fn main() {
@@ -8,10 +9,10 @@ fn main() {
 }
 
 fn part1() {
-    let input = include_str!("input.test.txt");
+    let input = include_str!("input.txt");
 
     let image_enhancement_algo = ImageEnhancementBits::new(input.lines().next().unwrap());
-    let input_image = InputImage::new( input.lines().skip(2).collect() ).re_center();
+    let input_image = InputImage::new( input.lines().skip(2).collect() );
 
     let mut n = next(&input_image, &image_enhancement_algo);
     println!("");
@@ -45,8 +46,8 @@ fn bin_to_usize(s: &str) -> usize {
 fn next(input_image: &InputImage, image_enhancement_algo: &ImageEnhancementBits) -> InputImage {
     let mut new_input_image: HashSet<Position> = HashSet::new();
 
-    for row in -3..(input_image.bottom() + 3) {
-        for col in -3..(input_image.right() + 3) {
+    for row in -2..(input_image.bottom() + 2) {
+        for col in -2..(input_image.right() + 2) {
             let p = Position{ x: col, y: row };
             let result = input_image.is_light(&p, &image_enhancement_algo);
             if result {
@@ -55,7 +56,7 @@ fn next(input_image: &InputImage, image_enhancement_algo: &ImageEnhancementBits)
         }
     }
 
-    InputImage{ light_pixels: new_input_image }.re_center()
+    InputImage{ light_pixels: new_input_image }
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -169,6 +170,10 @@ impl Debug for InputImage {
 
 impl ImageEnhancementBits {
     fn new(s: &str) -> ImageEnhancementBits {
+        if s.len() != 512 {
+            panic!("image enhancement bits were {} long, expected 512", s.len());
+        }
+
         let mut bits = HashSet::new();
 
         for (i, c) in s.chars().enumerate() {
