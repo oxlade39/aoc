@@ -1,5 +1,5 @@
 use core::panic;
-use std::{time::Instant, collections::HashSet, hash::Hash, fmt::{Debug, Pointer}};
+use std::{time::Instant, collections::HashSet, hash::Hash, fmt::{Debug, Pointer}, iter::repeat};
 
 fn main() {
     let start = Instant::now();
@@ -248,4 +248,38 @@ fn test_parse_ieb() {
     let image_enhancement_algo = ImageEnhancementBits::new(input.lines().next().unwrap());
     assert_eq!(image_enhancement_algo.0.contains(&34), true);
     assert_eq!(image_enhancement_algo.0.contains(&70), false);
+}
+
+#[test]
+fn test_correct_count() {
+    let mut input = include_str!("input.test.txt");
+
+    let mut image_enhancement_algo = ImageEnhancementBits::new(input.lines().next().unwrap());
+    let mut input_image = InputImage::new( input.lines().skip(2).collect() );
+
+    let mut result = repeat(()).take(2)
+        .fold(input_image, |input, _| next(&input, &image_enhancement_algo));
+    println!("35:\n{:?}", result);
+    assert_eq!(result.light_pixels.len(), 35);
+    println!("{:?}", result.light_pixels);
+
+    input = include_str!("input.txt");
+
+    image_enhancement_algo = ImageEnhancementBits::new(input.lines().next().unwrap());
+    input_image = InputImage::new( input.lines().skip(2).collect() );
+
+    result = repeat(()).take(2)
+        .fold(input_image, |input, _| next(&input, &image_enhancement_algo));
+    println!("5583:\n{:?}", result);
+    assert_eq!(result.light_pixels.len(), 5583);
+
+    input = include_str!("input.txt");
+
+    image_enhancement_algo = ImageEnhancementBits::new(input.lines().next().unwrap());
+    input_image = InputImage::new( input.lines().skip(2).collect() );
+
+    result = repeat(()).take(50)
+        .fold(input_image, |input, _| next(&input, &image_enhancement_algo));
+    println!("3351:\n{:?}", result);
+    assert_eq!(result.light_pixels.len(), 3351);
 }
