@@ -1,4 +1,4 @@
-use std::{time::Instant, collections::{HashSet, HashMap}, hash::{Hash, Hasher}};
+use std::{time::Instant, collections::{HashSet, HashMap}, hash::Hash};
 
 use itertools::Itertools;
 
@@ -56,6 +56,58 @@ fn part1() {
 }
 
 fn part2() {
+    let scanners = parse(include_str!("input.txt"));
+
+    let distances = calculate_distances(&scanners);
+    let mut path = sort_distances(&distances);
+    let mut positions: HashMap<i8, Vec<Position>> = HashMap::new();
+
+    loop {
+        if let Some((target_id, source_id, target_distances, source_distances)) = path.pop() {
+            let (rot, trans) = find_shared_translation(
+                target_distances, 
+                source_distances
+            ).unwrap();
+
+            let scanner = trans.transform(&(0,0,0).into());
+
+            let transformed = match positions.remove(&source_id) {
+                Some(existing_from) => {
+                    let mut bp = BeaconPositions(existing_from)
+                        .apply(&rot)
+                        .apply(&trans)
+                        .0;
+                    bp.push(scanner);
+                    bp
+                },
+                _ => vec![scanner]
+            };
+    
+            if let Some(existing) = positions.get_mut(&target_id) {
+                existing.extend(transformed);
+            } else {
+                positions.insert(target_id, transformed);
+            }
+
+        } else {
+            break;
+        }
+    }
+    if positions.keys().len() > 1 {
+        panic!("too many remaining keys: {:?}", positions.keys());
+    }
+    
+    let result = positions.get(&0).unwrap().iter()
+        .combinations(2)
+        .map(|combo| {
+            let x_delta = i64::abs(combo[0].x - combo[1].x);
+            let y_delta = i64::abs(combo[0].y - combo[1].y);
+            let z_delta = i64::abs(combo[0].z - combo[1].z);
+            x_delta + y_delta + z_delta
+        })
+        .max()
+        .unwrap();
+    println!("pt2: {}", result);
 }
 
 fn parse(s: &str) -> Vec<Scanner> {
