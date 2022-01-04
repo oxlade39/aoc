@@ -1,4 +1,4 @@
-use std::{time::Instant, collections::{HashSet, HashMap}};
+use std::{time::Instant, collections::{HashSet, HashMap}, hash::{Hash, Hasher}};
 
 use itertools::Itertools;
 
@@ -10,120 +10,49 @@ fn main() {
 }
 
 fn part1() {
-    let scanners = parse(include_str!("input.test2.txt"));
+    let scanners = parse(include_str!("input.txt"));
 
-    let mut right_nodes: HashSet<usize> = HashSet::from_iter([0]);
+    let distances = calculate_distances(&scanners);
+    let mut path = sort_distances(&distances);
 
-    let mut scanner_pairs: Vec<(usize, usize)> = Vec::new();
-    let threshold = nCr(12, 2);
-    println!("threshold: {}", threshold);
-    for scanner in (0..scanners.len()).combinations(2) {
-        let left = &scanners[scanner[0]];
-        let right = &scanners[scanner[1]];
-
-        let left_dist: HashSet<_> = left.beacon_positions.distances().iter().map(|d| d.squared_euclidean).collect();
-        let right_dist: HashSet<_> = right.beacon_positions.distances().iter().map(|d| d.squared_euclidean).collect();
-        let shared_dist = left_dist.intersection(&right_dist).count();
-        if shared_dist as i64 >= threshold {
-
-            if right_nodes.contains(&scanner[1]) {
-                right_nodes.insert(scanner[0]);
-                scanner_pairs.push((scanner[1], scanner[0]));
-            } else {
-                right_nodes.insert(scanner[1]);
-                scanner_pairs.push((scanner[0], scanner[1]));
-            }
-        }
-    }
-    println!("scanner pairs: {:?}", scanner_pairs);
-
-    let rotations = all_rotations();
-    let mut scanner_transforms: Vec<(Rotation, Translation)> = Vec::new();
-
-    for (left_idx, right_idx) in &scanner_pairs {
-        let left = &scanners[left_idx.clone()];
-        let left_positions = left.beacon_positions.clone();
-        let left_set: HashSet<Position> = HashSet::from_iter(left_positions.0);
-
-        let right = &scanners[right_idx.clone()];
-        let right_positions = right.beacon_positions.clone();
-        let right_set: HashSet<Position> = HashSet::from_iter(right_positions.0);
-        
-        let left_pairs: Vec<_> = left_set.iter().combinations(2).collect();
-        let right_pairs: Vec<_> = right_set.iter().combinations(2).collect();
-
-        let mut matches: Vec<((&Position, &Position), (&Position, &Position))> = vec![];
-
-        for left_pair in &left_pairs {
-            for right_pair in &right_pairs {
-                let left_d = left_pair[0].distance(left_pair[1]);
-                let right_d = right_pair[0].distance(right_pair[1]);
-                if left_d.squared_euclidean == right_d.squared_euclidean {
-                    matches.push(((left_pair[0], left_pair[1]), (right_pair[0], right_pair[1])));
-                    break;
-                }
-            }
-        }
-        let first = matches[0];
-        let left0: &Position = first.0.0;
-        let left1: &Position = first.0.1;
-        let right0: &Position = first.1.0;
-        let right1: &Position = first.1.1;
-
-        let left_1_in_0 = left1.in_basis(left0);
-
-        let right_0_basis = Translation::in_basis(right0);
-        let right_1_basis = Translation::in_basis(right1);
-        let right_1_in_0 = right_0_basis.transform(right1);
-        let right_0_in_1 = right_1_basis.transform(right0);
-
-        for rot in &rotations {
-            if left_1_in_0 == rot.transform(&right_1_in_0) {
-                // positions match but they aren't in either scanner's basis
-                let right_1_in_scanner_rotation = rot.transform(right1);
-                println!("[{} -> {}] - {:?} == {:?}", left_idx, right_idx, left1, right_1_in_scanner_rotation);
-
-                let matching = (rot.clone(), left1.difference(&right_1_in_scanner_rotation));
-                // println!("[{} -> {}] - via {:?} then {:?}", left_idx, right_idx, matching.0, matching.1);
-                scanner_transforms.push(matching);
-            } else if left_1_in_0 == rot.transform(&right_0_in_1) {
-                // positions match but they aren't in either scanner's basis
-                let right_0_in_scanner_rotation = rot.transform(right0);
-                println!("[{} -> {}] - {:?} == {:?}", left_idx, right_idx, left1, right_0_in_scanner_rotation);
-
-                let matching = (rot.clone(), left1.difference(&right_0_in_scanner_rotation));
-                // println!("[{} -> {}] - via {:?} then {:?}", left_idx, right_idx, matching.0, matching.1);
-                scanner_transforms.push(matching);
-            }
-        }
-    }
-
-    for it in &scanner_transforms {
-        println!("transforms: {:?}", it);
-    }
-
-    
-    let mut intersections: HashMap<(usize, usize), HashSet<Position>> = HashMap::new();
-
+    let mut positions: HashMap<i8, Vec<Position>> = HashMap::new();
     loop {
-        if scanner_transforms.is_empty() {
+        if path.is_empty() {
             break;
         }
 
-        let (rot, trans) = scanner_transforms.pop().unwrap();
-        let (left, right) = scanner_pairs.pop().unwrap();
+        let (target_id, source_id, target_distances, source_distances) = path.pop().unwrap();
+        let (rot, trans) = find_shared_translation(&target_distances, &source_distances).unwrap();
+        let source = &scanners[source_id as usize];
 
-        let left_positions: HashSet<Position> = HashSet::from_iter(scanners[left].beacon_positions.0.clone());
-        let right_positions: HashSet<Position> = HashSet::from_iter(scanners[right].beacon_positions.apply(&rot).apply(&trans).0);
+        let transformed = match positions.remove(&source_id) {
+            Some(mut existing_from) => {
+                existing_from.extend(source.beacon_positions.0.clone());
+                BeaconPositions(existing_from)
+                    .apply(&rot)
+                    .apply(&trans)
+                    .0
+            },
+            _ => source.beacon_positions
+                    .apply(&rot)
+                    .apply(&trans)
+                    .0
+        };
 
-        let i: HashSet<_> = left_positions.intersection(&right_positions).map(|p|p.clone()).collect();
-        intersections.insert((left, right), i);
+        if let Some(existing) = positions.get_mut(&target_id) {
+            existing.extend(transformed);
+        } else {
+            positions.insert(target_id, transformed);
+        }
+
     }
-
-    let zero = intersections.get(&(0, 1)).unwrap();
-    for p in zero {
-        println!("{},{},{}", p.x, p.y, p.z);
+    if positions.keys().len() > 1 {
+        panic!("too many remaining keys: {:?}", positions.keys());
     }
+    let incl_dupes = positions.remove(&0).unwrap();
+    let unique: HashSet<Position> = HashSet::from_iter(incl_dupes);    
+    println!("part1: {}", unique.len());
+
 }
 
 fn part2() {
@@ -167,6 +96,90 @@ fn factorial(n: i64) -> i64 {
         1 => 1,
         _ => factorial(n - 1) * n
     }
+}
+
+fn calculate_distances(scanners: &Vec<Scanner>) -> Vec<(i8, i8, Vec<Distance>, Vec<Distance>)> {
+    let mut distances: Vec<(i8, i8, Vec<Distance>, Vec<Distance>)> = vec![];
+    for combo in scanners.iter().combinations(2) {
+        let left = combo[0];
+        let right = combo[1];
+
+        let left_distances: Vec<_> = left.beacon_positions.0.iter()
+            .combinations(2)
+            .map(|pair| pair[0].distance(pair[1]))
+            .collect();
+
+        let right_distances: Vec<_> = right.beacon_positions.0.iter()
+            .combinations(2)
+            .map(|pair| pair[0].distance(pair[1]))
+            .collect();
+
+        let left_euclidean: HashSet<_> = HashSet::from_iter(left_distances.iter().map(|d|d.squared_euclidean));
+        let right_euclidean: HashSet<_> = HashSet::from_iter(right_distances.iter().map(|d|d.squared_euclidean));
+        
+        let shared_distances = left_euclidean
+            .intersection(&right_euclidean)
+            .count();
+
+        if shared_distances as i64 >= nCr(12, 2) {
+            distances.push((left.id, right.id, left_distances, right_distances));
+        }
+    }
+    distances
+}
+
+/// build a graph of overlapping scanners
+/// the graph can be iterated in reverse to perform necessary translations
+fn sort_distances(distances: &Vec<(i8, i8, Vec<Distance>, Vec<Distance>)>) -> Vec<(i8, i8, &Vec<Distance>, &Vec<Distance>)> {    
+    let mut path = Vec::new();
+    let mut visited = HashSet::new();
+    visit_path(&distances, &mut path, &mut visited, (-1, 0));
+    path
+}
+
+fn find_shared_translation(left_distances: &Vec<Distance>, right_distances: &Vec<Distance>) -> Option<(Rotation, Translation)> {
+    for left_dist in left_distances {
+        let (left_0, left_1) = &left_dist.positions;
+        for right_dist in right_distances {
+            let (right_0, right_1) = &right_dist.positions;
+
+            // if two points in left scanner have the same distance as two points in right scanner
+            // look for the rotation in right that aligns the axis
+            if left_dist.squared_euclidean == right_dist.squared_euclidean {
+                for rot in all_rotations() {
+                    let rot_0 = rot.transform(right_0);
+                    let rot_1 = rot.transform(right_1);
+                    let x_rot_delta = rot_0.x - rot_1.x;
+                    let y_rot_delta = rot_0.y - rot_1.y;
+                    let z_rot_delta = rot_0.z - rot_1.z;
+                    let x_delta = left_0.x - left_1.x;
+                    let y_delta = left_0.y - left_1.y;
+                    let z_delta = left_0.z - left_1.z;
+    
+                    // check the distances are equal along all axis
+                    if i64::abs(x_rot_delta) == i64::abs(x_delta) && 
+                        i64::abs(y_rot_delta) == i64::abs(y_delta) && 
+                        i64::abs(z_rot_delta) == i64::abs(z_delta) && 
+                        i64::signum(x_rot_delta) == i64::signum(x_delta) && 
+                        i64::signum(y_rot_delta) == i64::signum(y_delta) && 
+                        i64::signum(y_rot_delta) == i64::signum(y_delta) {
+                        
+                        let diff_0 = rot_0.difference(left_0);
+                        let diff_3 = rot_1.difference(left_1);
+    
+                        // if the 2 right points share the same translation back to left
+                        // then they are aligned with this rotation
+                        if diff_0 == diff_3 {
+                            let d = left_0.difference(&rot_0);
+                            // right scanner position is at `d.transform(&(0,0,0).into())`
+                            return Some((rot, d));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    None
 }
 
 fn all_rotations() -> HashSet<Rotation> {
@@ -266,10 +279,6 @@ enum Axis {
 impl Position {
     fn in_basis(&self, other: &Self) -> Self {
         Translation::in_basis(other).transform(self)
-    }
-
-    fn refect_basis(&self, other: &Self) -> Self {
-        self.in_basis(&other.reflect(Axis::X).reflect(Axis::Y).reflect(Axis::Z))
     }
 
     fn distance(&self, other: &Self) -> Distance {
@@ -508,18 +517,6 @@ fn test_position_basis_transforms() {
         .reflect(Axis::Z);
     let reversed = transformed.in_basis(&neg_a); // t - -a = b
     assert_eq!(reversed, b);
-    assert_eq!(transformed.refect_basis(&a), b);
-    assert_eq!(b.in_basis(&a).refect_basis(&a), b);
-}
-
-#[test]
-fn test_relative_positions() {
-    let a = Position { x: 0, y: 0, z: 0 };
-    let b = Position { x: 10, y: 10, z: 10 };
-    let c_in_basis_b = Position { x: 5, y: 5, z: 5 };
-
-    let c_in_basis_a = c_in_basis_b.refect_basis(&b);
-    assert_eq!(c_in_basis_a, Position { x: 15, y: 15, z: 15 });
 }
 
 #[test]
@@ -581,15 +578,6 @@ fn test_simple_positioning() {
     let translation = scanner0_positions[0].difference(&rotated);
     let scanner1_calculated_pos = translation.transform(&(0,0,0).into());
     assert_eq!(scanners[1], scanner1_calculated_pos);
-
-    let result = find_pairwise_rotation((
-        &scanner0_positions[0],
-        &scanner0_positions[1],
-    ), (
-        &scanner1_positions[0],
-        &scanner1_positions[1],
-    ));
-    assert_eq!(rotation, result);
 }
 
 #[test]
@@ -602,51 +590,43 @@ fn test_scanner_positioning() {
         (686,422,578).into(),
         (605,423,415).into(),
     ];
-    let scanner_1: Position = (68,-1246,-43).into();
+    let _scanner_1: Position = (68,-1246,-43).into();
 
     let scanner_0_distance = scanner_0_points[0].distance(&scanner_0_points[1]);
     let scanner_1_distance = scanner_1_points[0].distance(&scanner_1_points[1]);
 
     assert_eq!(scanner_0_distance.squared_euclidean, scanner_1_distance.squared_euclidean);
-
-    let rot = find_pairwise_rotation(
-        (&scanner_0_points[0], &scanner_0_points[1]), 
-        (&scanner_1_points[0], &scanner_1_points[1])
-    );
-
-    println!("rot: {:?}", rot);
-
-    let rotated = [
-        rot.transform(&scanner_1_points[0]),
-        rot.transform(&scanner_1_points[1]),
-    ];
-    
-    println!("rotated: {:?}", rotated);
 }
 
-fn find_pairwise_rotation(left: (&Position, &Position), right: (&Position, &Position)) -> Rotation {
-    let s0_p1_in_0 = left.1.in_basis(left.0);
-
-    let s1_p1_in_0 = right.1.in_basis(right.0);
-    let s1_p0_in_1 = right.0.in_basis(right.1);
-
-    println!("**");
-    println!("{:?}", s0_p1_in_0);
-    println!("{:?}", s1_p1_in_0);
-    println!("{:?}", s1_p0_in_1);
-    println!("**");
-
-    let mut results: Vec<(Rotation, &Position)> = vec![];
-    for rot in all_rotations() {
-        if rot.transform(&s1_p1_in_0) == s0_p1_in_0 {
-            results.push((rot, right.1));
-        } 
-        // else if rot.transform(&s1_p0_in_1) == s0_p1_in_0 {
-        //     results.push((rot, right.0))
-        // }
+fn visit_path<'a>(
+    pairs: &'a Vec<(i8, i8, Vec<Distance>, Vec<Distance>)>,
+    path: &mut Vec<(i8, i8, &'a Vec<Distance>, &'a Vec<Distance>)>,
+    visited: &mut HashSet<i8>,
+    pair: (i8, i8)
+) {
+    for (left, right, left_d, right_d) in pairs.iter().filter(|(left, _right, _, _)|*left == pair.1) {
+        if visited.contains(right) == false && (*right, *left) != pair {
+            path.push((*left, *right, left_d, right_d));
+            visited.insert(*right);
+            visit_path(pairs, path, visited, (*left, *right));
+        }
     }
-    for it in &results {
-        println!("{:?}", it);
+
+    for (right, left, right_d, left_d) in pairs.iter().filter(|(_right, left, _, _)|*left == pair.1) {
+        if visited.contains(right) == false && (*right, *left) != pair {
+            path.push((*left, *right, left_d, right_d));
+            visited.insert(*right);
+            visit_path(pairs, path, visited, (*left, *right));
+        }
     }
-    results.pop().unwrap().0
+}
+
+#[test]
+fn test_visit_path() {
+    let input = vec![(0, 1), (1, 3), (4, 1), (2, 4)];
+    let mut path: Vec<(i8, i8)> = vec![];
+    let mut visited: HashSet<i8> = HashSet::new();
+    
+    // visit_path(&input, &mut path, &mut visited, (-1, 0));
+    println!("path: {:?}", path)
 }
