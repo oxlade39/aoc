@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use std::{time::Instant, collections::{HashSet, HashMap}, hash::Hash};
 
 use itertools::Itertools;
@@ -138,7 +139,7 @@ fn parse(s: &str) -> Vec<Scanner> {
     scanners
 }
 
-fn nCr(n: i64, r: i64) -> i64 {
+fn ncr(n: i64, r: i64) -> i64 {
     factorial(n) / (factorial(r) * factorial(n - r))
 }
 
@@ -173,7 +174,7 @@ fn calculate_distances(scanners: &Vec<Scanner>) -> Vec<(i8, i8, Vec<Distance>, V
             .intersection(&right_euclidean)
             .count();
 
-        if shared_distances as i64 >= nCr(12, 2) {
+        if shared_distances as i64 >= ncr(12, 2) {
             distances.push((left.id, right.id, left_distances, right_distances));
         }
     }
@@ -671,14 +672,4 @@ fn visit_path<'a>(
             visit_path(pairs, path, visited, (*left, *right));
         }
     }
-}
-
-#[test]
-fn test_visit_path() {
-    let input = vec![(0, 1), (1, 3), (4, 1), (2, 4)];
-    let mut path: Vec<(i8, i8)> = vec![];
-    let mut visited: HashSet<i8> = HashSet::new();
-    
-    // visit_path(&input, &mut path, &mut visited, (-1, 0));
-    println!("path: {:?}", path)
 }
