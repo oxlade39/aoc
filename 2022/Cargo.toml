@@ -1,0 +1,11 @@
+[package]
+name = "aoc2022"
+version = "0.1.0"
+
+[dependencies]
+itertools = "0.10.3"
+
+[[bin]]
+name = "d1"
+path = "d1/main.rs"
+
