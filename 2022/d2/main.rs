@@ -1,4 +1,4 @@
-use std::{str::FromStr};
+use std::str::FromStr;
 
 
 fn main() {
@@ -19,6 +19,7 @@ enum HandShape {
 #[derive(Debug, PartialEq)]
 struct Round(HandShape, HandShape);
 
+#[derive(Debug, PartialEq)]
 struct RoundStrategy(HandShape, PlayResult);
 
 #[derive(Debug, PartialEq)]
@@ -169,6 +170,14 @@ fn test_parse_round() {
     let round = line.parse().unwrap();
 
     assert_eq!(Round(HandShape::Rock, HandShape::Paper), round);
+}
+
+#[test]
+fn test_parse_round_strategy() {
+    let line = "A Y";
+    let round_strategy = line.parse().unwrap();
+
+    assert_eq!(RoundStrategy(HandShape::Rock, PlayResult::Draw), round_strategy);
 }
 
 #[test]
