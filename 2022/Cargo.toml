@@ -9,3 +9,7 @@ itertools = "0.10.3"
 name = "d1"
 path = "d1/main.rs"
 
+[[bin]]
+name = "d2"
+path = "d2/main.rs"
+
