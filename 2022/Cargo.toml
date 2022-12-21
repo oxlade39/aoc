@@ -1,9 +1,10 @@
 [package]
 name = "aoc2022"
 version = "0.1.0"
+edition = "2021"
 
 [dependencies]
-itertools = "0.10.3"
+itertools = "0.10.5"
 
 [[bin]]
 name = "d1"
@@ -12,4 +13,8 @@ path = "d1/main.rs"
 [[bin]]
 name = "d2"
 path = "d2/main.rs"
+
+[[bin]]
+name = "d3"
+path = "d3/main.rs"
 
