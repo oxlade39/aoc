@@ -3,30 +3,30 @@ use std::str::FromStr;
 fn main() {
     let input = include_str!("input.txt");
     let parsed: Input = input.parse().unwrap();
-    let mut stacks = parsed.0;
-    for m in parsed.1 {
-        stacks.apply(&m);
-    }
-    let str: String = stacks.top().into_iter().map(|c| c.0).collect();
-    println!("part1: {:?}", str);
+    let pt1_crane = CrateMover9000 {};
+    let pt1 = solve(pt1_crane, parsed.clone());
+    println!("part1: {:?}", pt1);
+    let pt2_crane = CrateMover9001 {};
+    let pt2 = solve(pt2_crane, parsed);
+    println!("part2: {:?}", pt2);
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 struct Stacks {
     crates: Vec<Vec<Crate>>
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 struct Crate(char);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 struct Move {
     crate_count: usize,
     from: usize,
     to: usize,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 struct Input(Stacks, Vec<Move>);
 
 #[derive(Debug, PartialEq)]
@@ -82,13 +82,6 @@ impl FromStr for Input {
 }
 
 impl Stacks {
-    fn apply(& mut self, to_apply: &Move) {
-        for _ in 0..to_apply.crate_count {
-            let to_move = self.crates[to_apply.from - 1].pop().unwrap();
-            self.crates[to_apply.to - 1].push(to_move);
-        }
-    }
-
     fn top(&self) -> Vec<&Crate> {
         let mut top: Vec<_> = Vec::new();
         for stack in &self.crates {
@@ -97,6 +90,48 @@ impl Stacks {
         }
         top
     }
+}
+
+trait Crane {
+    fn apply_moves(&self, stacks: &mut Stacks, moves: &Vec<Move>);
+}
+
+struct CrateMover9000{}
+
+struct CrateMover9001{}
+
+impl Crane for CrateMover9000 {
+    fn apply_moves(&self, stacks: &mut Stacks, moves: &Vec<Move>) {
+        for to_apply in moves {
+            for _ in 0..to_apply.crate_count {
+                let to_move = stacks.crates[to_apply.from - 1].pop().unwrap();
+                stacks.crates[to_apply.to - 1].push(to_move);
+            }
+        }
+    }
+}
+
+impl Crane for CrateMover9001 {
+    fn apply_moves(&self, stacks: &mut Stacks, moves: &Vec<Move>) {
+        for to_apply in moves {
+            let mut tmp = Vec::new();
+            for _ in 0..to_apply.crate_count {
+                tmp.push(stacks.crates[to_apply.from - 1].pop().unwrap())
+            }
+            loop {
+                if let Some(item) = tmp.pop() {
+                    stacks.crates[to_apply.to - 1].push(item);
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+}
+
+fn solve<T: Crane>(crane: T, mut input: Input) -> String {
+    crane.apply_moves(&mut input.0, &input.1);
+    input.0.top().into_iter().map(|c| c.0).collect()
 }
 
 #[test]
@@ -117,30 +152,19 @@ fn test_parse_example() {
 }
 
 #[test]
-fn apply_move() {
-    let mut stacks = Stacks { crates: vec![
-        vec![Crate('Z'), Crate('N')], 
-        vec![Crate('M'), Crate('C'), Crate('D')], 
-        vec![Crate('P')]
-    ] };
-    let m = Move { crate_count: 1, from: 2, to: 1 };
-    stacks.apply(&m);
-    assert_eq!(Stacks { crates: vec![
-        vec![Crate('Z'), Crate('N'), Crate('D')], 
-        vec![Crate('M'), Crate('C')], 
-        vec![Crate('P')]
-    ] }, stacks);
-}
-
-#[test]
 fn test_part_1_example() {
     let input = include_str!("input.example.txt");
     let parsed: Input = input.parse().unwrap();
 
-    let mut stacks = parsed.0;
-    for m in parsed.1 {
-        stacks.apply(&m);
-    }
-    let top = stacks.top();
-    assert_eq!(vec![&Crate('C'), &Crate('M'), &Crate('Z')], top);
+    let result = solve(CrateMover9000{}, parsed);
+    assert_eq!("CMZ", result);
+}
+
+#[test]
+fn test_part_2_example() {
+    let input = include_str!("input.example.txt");
+    let parsed: Input = input.parse().unwrap();
+
+    let result = solve(CrateMover9001{}, parsed);
+    assert_eq!("MCD", result);
 }
