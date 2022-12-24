@@ -1,10 +1,13 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, slice::Iter};
 
 
 fn main() {
     let input = include_str!("input.txt");
     let root = parse(input);
     let found = find_dirs(&root, 100000);
+
+    println!("root: {:?}    ", root);
+    println!("found: {}", found.len());
     
     let total_size: i32 = found
         .iter()
@@ -23,109 +26,74 @@ fn to_command_chunks(input: &str) -> Vec<Vec<&str>> {
 
 fn parse(input: &str) -> Dir {
     let parts: Vec<_> = to_command_chunks(input);
-
-    let mut dir_names: Vec<&str> = Vec::new();
-    let mut files: Vec<Vec<(i32, &str)>> = Vec::new();
-    let mut dirs: Vec<Vec<&str>> = Vec::new();
-
-    let mut known_dirs: HashMap<&str, Dir> = HashMap::new();
-
-    for part in parts {
-        let command = part[0];
-        if command.starts_with("cd") {
-            let next_dir = part[0].split(" ").collect::<Vec<_>>()[1];
-            if next_dir == ".." {
-                let top_dir = dir_names.pop().unwrap();
-                let top_files = files.pop().unwrap();
-                let top_dirs = dirs.pop().unwrap();
-
-                let resolved_dirs: Vec<_> = top_dirs
-                    .iter()
-                    .map(|dir| known_dirs.remove(dir)
-                        .expect(&format!("expected resolved dir: \n\t{} at \n\t{} but not in \n\t{:?}", &dir, &top_dir, &known_dirs.keys())))
-                    .collect();
-                let resolved_files: Vec<_> = top_files
-                    .iter()
-                    .map(|f| File {
-                        name: f.1.to_string(),
-                        size: f.0
-                    })
-                    .collect();
-                if let Some(existing ) = known_dirs.insert(top_dir, Dir { 
-                    name: top_dir.to_string(), 
-                    child_dirs: resolved_dirs, 
-                    child_files: resolved_files 
-                }) {
-                    panic!("{:?} already present", existing);
-                }
-
-            } else {
-                dir_names.push(next_dir);
-            }
-        }
-        if command == "ls" {
-            let mut cur_dirs: Vec<&str> = Vec::new();
-            let mut cur_files: Vec<(i32, &str)> = Vec::new();
-            for p in part[1..].iter() {
-                if p.starts_with("dir") {
-                    let dir = p.split(" ").collect::<Vec<_>>()[1];
-                    cur_dirs.push(dir);
-                } else {
-                    let file_parts = p.split(" ").collect::<Vec<_>>();
-                    cur_files.push((file_parts[0].parse().unwrap(), file_parts[1]));
-                }
-            }
-            files.push(cur_files);
-            dirs.push(cur_dirs);
-        }
+    let mut commands = parts.iter();
+    let root = commands.next().expect("root");
+    if root[0] != "cd /" {
+        panic!("unexpected start: {:?}", root);
     }
+    process_commands(commands, Dir::new("/"), vec![])
+}
 
-    println!("done commands but remaining state");
-    println!("dirs: \n\t{:?}\nfiles: \n\t{:?}\ndirs: \n\t{:?}\nknown_dirs: \n\t{:?}", 
-        dir_names, files, dirs, known_dirs);
-
-    loop {
-        if let Some(top_dir) = dir_names.pop() {
-            let top_files = files.pop().unwrap();
-            let top_dirs = dirs.pop().unwrap();
-
-            let resolved_dirs: Vec<_> = top_dirs
-                .iter()
-                .map(|dir| known_dirs.remove(dir).expect(&format!("missing: {:?}", dir)))
-                .collect();
-            let resolved_files: Vec<_> = top_files
-                .iter()
-                .map(|f| File {
-                    name: f.1.to_string(),
-                    size: f.0
-                })
-                .collect();
-            if let Some(existing) = known_dirs.insert(top_dir, Dir { 
-                name: top_dir.to_string(), 
-                child_dirs: resolved_dirs, 
-                child_files: resolved_files 
-            }) {
-                panic!("{:?} already exists", existing);
+fn process_commands(
+    mut commands: Iter<Vec<&str>>, 
+    mut cwd: Dir, 
+    mut parents: Vec<Dir>
+) -> Dir {
+    println!("enter: {:?}", cwd.name);
+    if let Some(command) = commands.next() {
+        // println!("processing: {:?}", command);
+        // println!("with: \n\t{:?}\n\t{:?}", cwd, parents);
+        let mut command_itr = command.iter();
+        let command = command_itr.next().unwrap();
+        if command.starts_with("cd") {
+            let next_dir = command.split(" ").collect::<Vec<_>>()[1];
+            if next_dir == ".." {
+                let mut parent = parents.pop().unwrap();
+                parent.add_dir(cwd);
+                return process_commands(commands, parent, parents);
+            } else {
+                let next_cwd = Dir::new(next_dir);
+                parents.push(cwd);
+                return process_commands(commands, next_cwd, parents);
             }
         } else {
-            break;
+            // ls
+            for item in command_itr {
+                let file_parts: Vec<_> = item.split(" ").collect();
+                if file_parts[0] == "dir" {
+                    cwd.add_dir(Dir::new(file_parts[1]));
+                } else {
+                    cwd.add_file(File { 
+                        name: file_parts[1].to_string(), 
+                        size: file_parts[0].parse().expect("file size") 
+                    });
+                }
+            }
+            return process_commands(commands, cwd, parents)
         }
     }
-    let root = known_dirs.remove("/").expect("/");
-    for (k, v) in known_dirs {
-        println!("\t{:?}", v);
+    println!("going back up stack");
+    println!("cwd:\n{:?}\n", cwd.name);
+
+    if let Some(mut parent) = parents.pop() {
+        parent.add_dir(cwd);
+        process_commands(commands, parent, parents)
+    } else {
+        cwd
     }
-    return root;
 }
 
 fn find_dirs(dir: &Dir, size: i32) -> Vec<&Dir> {
     let mut matching: Vec<&Dir> = Vec::new();
+    println!("scanning children of {:?}: {:?}", 
+        dir.name,
+        dir.child_dirs.values().map(|c|&c.name).collect::<Vec<_>>());
 
-    for child in &dir.child_dirs {
+    for child in dir.child_dirs.values() {
         if child.size() <= size {
             matching.push(child);
-            matching.extend(find_dirs(child, size));
         }
+        matching.extend(find_dirs(child, size));
     }
 
     matching
@@ -144,7 +112,7 @@ struct File {
 #[derive(Debug, PartialEq, Clone)]
 struct Dir {
     name: String,
-    child_dirs: Vec<Dir>,
+    child_dirs: HashMap<String, Dir>,
     child_files: Vec<File>,
 }
 
@@ -158,13 +126,32 @@ impl INode for Dir {
     fn size(&self) -> i32 {
         self.child_dirs
             .iter()
-            .map(|dir| dir as &dyn INode)
+            .map(|dir| dir.1 as &dyn INode)
             .chain(self.child_files
                 .iter()
                 .map(|f| f as &dyn INode))
             .map(|inode| inode.size())
             .sum()
     }
+}
+
+impl Dir {
+    fn new(name: &str) -> Dir {
+        Dir { 
+            name: name.to_string(), 
+            child_dirs: HashMap::new(), 
+            child_files: vec![] 
+        }
+    }
+
+    fn add_dir(&mut self, child: Dir) {
+        self.child_dirs.insert(child.name.clone(), child);
+    }
+
+    fn add_file(&mut self, child: File) {
+        self.child_files.push(child);
+    }
+
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -175,22 +162,16 @@ struct DirState {
 
 #[test]
 fn test_size() {
-    let root = Dir { 
-        name: "/".to_string(),
+    let mut root = Dir::new("/");
+    root.add_file(File { name: ".tmp".to_string(), size: 1000 });
+    root.add_file(File { name: ".tmp1".to_string(), size: 50 });
+    root.add_dir(Dir { 
+        name: "a".to_string(), 
+        child_dirs: HashMap::new(), 
         child_files: vec![
-            File { name: ".tmp".to_string(), size: 1000 },
-            File { name: ".tmp1".to_string(), size: 50 },
-        ],
-        child_dirs: vec![
-            Dir {
-                name: "a".to_string(),
-                child_files: vec![
-                    File { name: "a.tmp".to_string(), size: 10 }
-                ],
-                child_dirs: vec![]
-            }
-        ]
-    };
+            File { name: "a.tmp".to_string(), size: 10 }
+        ] 
+    });
 
     let total_size = root.size();
     assert_eq!(1060, total_size);
@@ -200,6 +181,7 @@ fn test_size() {
 fn test_part1_example() {
     let input = include_str!("input.example.txt");
     let root = parse(input);
+    println!("parsed: \n\t{:?}", root);
     let found = find_dirs(&root, 100000);
     
     let total_size: i32 = found
@@ -214,5 +196,5 @@ fn test_part1_example() {
 fn test_parse_repeats() {
     let input = include_str!("example.repeat.txt");
     let root = parse(input);
-    println!("with repeats: {:?}", root);
+    println!("\n\nwith repeats:\n{:?}", root);
 }

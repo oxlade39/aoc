@@ -15,10 +15,6 @@ $ cd b
 $ ls
 12 b
 $ cd ..
-$ cd b
-$ ls
-10 c
-$ cd ..
 $ cd c
 $ ls
 22 c
