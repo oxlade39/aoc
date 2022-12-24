@@ -1,0 +1,19 @@
+$ cd /
+$ ls
+dir a
+dir b
+dir c
+$ cd a
+$ ls
+dir a
+$ cd a
+$ ls
+14848514 a
+$ cd ..
+$ cd ..
+$ cd b
+$ ls
+10 c
+$ cd ..
+$ ls
+22 c
