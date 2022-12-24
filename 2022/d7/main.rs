@@ -13,12 +13,16 @@ fn main() {
     println!("part1: {}", total_size);
 }
 
-fn parse(input: &str) -> Dir {
-    let parts: Vec<_> = input
+fn to_command_chunks(input: &str) -> Vec<Vec<&str>> {
+    input
         .split("$ ")
         .map(|part| part.lines().collect::<Vec<_>>())
         .skip(1)
-        .collect();
+        .collect()
+}
+
+fn parse(input: &str) -> Dir {
+    let parts: Vec<_> = to_command_chunks(input);
 
     let mut dir_names: Vec<&str> = Vec::new();
     let mut files: Vec<Vec<(i32, &str)>> = Vec::new();
@@ -161,6 +165,12 @@ impl INode for Dir {
             .map(|inode| inode.size())
             .sum()
     }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+struct DirState {
+    dirs: Vec<String>,
+    files: Vec<(i32, String)>
 }
 
 #[test]

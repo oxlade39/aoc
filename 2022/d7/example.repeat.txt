@@ -6,14 +6,19 @@ dir c
 $ cd a
 $ ls
 dir a
+dir b
 $ cd a
 $ ls
 14848514 a
 $ cd ..
+$ cd b
+$ ls
+12 b
 $ cd ..
 $ cd b
 $ ls
 10 c
 $ cd ..
+$ cd c
 $ ls
 22 c
