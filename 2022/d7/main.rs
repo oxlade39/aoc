@@ -4,7 +4,7 @@ use std::{collections::HashMap, slice::Iter};
 fn main() {
     let input = include_str!("input.txt");
     let root = parse(input);
-    let found = find_dirs(&root, 100000);
+    let found = find_dirs_smaller_than(&root, 100000);
 
     println!("root: {:?}    ", root);
     println!("found: {}", found.len());
@@ -14,6 +14,19 @@ fn main() {
         .map(|dir| dir.size())
         .sum();
     println!("part1: {}", total_size);
+
+    let total_disk_space = 70000000;
+    let required_space = 30000000;
+    let used_space = root.size();
+    let free_space = total_disk_space - used_space;
+    let required_to_free = required_space - free_space;
+    let mut dirs_that_could_make_space = find_dirs_larger_than(&root, required_to_free);
+    dirs_that_could_make_space.sort_by(|a, b| a.size().partial_cmp(&b.size()).unwrap());
+    println!("part2");
+    println!("used: \t\t\t\t{}", used_space);
+    println!("free: \t\t\t\t{}", free_space);
+    println!("required to free: \t\t{}", required_to_free);
+    println!("smallest satisfying: \t\t{}", dirs_that_could_make_space[0].size());
 }
 
 fn to_command_chunks(input: &str) -> Vec<Vec<&str>> {
@@ -39,7 +52,6 @@ fn process_commands(
     mut cwd: Dir, 
     mut parents: Vec<Dir>
 ) -> Dir {
-    println!("enter: {:?}", cwd.name);
     if let Some(command) = commands.next() {
         // println!("processing: {:?}", command);
         // println!("with: \n\t{:?}\n\t{:?}", cwd, parents);
@@ -72,8 +84,8 @@ fn process_commands(
             return process_commands(commands, cwd, parents)
         }
     }
-    println!("going back up stack");
-    println!("cwd:\n{:?}\n", cwd.name);
+    // println!("going back up stack");
+    // println!("cwd:\n{:?}\n", cwd.name);
 
     if let Some(mut parent) = parents.pop() {
         parent.add_dir(cwd);
@@ -83,17 +95,33 @@ fn process_commands(
     }
 }
 
-fn find_dirs(dir: &Dir, size: i32) -> Vec<&Dir> {
+fn find_dirs_smaller_than(dir: &Dir, size: i32) -> Vec<&Dir> {
     let mut matching: Vec<&Dir> = Vec::new();
-    println!("scanning children of {:?}: {:?}", 
-        dir.name,
-        dir.child_dirs.values().map(|c|&c.name).collect::<Vec<_>>());
+    // println!("scanning children of {:?}: {:?}", 
+    //     dir.name,
+    //     dir.child_dirs.values().map(|c|&c.name).collect::<Vec<_>>());
 
     for child in dir.child_dirs.values() {
         if child.size() <= size {
             matching.push(child);
         }
-        matching.extend(find_dirs(child, size));
+        matching.extend(find_dirs_smaller_than(child, size));
+    }
+
+    matching
+}
+
+fn find_dirs_larger_than(dir: &Dir, size: i32) -> Vec<&Dir> {
+    let mut matching: Vec<&Dir> = Vec::new();
+    // println!("scanning children of {:?}: {:?}", 
+    //     dir.name,
+    //     dir.child_dirs.values().map(|c|&c.name).collect::<Vec<_>>());
+
+    for child in dir.child_dirs.values() {
+        if child.size() >= size {
+            matching.push(child);
+        }
+        matching.extend(find_dirs_larger_than(child, size));
     }
 
     matching
@@ -181,8 +209,7 @@ fn test_size() {
 fn test_part1_example() {
     let input = include_str!("input.example.txt");
     let root = parse(input);
-    println!("parsed: \n\t{:?}", root);
-    let found = find_dirs(&root, 100000);
+    let found = find_dirs_smaller_than(&root, 100000);
     
     let total_size: i32 = found
         .iter()
