@@ -1,9 +1,13 @@
 use std::{str::FromStr, num::ParseIntError};
 
+use itertools::Itertools;
+
 
 fn main() {
     let input = include_str!("input.txt");
     println!("part1: {}", part1(input));
+    let result = part2(input);
+    print_crt(&result);
 }
 
 #[derive(Debug, PartialEq)]
@@ -93,10 +97,53 @@ fn part1(input: &str) -> i32 {
         .sum()
 }
 
+fn part2(input: &str) -> [[char; 40]; 6] {
+    let instructions = input
+        .lines()
+        .map(|line| line.parse::<Instruction>().unwrap())
+        .collect();
+    let reg = Register::new();
+    let mut crt_lines = [[' '; 40]; 6];
+    let results = process_instructions(&instructions, &reg);
+    let mut results_itr = results.iter();
+    
+    for i in 0..crt_lines.len() {
+        for j in 0..crt_lines[0].len() {
+            let register_val = results_itr.next().unwrap().values[0];
+            let sprite_vals = [register_val - 1, register_val, register_val + 1];
+            if j as i32 == sprite_vals[0] || j as i32 == sprite_vals[1] || j as i32 == sprite_vals[2] {
+                crt_lines[i][j] = '#';
+            } else {
+                crt_lines[i][j] = '.';
+            }
+
+            let cycle = (i + 1) * (j + 1);
+            if cycle < 30 {
+                println!("Cycle: {}", cycle);
+                println!("Register Val: {}", register_val);
+                println!("Pixel: {}", j);
+                println!("Sprite Position: {:?}", sprite_vals);
+                print_crt(&crt_lines);
+                println!("");    
+            }
+        }
+    }
+    crt_lines
+}
+
+fn print_crt(crt: &[[char; 40]; 6]) {
+    for line in crt {
+        for col in line {
+            print!("{}", col);
+        }
+        println!("");
+    }
+}
+
 
 #[cfg(test)]
 mod test {
-    use crate::{Instruction, process_instructions, Register, part1};
+    use crate::{Instruction, process_instructions, Register, part1, part2, print_crt};
 
     #[test]
     fn test_parse() {
@@ -129,5 +176,12 @@ mod test {
         let input = include_str!("input.example.txt");
         let result = part1(input);
         assert_eq!(13140, result);
+    }
+
+    #[test]
+    fn test_part2_example() {
+        let input = include_str!("input.example.txt");
+        let result = part2(input);
+        print_crt(&result);
     }
 }
