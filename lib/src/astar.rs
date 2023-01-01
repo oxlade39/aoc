@@ -67,9 +67,10 @@ where H: Hueristic, C: Cost
     let mut f_scores: HashMap<Point, i64> = HashMap::new();
 
 
-    open_set.insert(Candidate::new(start.clone(), plane.height() * plane.width()));
+    let start_f_score = heuristic.measure(&start, &end);
+    open_set.insert(Candidate::new(start.clone(), start_f_score));
     g_scores.insert(start.clone(), 0);
-    f_scores.insert(start.clone(), heuristic.measure(&start, &end));
+    f_scores.insert(start.clone(), start_f_score);
 
     loop {
         if open_set.is_empty() {
@@ -96,7 +97,7 @@ where H: Hueristic, C: Cost
             }
             // fix to take ownership of points
             return ShortestPath {
-                path: path.into_iter().map(|(p, c)| (p.clone(), c)).collect(),
+                path,
                 total_cost,
             };
         }
