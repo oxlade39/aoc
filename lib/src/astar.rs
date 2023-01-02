@@ -129,7 +129,7 @@ fn astar<H, C, N>(
     heuristic: H,
     cost: C,
     neighbours: N
-) -> ShortestPath 
+) -> Option<ShortestPath> 
 where H: Hueristic, C: Cost, N: Neighbours
 {
     let mut open_set: BTreeSet<Candidate> = BTreeSet::new();
@@ -168,10 +168,10 @@ where H: Hueristic, C: Cost, N: Neighbours
                 path_node = next;
             }
             // fix to take ownership of points
-            return ShortestPath {
+            return Some(ShortestPath {
                 path,
                 total_cost,
-            };
+            });
         }
 
         open_set.remove(&curr_candid);
@@ -191,7 +191,7 @@ where H: Hueristic, C: Cost, N: Neighbours
         }
     }
 
-    ShortestPath { path: vec![], total_cost: -1 }
+    None
 }
 
 #[cfg(test)]
@@ -264,7 +264,7 @@ mod tests {
             DirectNeighbours(&plane),
         );
 
-        assert_eq!(10, result.total_cost);
+        assert_eq!(10, result.unwrap().total_cost);
     }
 
     #[test]
@@ -288,7 +288,7 @@ mod tests {
             cost,
             TouchingNeighbours(&plane),
         );
-        assert_eq!(1, shortest_path.total_cost, "{:?}", shortest_path);
+        assert_eq!(1, shortest_path.unwrap().total_cost);
     }
 
     #[test]
@@ -316,7 +316,7 @@ mod tests {
             cost,
             TouchingNeighbours(&plane),
         );
-        assert_eq!(4, shortest_path.total_cost, "{:?}", shortest_path);
+        assert_eq!(4, shortest_path.unwrap().total_cost);
     }
 
     #[test]
@@ -353,7 +353,7 @@ mod tests {
             cost,
             TouchingNeighbours(&plane),
         );
-        assert_eq!(12, shortest_path.total_cost, "{:?}", shortest_path);
+        assert_eq!(12, shortest_path.unwrap().total_cost);
     }
 
 }
