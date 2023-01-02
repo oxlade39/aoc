@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashMap};
+use std::{collections::{HashMap, BinaryHeap}, cmp::Ordering};
 
 use crate::{cartesian::{Point, Plane, Vector, Transform}, distance::StraightLineDistance};
 
@@ -25,32 +25,44 @@ impl PartialEq for Candidate {
 
 impl Eq for Candidate {}
 
-impl PartialOrd for Candidate {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.cost.partial_cmp(&other.cost)
-    }
-}
-
+// The priority queue depends on `Ord`.
+// Explicitly implement the trait so the queue becomes a min-heap
+// instead of a max-heap.
 impl Ord for Candidate {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.point.cmp(&other.point)
+    fn cmp(&self, other: &Self) -> Ordering {
+        // Notice that the we flip the ordering on costs.
+        // In case of a tie we compare positions - this step is necessary
+        // to make implementations of `PartialEq` and `Ord` consistent.
+        other.cost.cmp(&self.cost)
+            .then_with(|| self.point.cmp(&other.point))
     }
 }
 
-trait Hueristic {
+// `PartialOrd` needs to be implemented as well.
+impl PartialOrd for Candidate {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+/// An heuristic function used to estimate the h-score
+/// See the <a href="https://en.wikipedia.org/wiki/A*_search_algorithm#Description">description here</a>
+pub trait Hueristic {
     /// must underestimate the actual cost for a* to find shortest path
     fn measure(&self, from: &Point, to: &Point) -> i64;
 }
 
-trait Cost {
+/// A cost function used to estimate the path cost
+/// See the <a href="https://en.wikipedia.org/wiki/A*_search_algorithm#Description">description here</a>
+pub trait Cost {
     fn measure(&self, from: &Point, to: &Point) -> i64;
 }
 
-trait Neighbours {
+pub trait Neighbours {
     fn neighbours(&self, p: &Point) -> Vec<Point>;
 }
 
-struct StraightLine;
+pub struct StraightLine;
 
 impl Hueristic for StraightLine {
     fn measure(&self, from: &Point, to: &Point) -> i64 {
@@ -74,8 +86,8 @@ impl Cost for Vec<Vec<i64>> {
     }
 }
 
-struct DirectNeighbours<'a>(&'a Plane);
-struct TouchingNeighbours<'a>(&'a Plane);
+pub struct DirectNeighbours<'a>(&'a Plane);
+pub struct TouchingNeighbours<'a>(&'a Plane);
 
 impl Neighbours for DirectNeighbours<'_> {
     fn neighbours(&self, p: &Point) -> Vec<Point> {
@@ -118,21 +130,23 @@ impl Neighbours for TouchingNeighbours<'_> {
 }
 
 #[derive(Debug, PartialEq)]
-struct ShortestPath {
+pub struct ShortestPath {
     path: Vec<(Point, i64)>,
     total_cost: i64
 }
 
-fn astar<H, C, N>(
+/// Extendable implementation of 
+/// <a href="https://en.wikipedia.org/wiki/A*_search_algorithm">astar</a> shortest path.
+pub fn astar<H, C, N>(
     start: Point, 
     end: Point,
-    heuristic: H,
-    cost: C,
-    neighbours: N
+    heuristic: &H,
+    cost: &C,
+    neighbours: &N
 ) -> Option<ShortestPath> 
 where H: Hueristic, C: Cost, N: Neighbours
 {
-    let mut open_set: BTreeSet<Candidate> = BTreeSet::new();
+    let mut open_set: BinaryHeap<Candidate> = BinaryHeap::new();
     let mut came_from: HashMap<Point, Point> = HashMap::new();
 
     let mut g_scores: HashMap<Point, i64> = HashMap::new();
@@ -140,18 +154,12 @@ where H: Hueristic, C: Cost, N: Neighbours
 
 
     let start_f_score = heuristic.measure(&start, &end);
-    open_set.insert(Candidate::new(start.clone(), start_f_score));
+    open_set.push(Candidate::new(start.clone(), start_f_score));
     g_scores.insert(start.clone(), 0);
     f_scores.insert(start.clone(), start_f_score);
 
-    loop {
-        if open_set.is_empty() {
-            break;
-        }
-
-        // this is slow, optimise to use a priority queue
-        let curr_candid = open_set.first().unwrap().clone();
-        let curr_node = curr_candid.point.clone();
+    while let Some(curr_candid) = open_set.pop() {
+        let curr_node = curr_candid.point;
 
         if curr_node == end {
             let mut path: Vec<(Point, i64)> = vec![];
@@ -174,7 +182,6 @@ where H: Hueristic, C: Cost, N: Neighbours
             });
         }
 
-        open_set.remove(&curr_candid);
         for neighbour in neighbours.neighbours(&curr_node) {
             let neighbour_cost = cost.measure(&curr_node, &neighbour);
             let neighbour_g_score = g_scores.get(&neighbour).unwrap_or(&INFINITY);
@@ -186,7 +193,7 @@ where H: Hueristic, C: Cost, N: Neighbours
                 // distance to target
                 let hueristic = heuristic.measure(&neighbour, &end);
                 f_scores.insert(neighbour.clone(), tentative_g_score + hueristic);
-                open_set.insert(Candidate::new(neighbour.clone(), tentative_g_score + hueristic));
+                open_set.push(Candidate::new(neighbour.clone(), tentative_g_score + hueristic));
             }
         }
     }
@@ -259,9 +266,9 @@ mod tests {
         let result = astar(
             start, 
             end, 
-            ManhattenDistance, 
-            ManhattenDistance,
-            DirectNeighbours(&plane),
+            &ManhattenDistance, 
+            &ManhattenDistance,
+            &DirectNeighbours(&plane),
         );
 
         assert_eq!(10, result.unwrap().total_cost);
@@ -284,9 +291,9 @@ mod tests {
         let shortest_path = astar(
             start, 
             end, 
-            heuristic, 
-            cost,
-            TouchingNeighbours(&plane),
+            &heuristic, 
+            &cost,
+            &TouchingNeighbours(&plane),
         );
         assert_eq!(1, shortest_path.unwrap().total_cost);
     }
@@ -312,11 +319,12 @@ mod tests {
         let shortest_path = astar(
             start, 
             end, 
-            heuristic, 
-            cost,
-            TouchingNeighbours(&plane),
+            &heuristic, 
+            &cost,
+            &TouchingNeighbours(&plane),
         );
-        assert_eq!(4, shortest_path.unwrap().total_cost);
+        let tc = shortest_path.as_ref().unwrap().total_cost;
+        assert_eq!(4, tc, "{:?}", shortest_path);
     }
 
     #[test]
@@ -349,9 +357,9 @@ mod tests {
         let shortest_path = astar(
             start, 
             end, 
-            heuristic, 
-            cost,
-            TouchingNeighbours(&plane),
+            &heuristic, 
+            &cost,
+            &TouchingNeighbours(&plane),
         );
         assert_eq!(12, shortest_path.unwrap().total_cost);
     }
