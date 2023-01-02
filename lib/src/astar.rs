@@ -216,7 +216,7 @@ mod tests {
     }
 
     #[test]
-    fn test_point_neighbours_at_edged() {
+    fn test_direct_neighbours_at_edge() {
         let p: Point = (0, 0).into();
         let plane: Plane = (10, 10).into();
         let neighbours = DirectNeighbours(&plane);
@@ -230,7 +230,7 @@ mod tests {
     }
 
     #[test]
-    fn test_point_neighbours_8_includes_diagonals() {
+    fn test_touching_neighbours_includes_diagonals() {
         // ...
         // .P.
         // ...
@@ -322,25 +322,28 @@ mod tests {
     #[test]
     fn test_grid_cost_example() {
         // S....
-        // ##.##
-        // ..#..
-        // ...#E
+        // ####.
+        // .....
+        // .####
+        // ....E
 
-        // S\...
-        // ##\##
-        // ..#\.
-        // ...#E
-        let plane = (5, 4).into();
-        let start = (0, 3).into();
+        // S--\
+        // ####|
+        // ./-/.
+        // |####
+        // .\--E
+        let plane = (5, 5).into();
+        let start = (0, 4).into();
         let end = (4, 0).into();
         let heuristic = StraightLine;
 
         // construct back to front so indices line up
         let cost = vec![
-            vec![1, 1, 1, INFINITY, 1],
-            vec![1, 1, INFINITY, 1, 1],
-            vec![INFINITY, INFINITY, 1, INFINITY, INFINITY],
-            vec![1; 5],
+            vec![1, 1, 1, 1, 1],
+            vec![1, INFINITY, INFINITY, INFINITY, INFINITY],
+            vec![1, 1, 1, 1, 1],
+            vec![INFINITY, INFINITY, INFINITY, INFINITY, 1],
+            vec![1, 1, 1, 1, 1],
         ];
         
         let shortest_path = astar(
@@ -350,7 +353,7 @@ mod tests {
             cost,
             TouchingNeighbours(&plane),
         );
-        assert_eq!(4, shortest_path.total_cost, "{:?}", shortest_path);
+        assert_eq!(12, shortest_path.total_cost, "{:?}", shortest_path);
     }
 
 }
