@@ -36,22 +36,20 @@ impl Point {
         self.x >= plane.top_left.x && self.x <= plane.bottom_right.x && self.y >= plane.bottom_right.y && self.y <= plane.top_left.y
     }
 
-    pub fn neighbours(&self, within: &Plane) -> Vec<Point> {
-        [(-1, 0), (1, 0), (0, 1), (0, -1)]
-            .map(|t| {
-                let into: Transform = t.into();
-                into
-            })
-            .into_iter()
-            .filter_map(|t| {
-                let transformed = self.transform(&t);
-                if transformed.within(within) {
-                    Some(transformed)
-                } else {
-                    None
-                }
-            })
-            .collect()
+    pub fn to(self, end: Point) -> Vector {
+        Vector { start: self, end }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Vector {
+    pub start: Point,
+    pub end: Point,
+}
+
+impl From<(Point, Point)> for Vector {
+    fn from(value: (Point, Point)) -> Self {
+        Self { start: value.0, end: value.1 }
     }
 }
 
@@ -63,9 +61,15 @@ pub struct Plane {
 
 impl From<(i64, i64)> for Plane {
     fn from(value: (i64, i64)) -> Self {
+        if value.0 < 0 {
+            panic!("width must be be greated than 0 but was {}", value.0);
+        }
+        if value.1 < 0 {
+            panic!("height must be be greated than 0 but was {}", value.1);
+        }
         Plane { 
-            top_left: (0, value.1).into(), 
-            bottom_right: (value.0, 0).into()
+            top_left: (0, value.1 - 1).into(), 
+            bottom_right: (value.0 - 1, 0).into()
         }
     }
 }
@@ -82,18 +86,19 @@ impl Plane {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
 
     #[test]
     fn test_plane_width() {
         let p: Plane = (5, 11).into(); 
-        assert_eq!(5, p.width())
+        assert_eq!(4, p.width())
     }
 
     #[test]
     fn test_plane_height() {
         let p: Plane = (5, 11).into(); 
-        assert_eq!(11, p.height())
+        assert_eq!(10, p.height())
     }
 
     #[test]
@@ -101,25 +106,12 @@ mod tests {
         let p: Plane = (10, 10).into();
 
         assert_eq!(p.bottom_right, Point {
-            x: 10,
+            x: 9,
             y: 0
         });
         assert_eq!(p.top_left, Point {
             x: 0,
-            y: 10
+            y: 9
         });
-    }
-
-    #[test]
-    fn test_point_neighbours_at_edged() {
-        let p: Point = (0, 0).into();
-        let plane: Plane = (10, 10).into();
-        let n = p.neighbours(&plane);
-
-        let expected: Vec<Point> = vec![            
-            (1, 0).into(),
-            (0, 1).into(),
-        ];
-        assert_eq!(n, expected);
     }
 }

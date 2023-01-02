@@ -1,6 +1,6 @@
 use std::collections::{BTreeSet, HashMap};
 
-use crate::cartesian::{Point, Plane};
+use crate::{cartesian::{Point, Plane, Vector, Transform}, distance::StraightLineDistance};
 
 /// Use sufficiently high number that a real hueristic wouldn't be above
 const INFINITY: i64 = 1000000;
@@ -38,11 +38,83 @@ impl Ord for Candidate {
 }
 
 trait Hueristic {
+    /// must underestimate the actual cost for a* to find shortest path
     fn measure(&self, from: &Point, to: &Point) -> i64;
 }
 
 trait Cost {
     fn measure(&self, from: &Point, to: &Point) -> i64;
+}
+
+trait Neighbours {
+    fn neighbours(&self, p: &Point) -> Vec<Point>;
+}
+
+struct StraightLine;
+
+impl Hueristic for StraightLine {
+    fn measure(&self, from: &Point, to: &Point) -> i64 {
+        let v: Vector = (from.clone(), to.clone()).into();
+        let sld: StraightLineDistance = v.into();
+        sld.0
+    }
+}
+
+impl Cost for StraightLine {
+    fn measure(&self, from: &Point, to: &Point) -> i64 {
+        let v: Vector = (from.clone(), to.clone()).into();
+        let sld: StraightLineDistance = v.into();
+        sld.0
+    }
+}
+
+impl Cost for Vec<Vec<i64>> {
+    fn measure(&self, _: &Point, to: &Point) -> i64 {
+        self[to.y as usize][to.x as usize]
+    }
+}
+
+struct DirectNeighbours<'a>(&'a Plane);
+struct TouchingNeighbours<'a>(&'a Plane);
+
+impl Neighbours for DirectNeighbours<'_> {
+    fn neighbours(&self, p: &Point) -> Vec<Point> {
+        [(-1, 0), (1, 0), (0, 1), (0, -1)]
+            .map(|t| {
+                let into: Transform = t.into();
+                into
+            })
+            .into_iter()
+            .filter_map(|t| {
+                let transformed = p.transform(&t);
+                if transformed.within(self.0) {
+                    Some(transformed)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+}
+
+impl Neighbours for TouchingNeighbours<'_> {
+    fn neighbours(&self, p: &Point) -> Vec<Point> {
+        [(-1, 0), (1, 0), (0, 1), (0, -1), (-1, -1), (1, 1), (-1, 1), (1, -1)]
+            .map(|t| {
+                let into: Transform = t.into();
+                into
+            })
+            .into_iter()
+            .filter_map(|t| {
+                let transformed = p.transform(&t);
+                if transformed.within(self.0) {
+                    Some(transformed)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -51,14 +123,14 @@ struct ShortestPath {
     total_cost: i64
 }
 
-fn astar<H, C>(
-    plane: &Plane, 
+fn astar<H, C, N>(
     start: Point, 
     end: Point,
     heuristic: H,
     cost: C,
+    neighbours: N
 ) -> ShortestPath 
-where H: Hueristic, C: Cost
+where H: Hueristic, C: Cost, N: Neighbours
 {
     let mut open_set: BTreeSet<Candidate> = BTreeSet::new();
     let mut came_from: HashMap<Point, Point> = HashMap::new();
@@ -103,7 +175,7 @@ where H: Hueristic, C: Cost
         }
 
         open_set.remove(&curr_candid);
-        for neighbour in curr_node.neighbours(plane) {
+        for neighbour in neighbours.neighbours(&curr_node) {
             let neighbour_cost = cost.measure(&curr_node, &neighbour);
             let neighbour_g_score = g_scores.get(&neighbour).unwrap_or(&INFINITY);
             let tentative_g_score = g_scores.get(&curr_node).unwrap_or(&INFINITY) + neighbour_cost;
@@ -125,6 +197,8 @@ where H: Hueristic, C: Cost
 #[cfg(test)]
 mod tests {
 
+    use std::collections::HashSet;
+
     use super::*;
 
     struct ManhattenDistance;
@@ -142,20 +216,141 @@ mod tests {
     }
 
     #[test]
+    fn test_point_neighbours_at_edged() {
+        let p: Point = (0, 0).into();
+        let plane: Plane = (10, 10).into();
+        let neighbours = DirectNeighbours(&plane);
+        let n = neighbours.neighbours(&p);
+
+        let expected: Vec<Point> = vec![            
+            (1, 0).into(),
+            (0, 1).into(),
+        ];
+        assert_eq!(n, expected);
+    }
+
+    #[test]
+    fn test_point_neighbours_8_includes_diagonals() {
+        // ...
+        // .P.
+        // ...
+        let plane: Plane = (3, 3).into();
+        let p: Point = (1, 1).into();
+
+        let expected: HashSet<Point> = HashSet::from_iter(vec![
+            (0, 2), (1, 2), (2, 2),
+            (0, 1),         (2, 1),
+            (0, 0), (1, 0), (2, 0)
+        ].into_iter()
+        .map(|p| p.into()));
+
+        let neighbours = TouchingNeighbours(&plane);
+        let n: HashSet<Point> = HashSet::from_iter(neighbours.neighbours(&p));
+
+        assert_eq!(n, expected);
+    }
+
+    #[test]
     fn test_example() {
         let plane = &(10, 10).into();
         let start = (0, 0).into();
         let end = (5, 5).into();
 
         let result = astar(
-            plane, 
             start, 
             end, 
             ManhattenDistance, 
             ManhattenDistance,
+            DirectNeighbours(&plane),
         );
 
-        println!("shortest path: {:?}", result);
+        assert_eq!(10, result.total_cost);
+    }
+
+    #[test]
+    fn test_simple_straight_line_example() {
+        // .E
+        // S.
+
+        // .E
+        // S.
+
+        let plane = (2, 2).into();
+        let start = (0, 0).into();
+        let end = (1, 1).into();
+        let heuristic = StraightLine;
+        let cost = StraightLine;
+        
+        let shortest_path = astar(
+            start, 
+            end, 
+            heuristic, 
+            cost,
+            TouchingNeighbours(&plane),
+        );
+        assert_eq!(1, shortest_path.total_cost, "{:?}", shortest_path);
+    }
+
+    #[test]
+    fn test_straight_line_example() {
+        // ....E
+        // .....
+        // .....
+        // S....
+
+        // ...-E
+        // ../..
+        // ./...
+        // S....
+
+        let plane = (5, 4).into();
+        let start = (0, 0).into();
+        let end = (4, 3).into();
+        let heuristic = StraightLine;
+        let cost = StraightLine;
+        
+        let shortest_path = astar(
+            start, 
+            end, 
+            heuristic, 
+            cost,
+            TouchingNeighbours(&plane),
+        );
+        assert_eq!(4, shortest_path.total_cost, "{:?}", shortest_path);
+    }
+
+    #[test]
+    fn test_grid_cost_example() {
+        // S....
+        // ##.##
+        // ..#..
+        // ...#E
+
+        // S\...
+        // ##\##
+        // ..#\.
+        // ...#E
+        let plane = (5, 4).into();
+        let start = (0, 3).into();
+        let end = (4, 0).into();
+        let heuristic = StraightLine;
+
+        // construct back to front so indices line up
+        let cost = vec![
+            vec![1, 1, 1, INFINITY, 1],
+            vec![1, 1, INFINITY, 1, 1],
+            vec![INFINITY, INFINITY, 1, INFINITY, INFINITY],
+            vec![1; 5],
+        ];
+        
+        let shortest_path = astar(
+            start, 
+            end, 
+            heuristic, 
+            cost,
+            TouchingNeighbours(&plane),
+        );
+        assert_eq!(4, shortest_path.total_cost, "{:?}", shortest_path);
     }
 
 }
