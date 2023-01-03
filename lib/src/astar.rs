@@ -86,8 +86,8 @@ impl Cost for Vec<Vec<i64>> {
     }
 }
 
-pub struct DirectNeighbours<'a>(&'a Plane);
-pub struct TouchingNeighbours<'a>(&'a Plane);
+pub struct DirectNeighbours<'a>(pub &'a Plane);
+pub struct TouchingNeighbours<'a>(pub &'a Plane);
 
 impl Neighbours for DirectNeighbours<'_> {
     fn neighbours(&self, p: &Point) -> Vec<Point> {
@@ -131,8 +131,8 @@ impl Neighbours for TouchingNeighbours<'_> {
 
 #[derive(Debug, PartialEq)]
 pub struct ShortestPath {
-    path: Vec<(Point, i64)>,
-    total_cost: i64
+    pub path: Vec<(Point, i64)>,
+    pub total_cost: i64
 }
 
 /// Extendable implementation of 
