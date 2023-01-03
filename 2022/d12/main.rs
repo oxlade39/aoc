@@ -6,22 +6,57 @@ fn main() {
     let input = include_str!("input.txt");
     let pt1 = part1(input);
     println!("pt1: {}", pt1);
+    let pt2 = part2(input);
+    println!("pt2: {}", pt2);
 }
 
 fn part1(input: &str) -> usize {
     let parsed: HeightMap = input.parse().unwrap();
-    let start = &parsed.start.clone();
-    let end = &parsed.end.clone();
-    let plane = parsed.to_plane();
+    let start = &parsed.start;
+    let end = &parsed.end;
+    let plane = &parsed.to_plane();
 
     let shortest_path = astar::astar(
         start.clone(), 
         end.clone(), 
         &StraightLine, 
         &OnlyUpOneCost(&parsed, StraightLine), 
-        &DirectNeighbours(&plane),
+        &DirectNeighbours(plane),
     ).unwrap();
     shortest_path.path.len()
+}
+
+fn part2(input: &str) -> i64 {
+    let parsed: HeightMap = input.parse().unwrap();
+    let end = &parsed.end;
+    let plane = &parsed.to_plane();
+
+    parsed.map.iter()
+        .enumerate()
+        .flat_map(|(y, row)| {
+            row.iter()
+            .enumerate()
+            .filter_map(move |(x, h)| {
+                if *h == 0 {
+                    let start: Point = (x as i64, y as i64).into();
+                    Some(start)
+                } else {
+                    None
+                }
+            })
+        })
+        .filter_map(|start| {
+            let maybe_p = astar::astar(
+                start, 
+                end.clone(), 
+                &StraightLine, 
+                &OnlyUpOneCost(&parsed, StraightLine), 
+                &DirectNeighbours(plane),
+            );
+            maybe_p.map(|p| p.path.len() as i64)
+        })
+        .min()
+        .unwrap_or(-1)
 }
 
 #[derive(Debug)]
@@ -94,11 +129,11 @@ impl<T: Cost> Cost for OnlyUpOneCost<'_, T> {
         let from_height = self.0.height_at(from);
         let to_height = self.0.height_at(to);
         if (to_height - from_height) > 1 {
-            10000
+            1000000000000
         } else if (to_height - from_height) == 1 {
             1
         } else {
-            2
+            1
         }
     }
 }
@@ -150,6 +185,14 @@ mod tests {
         ).unwrap();
         
         assert_eq!(31, shortest_path.path.len());
+    }
+
+    #[test]
+    fn test_pt2_example() {
+        let input = include_str!("input.example.txt");
+        let result = part2(input);
+
+        assert_eq!(29, result);
     }
 
 }
