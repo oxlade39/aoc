@@ -54,3 +54,7 @@ path = "d11/main.rs"
 [[bin]]
 name = "d12"
 path = "d12/main.rs"
+
+[[bin]]
+name = "d13"
+path = "d13/main.rs"
