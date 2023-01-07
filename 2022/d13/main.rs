@@ -288,4 +288,11 @@ mod tests {
         assert_eq!(13, result);
     }
 
+    #[test]
+    fn test_parse_my_input() {
+        let input = include_str!("input.txt");
+        let result = part1(input);
+        assert_eq!(6272, result);
+    }
+
 }
