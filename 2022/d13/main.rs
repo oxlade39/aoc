@@ -136,6 +136,30 @@ fn parse(s: &str, index: usize, mut stack: Vec<Vec<PacketItem>>) -> Vec<Vec<Pack
     }
 }
 
+fn part1_items(input: &str) -> Vec<i64> {
+    let items: Vec<Vec<PacketItem>> = input
+            .lines()
+            .chunks(3)
+            .into_iter()
+            .map(|c| {
+                c.take(2)
+                .map(|item| item.parse().unwrap())
+                .collect::<Vec<_>>()
+            })
+            .collect();
+    items
+        .into_iter()
+        .enumerate()
+        .filter_map(|(i, packets)| {
+            let order = packets[0].order(&packets[1]);
+            match order {
+                Order::Correct => Some(i as i64 + 1),
+                _ => None,
+            }
+        })
+        .collect()
+}
+
 fn part1(input: &str) -> i64 {
     let items: Vec<Vec<PacketItem>> = input
             .lines()
@@ -168,6 +192,8 @@ fn part1(input: &str) -> i64 {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
     use super::*;
 
     #[test]
@@ -286,6 +312,69 @@ mod tests {
         let input = include_str!("input.example.txt");
         let result = part1(input);
         assert_eq!(13, result);
+    }
+
+    #[test]
+    fn test_bad_items() {
+        let input = include_str!("input.txt");
+        let items: Vec<Vec<&str>> = input
+            .lines()
+            .chunks(3)
+            .into_iter()
+            .map(|c| {
+                c.take(2)
+                .collect::<Vec<_>>()
+            })
+            .collect();
+
+        println!("{:?}", items[89]);
+        println!();
+        println!("{:?}", items[110]);
+
+        let left: PacketItem = "[[],[7,6,[],[3,6,10,[9,7],4],[]],[4,9,8,[],2],[]]".parse().unwrap();
+        let right: PacketItem = "[[],[4,[9,1,10,9,6],4,0],[[],[[],[10,7]],[[6,5],5,[3,2,6,3]],[2,3,10,10],[]],[9,[2,9]],[[5],10]]".parse().unwrap();
+        let order = left.order(&right);
+        println!("order: {:?}", order);
+        println!("l: {:?}", left);
+        println!("r: {:?}", right);
+
+
+        let left: PacketItem = "[[],[[[7,6,1,0],6,7,7]],[6],[[],6]]".parse().unwrap();
+        let right = "[[],[],[[],[[]],[[8,5],9,[2],8,5],4]]".parse().unwrap();
+        let order = left.order(&right);
+        println!("order: {:?}", order);
+    }
+
+    #[test]
+    fn test_expected_pairs() {
+        let input = include_str!("input.txt");
+        let expected = vec![
+            3,6,7,8,10,14,15,20,21,22,27,33,34,38,40,42,43,44,
+            46,49,52,53,55,58,60,61,63,65,66,68,69,72,73,74,77,
+            79,84,85,87,88,94,95,97,100,101,102,103,104,105,106,
+            108,109,112,113,114,115, 117, 119, 120, 122, 123, 
+            125, 126, 129, 131, 136, 138, 139, 140, 141, 143, 144, 145, 146, 149, 150
+        ];
+        let items = part1_items(input);
+        println!("expected:\n{:?}", expected);
+        println!("items:\n{:?}", items);
+
+        let expected: HashSet<i64> = HashSet::from_iter(expected);
+        let items = HashSet::from_iter(items);
+
+        let diff: Vec<_> = items.difference(&expected).collect();
+        let empty: Vec<i64> = vec![];
+        let empty: Vec<_> = empty.iter().collect();
+
+        // mine is giving these when it shouldn't
+        // 90, 111
+        assert_eq!(diff, empty);
+
+        let sum: i64 = items.iter().sum();
+        println!("sum: {:?}", sum);
+
+        let sum: i64 = expected.iter().sum();
+        println!("sum: {:?}", sum);
     }
 
     #[test]
