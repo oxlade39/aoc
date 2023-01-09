@@ -36,6 +36,16 @@ impl Point {
         self.x >= plane.top_left.x && self.x <= plane.bottom_right.x && self.y >= plane.bottom_right.y && self.y <= plane.top_left.y
     }
 
+    pub fn on(&self, v: &Vector) -> bool {
+        let min_x = v.start.x.min(v.end.x);
+        let max_x = v.start.x.max(v.end.x);
+        let min_y = v.start.y.min(v.end.y);
+        let max_y = v.start.y.max(v.end.y);
+        let on_x = min_x <= self.x && max_x >= self.x;
+        let on_y = min_y <= self.y && max_y >= self.y;        
+        on_y && on_x
+    }
+
     pub fn to(self, end: Point) -> Vector {
         Vector { start: self, end }
     }
@@ -113,5 +123,43 @@ mod tests {
             x: 0,
             y: 9
         });
+    }
+
+    #[test]
+    fn test_point_on_vector() {
+        // #....
+        // #....
+        // #....
+        // #....
+        // #....
+
+        let v: Vector = (
+            (0, 0).into(),
+            (0, 5).into(),
+        ).into();
+
+        for y in 0..=5 {
+            let p: Point = (0, y).into();
+            assert_eq!(true, p.on(&v));
+        }
+
+        // #....
+        // #x...
+        // #....
+        // #....
+        // #....
+        let p: Point = (1, 1).into();
+        assert_eq!(false, p.on(&v));
+    }
+
+    #[test]
+    fn test_vector_ordering() {
+        let v: Vector = (
+            (498,6).into(),
+            (496,6).into()
+        ).into();
+
+        let p: Point = (497, 6).into();
+        assert_eq!(true, p.on(&v));
     }
 }
