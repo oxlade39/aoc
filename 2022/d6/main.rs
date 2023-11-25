@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-
 fn main() {
     let input = include_str!("input.txt");
     let solver = Day6 { distinct_count: 4 };
@@ -16,7 +15,9 @@ trait Solver {
     fn solve(&self, datastream: &str) -> usize;
 }
 
-struct Day6 { distinct_count: usize }
+struct Day6 {
+    distinct_count: usize,
+}
 
 impl Solver for Day6 {
     fn solve(&self, datastream: &str) -> usize {
@@ -29,7 +30,7 @@ impl Solver for Day6 {
                 if let Some(count) = window.remove(&chars[i - self.distinct_count]) {
                     if count > 1 {
                         window.insert(chars[i - self.distinct_count], count - 1);
-                    }                    
+                    }
                 }
                 if let Some(count) = window.insert(chars[i], 1) {
                     window.insert(chars[i], count + 1);
@@ -44,7 +45,7 @@ impl Solver for Day6 {
             }
             // println!("+ i: {:?} - current: {:?} - window: {:?}", i, chars[i], window);
         }
-        
+
         panic!("not found");
     }
 }

@@ -43,7 +43,7 @@ fn sum_max_n(input: &str, n: usize) -> i32 {
     while count > 0 {
         if let Some(i) = heap.pop() {
             println!("got: {i}");
-            sum += i;            
+            sum += i;
         }
         count -= 1;
     }

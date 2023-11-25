@@ -1,14 +1,12 @@
 use crate::cartesian::Vector;
 
-
 pub trait Distance {
     fn from_vector(v: Vector) -> Self;
 
-    fn from_into_vector<T>(
-        into: T
-    ) -> Self 
-    where T: Into<Vector> + Sized,
-    Self: Sized
+    fn from_into_vector<T>(into: T) -> Self
+    where
+        T: Into<Vector> + Sized,
+        Self: Sized,
     {
         Self::from_vector(into.into())
     }
@@ -84,7 +82,7 @@ mod tests {
 
         // ...
         // se.
-        // ...        
+        // ...
         let p1: Point = (0, 1).into();
         let p2: Point = (1, 1).into();
         let v: Vector = (p1, p2).into();
@@ -92,7 +90,7 @@ mod tests {
 
         // ....
         // ...e
-        // s...        
+        // s...
         let p1: Point = (0, 0).into();
         let p2: Point = (3, 1).into();
         let v: Vector = (p1, p2).into();
@@ -100,7 +98,7 @@ mod tests {
 
         // ...e
         // ....
-        // s...        
+        // s...
         let p1: Point = (0, 0).into();
         let p2: Point = (3, 2).into();
         let v: Vector = (p1, p2).into();
@@ -109,10 +107,10 @@ mod tests {
         // ...e
         // ....
         // ....
-        // s...        
+        // s...
         let p1: Point = (0, 0).into();
         let p2: Point = (3, 3).into();
         let v: Vector = (p1, p2).into();
-        assert_eq!(StraightLineDistance(3), v.into());      
+        assert_eq!(StraightLineDistance(3), v.into());
     }
 }

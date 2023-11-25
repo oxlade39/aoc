@@ -1,4 +1,3 @@
-
 fn main() {
     let input = include_str!("input.txt");
     let mut counts: [i64; 9] = [0; 9];
@@ -9,7 +8,7 @@ fn main() {
     let day = 256;
 
     for _ in 0..day {
-        let carry = counts[0];        
+        let carry = counts[0];
         for bucket in 0..8 {
             counts[bucket] = counts[bucket + 1];
         }

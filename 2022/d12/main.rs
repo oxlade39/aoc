@@ -1,6 +1,9 @@
 use std::str::FromStr;
 
-use aoclib::{cartesian::{Point, Plane}, astar::{Cost, DirectNeighbours, self, StraightLine}};
+use aoclib::{
+    astar::{self, Cost, DirectNeighbours, StraightLine},
+    cartesian::{Plane, Point},
+};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -17,12 +20,13 @@ fn part1(input: &str) -> usize {
     let plane = &parsed.to_plane();
 
     let shortest_path = astar::astar(
-        start.clone(), 
-        end.clone(), 
-        &StraightLine, 
-        &OnlyUpOneCost(&parsed, StraightLine), 
+        start.clone(),
+        end.clone(),
+        &StraightLine,
+        &OnlyUpOneCost(&parsed, StraightLine),
         &DirectNeighbours(plane),
-    ).unwrap();
+    )
+    .unwrap();
     shortest_path.path.len()
 }
 
@@ -31,12 +35,12 @@ fn part2(input: &str) -> i64 {
     let end = &parsed.end;
     let plane = &parsed.to_plane();
 
-    parsed.map.iter()
+    parsed
+        .map
+        .iter()
         .enumerate()
         .flat_map(|(y, row)| {
-            row.iter()
-            .enumerate()
-            .filter_map(move |(x, h)| {
+            row.iter().enumerate().filter_map(move |(x, h)| {
                 if *h == 0 {
                     let start: Point = (x as i64, y as i64).into();
                     Some(start)
@@ -47,10 +51,10 @@ fn part2(input: &str) -> i64 {
         })
         .filter_map(|start| {
             let maybe_p = astar::astar(
-                start, 
-                end.clone(), 
-                &StraightLine, 
-                &OnlyUpOneCost(&parsed, StraightLine), 
+                start,
+                end.clone(),
+                &StraightLine,
+                &OnlyUpOneCost(&parsed, StraightLine),
                 &DirectNeighbours(plane),
             );
             maybe_p.map(|p| p.path.len() as i64)
@@ -70,9 +74,7 @@ impl FromStr for HeightMap {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let char_grid: Vec<Vec<_>> = s.lines()
-            .map(|l| l.chars().collect())
-            .collect();
+        let char_grid: Vec<Vec<_>> = s.lines().map(|l| l.chars().collect()).collect();
         let width = char_grid[0].len();
         let height = char_grid.len();
         let mut start: Option<Point> = None;
@@ -89,22 +91,22 @@ impl FromStr for HeightMap {
                     'S' => {
                         start = Some(p);
                         map[y][x] = 0;
-                    },
+                    }
                     'E' => {
                         end = Some(p);
                         map[y][x] = ('z' as i64) - ('a' as i64);
-                    },
+                    }
                     any_other => {
                         map[y][x] = (any_other as i64) - ('a' as i64);
                     }
                 }
-            } 
+            }
         }
 
-        Ok(HeightMap { 
+        Ok(HeightMap {
             start: start.ok_or_else(|| "start missing")?,
             end: end.ok_or_else(|| "end mising".to_string())?,
-            map
+            map,
         })
     }
 }
@@ -115,10 +117,7 @@ impl HeightMap {
     }
 
     fn to_plane(&self) -> Plane {
-        (
-            self.map[0].len() as i64,
-            self.map.len() as i64
-        ).into()
+        (self.map[0].len() as i64, self.map.len() as i64).into()
     }
 }
 
@@ -140,21 +139,22 @@ impl<T: Cost> Cost for OnlyUpOneCost<'_, T> {
 
 #[cfg(test)]
 mod tests {
-    use aoclib::astar::{self, StraightLine, DirectNeighbours};
+    use aoclib::astar::{self, DirectNeighbours, StraightLine};
 
     use crate::*;
-
 
     #[test]
     fn test_parse_input() {
         let input = include_str!("input.example.txt");
         let parsed: HeightMap = input.parse().unwrap();
-        assert_eq!(vec![
-            vec![0, 1, 3, 4, 5, 6, 7, 8], 
-            vec![0, 2, 2, 19, 20, 21, 22, 9], 
-            vec![0, 2, 2, 18, 25, 25, 23, 10], 
-            vec![0, 1, 2, 17, 24, 23, 23, 11], 
-            vec![0, 0, 1, 16, 15, 14, 13, 12]],
+        assert_eq!(
+            vec![
+                vec![0, 1, 3, 4, 5, 6, 7, 8],
+                vec![0, 2, 2, 19, 20, 21, 22, 9],
+                vec![0, 2, 2, 18, 25, 25, 23, 10],
+                vec![0, 1, 2, 17, 24, 23, 23, 11],
+                vec![0, 0, 1, 16, 15, 14, 13, 12]
+            ],
             parsed.map
         );
         let expected_start: Point = (0, 4).into();
@@ -162,10 +162,7 @@ mod tests {
         assert_eq!(expected_start, parsed.start);
         assert_eq!(expected_end, parsed.end);
 
-        assert_eq!(
-            'z' as i64 - 'a' as i64,
-            parsed.height_at(&expected_end)
-        )
+        assert_eq!('z' as i64 - 'a' as i64, parsed.height_at(&expected_end))
     }
 
     #[test]
@@ -177,13 +174,14 @@ mod tests {
         let plane = parsed.to_plane();
 
         let shortest_path = astar::astar(
-            start.clone(), 
-            end.clone(), 
-            &StraightLine, 
-            &OnlyUpOneCost(&parsed, StraightLine), 
+            start.clone(),
+            end.clone(),
+            &StraightLine,
+            &OnlyUpOneCost(&parsed, StraightLine),
             &DirectNeighbours(&plane),
-        ).unwrap();
-        
+        )
+        .unwrap();
+
         assert_eq!(31, shortest_path.path.len());
     }
 
@@ -194,5 +192,4 @@ mod tests {
 
         assert_eq!(29, result);
     }
-
 }

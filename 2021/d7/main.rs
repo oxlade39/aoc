@@ -1,4 +1,3 @@
-
 fn main() {
     part1();
     part2();
@@ -6,7 +5,10 @@ fn main() {
 
 fn part1() {
     let input = include_str!("input.txt");
-    let positions: Vec<_> = input.split(",").map(|c| c.parse::<i64>().unwrap()).collect();
+    let positions: Vec<_> = input
+        .split(",")
+        .map(|c| c.parse::<i64>().unwrap())
+        .collect();
     let max = (&positions).iter().max().unwrap().to_owned() as usize;
     println!("max: {}", max);
 
@@ -18,12 +20,15 @@ fn part1() {
         }
     }
     let min = (&counts).iter().min().unwrap();
-    println!("min: {}", min);    
+    println!("min: {}", min);
 }
 
 fn part2() {
     let input = include_str!("input.txt");
-    let positions: Vec<_> = input.split(",").map(|c| c.parse::<i64>().unwrap()).collect();
+    let positions: Vec<_> = input
+        .split(",")
+        .map(|c| c.parse::<i64>().unwrap())
+        .collect();
     let max = (&positions).iter().max().unwrap().to_owned() as usize;
     println!("max: {}", max);
 
@@ -37,5 +42,5 @@ fn part2() {
         }
     }
     let min = (&counts).iter().min().unwrap();
-    println!("min: {}", min);    
+    println!("min: {}", min);
 }

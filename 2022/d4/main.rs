@@ -1,4 +1,3 @@
-
 fn main() {
     let input = include_str!("input.txt");
     let part1 = count_where_overlap(input);
@@ -13,17 +12,20 @@ fn count_where_overlap(input: &str) -> i32 {
         .map(|line| {
             line.split(",")
                 .map(|items| {
-                    let range_bounds: Vec<i32> = items.split("-").map(|s| s.parse::<i32>().unwrap()).collect();
+                    let range_bounds: Vec<i32> = items
+                        .split("-")
+                        .map(|s| s.parse::<i32>().unwrap())
+                        .collect();
                     range_bounds[0]..range_bounds[1]
                 })
                 .collect::<Vec<_>>()
         })
         .map(|pair| {
             if pair[0].start >= pair[1].start && pair[0].end <= pair[1].end {
-                return 1
+                return 1;
             }
             if pair[1].start >= pair[0].start && pair[1].end <= pair[0].end {
-                return 1
+                return 1;
             }
             0
         })
@@ -36,17 +38,20 @@ fn count_overlaps(input: &str) -> i32 {
         .map(|line| {
             line.split(",")
                 .map(|items| {
-                    let range_bounds: Vec<i32> = items.split("-").map(|s| s.parse::<i32>().unwrap()).collect();
+                    let range_bounds: Vec<i32> = items
+                        .split("-")
+                        .map(|s| s.parse::<i32>().unwrap())
+                        .collect();
                     range_bounds[0]..range_bounds[1]
                 })
                 .collect::<Vec<_>>()
         })
         .map(|pair| {
             if pair[0].start <= pair[1].start && pair[0].end >= pair[1].start {
-                return 1
+                return 1;
             }
             if pair[1].start <= pair[0].start && pair[1].end >= pair[0].start {
-                return 1
+                return 1;
             }
             0
         })

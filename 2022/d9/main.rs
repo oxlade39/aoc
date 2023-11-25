@@ -1,5 +1,4 @@
-use std::{str::FromStr, collections::HashSet};
-
+use std::{collections::HashSet, str::FromStr};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -11,10 +10,10 @@ fn main() {
 fn part1(input: &str) -> usize {
     let mut head = Head {
         pos: (0, 0),
-        tail: Some(Box::new(Head { 
+        tail: Some(Box::new(Head {
             pos: (0, 0),
-            tail: None
-        }))
+            tail: None,
+        })),
     };
     let mut move_listener = MoveTracker::default();
     input
@@ -39,7 +38,7 @@ fn part2(input: &str) -> usize {
 #[derive(Debug, PartialEq)]
 struct Head {
     pos: (i32, i32),
-    tail: Option<Box<Head>>
+    tail: Option<Box<Head>>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -47,7 +46,7 @@ enum Direction {
     U,
     D,
     L,
-    R
+    R,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -57,10 +56,10 @@ trait MoveListener {
     fn on_tail_move(&mut self, from: &(i32, i32), to: &(i32, i32));
 }
 
-struct NOOP { }
+struct NOOP {}
 
 struct MoveTracker {
-    tail_positions: HashSet<(i32, i32)>
+    tail_positions: HashSet<(i32, i32)>,
 }
 
 impl Default for MoveTracker {
@@ -82,80 +81,68 @@ impl MoveListener for NOOP {
 }
 
 impl Head {
-    fn apply<T>(
-        &mut self, movement: Move, 
-        move_listener: &mut T
-    )
-    where T: MoveListener 
+    fn apply<T>(&mut self, movement: Move, move_listener: &mut T)
+    where
+        T: MoveListener,
     {
         let amount = movement.1;
 
         for _ in 0..amount {
             let new_head_position = match movement.0 {
-                Direction::U => {
-                    (self.pos.0 + 1, self.pos.1)
-                },
-                Direction::D => {
-                    (self.pos.0 - 1, self.pos.1)
-                },
-                Direction::L => {
-                    (self.pos.0, self.pos.1 - 1)
-                },
-                Direction::R => {
-                    (self.pos.0, self.pos.1 + 1)
-                }
-            };        
-            self.update_to(new_head_position, move_listener);            
-        }        
+                Direction::U => (self.pos.0 + 1, self.pos.1),
+                Direction::D => (self.pos.0 - 1, self.pos.1),
+                Direction::L => (self.pos.0, self.pos.1 - 1),
+                Direction::R => (self.pos.0, self.pos.1 + 1),
+            };
+            self.update_to(new_head_position, move_listener);
+        }
     }
 
-    fn update_to<T>(
-        &mut self,
-        new_head_position: (i32, i32), 
-        move_listener: &mut T) 
-        where T: MoveListener
-        {
-            let old_position = self.pos.clone();
-            self.pos = new_head_position;
-            if let Some(t) = self.tail.as_mut() {
-                let move_deltas = (
-                    new_head_position.0 - old_position.0,
-                    new_head_position.1 - old_position.1
-                );
-                let new_head_vs_old_tail = (
-                    new_head_position.0 - t.pos.0,
-                    new_head_position.1 - t.pos.1
-                );
+    fn update_to<T>(&mut self, new_head_position: (i32, i32), move_listener: &mut T)
+    where
+        T: MoveListener,
+    {
+        let old_position = self.pos.clone();
+        self.pos = new_head_position;
+        if let Some(t) = self.tail.as_mut() {
+            let move_deltas = (
+                new_head_position.0 - old_position.0,
+                new_head_position.1 - old_position.1,
+            );
+            let new_head_vs_old_tail =
+                (new_head_position.0 - t.pos.0, new_head_position.1 - t.pos.1);
 
-                let new_row_delta = (t.pos.0 - new_head_position.0).abs();
-                let new_col_delta = (t.pos.1 - new_head_position.1).abs();
-                let distance = new_row_delta + new_col_delta;
+            let new_row_delta = (t.pos.0 - new_head_position.0).abs();
+            let new_col_delta = (t.pos.1 - new_head_position.1).abs();
+            let distance = new_row_delta + new_col_delta;
 
-                if distance <= 2 && new_row_delta.max(new_col_delta) <= 1 {
-                    // still touching
-                    return;
-                }
-
-                let new_tail_pos = if t.pos.0 == new_head_position.0 {
-                    // still same height so just move width
-                    (t.pos.0, t.pos.1 + move_deltas.1.signum())
-                } else if t.pos.1 == new_head_position.1 {
-                    // still same width so just move vertically
-                    (t.pos.0 + move_deltas.0.signum(), t.pos.1)
-                } else {
-                    (t.pos.0 + new_head_vs_old_tail.0.signum(), t.pos.1 + new_head_vs_old_tail.1.signum())
-                };
-                t.update_to(new_tail_pos, move_listener);
-            } else {
-                move_listener.on_tail_move(&old_position, &new_head_position);
+            if distance <= 2 && new_row_delta.max(new_col_delta) <= 1 {
+                // still touching
+                return;
             }
 
+            let new_tail_pos = if t.pos.0 == new_head_position.0 {
+                // still same height so just move width
+                (t.pos.0, t.pos.1 + move_deltas.1.signum())
+            } else if t.pos.1 == new_head_position.1 {
+                // still same width so just move vertically
+                (t.pos.0 + move_deltas.0.signum(), t.pos.1)
+            } else {
+                (
+                    t.pos.0 + new_head_vs_old_tail.0.signum(),
+                    t.pos.1 + new_head_vs_old_tail.1.signum(),
+                )
+            };
+            t.update_to(new_tail_pos, move_listener);
+        } else {
+            move_listener.on_tail_move(&old_position, &new_head_position);
+        }
     }
 }
 
 #[derive(Debug, PartialEq)]
 enum ParseMoveError {
-    BadInput(String)
+    BadInput(String),
 }
 
 impl FromStr for Move {
@@ -171,12 +158,12 @@ impl FromStr for Move {
             "D" => Ok(Direction::D),
             "L" => Ok(Direction::L),
             "R" => Ok(Direction::R),
-            _ => Err(ParseMoveError::BadInput(s.to_string()))
+            _ => Err(ParseMoveError::BadInput(s.to_string())),
         }?;
 
         let qty = parts[1]
             .parse::<i32>()
-            .map_err(|_|ParseMoveError::BadInput(s.to_string()))?;
+            .map_err(|_| ParseMoveError::BadInput(s.to_string()))?;
 
         Ok(Move(direction, qty))
     }
@@ -186,9 +173,9 @@ fn depth(n: i32) -> Option<Head> {
     if n == 0 {
         None
     } else {
-        Some(Head { 
-            pos: (0, 0), 
-            tail: depth(n - 1).map(|next| Box::new(next)) 
+        Some(Head {
+            pos: (0, 0),
+            tail: depth(n - 1).map(|next| Box::new(next)),
         })
     }
 }
@@ -201,211 +188,209 @@ mod test {
     fn test_up_from_origin() {
         let mut initial = Head {
             pos: (0, 0),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         initial.apply(Move(Direction::U, 1), &mut NOOP {});
-    
+
         let expected = Head {
             pos: (1, 0),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         assert_eq!(initial, expected);
     }
-    
-    
+
     #[test]
     fn test_down_from_origin() {
         let mut initial = Head {
             pos: (0, 0),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         initial.apply(Move(Direction::D, 1), &mut NOOP {});
-    
+
         let expected = Head {
             pos: (-1, 0),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         assert_eq!(initial, expected);
     }
-    
+
     #[test]
     fn test_right_from_origin() {
         let mut initial = Head {
             pos: (0, 0),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         initial.apply(Move(Direction::R, 1), &mut NOOP {});
-    
+
         let expected = Head {
             pos: (0, 1),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         assert_eq!(initial, expected);
     }
-    
-    
+
     #[test]
     fn test_left_from_origin() {
         let mut initial = Head {
             pos: (0, 0),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         initial.apply(Move(Direction::R, 1), &mut NOOP {});
-    
+
         let expected = Head {
             pos: (0, 1),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         assert_eq!(initial, expected);
     }
-    
+
     #[test]
     fn test_left_many_from_origin() {
         let mut initial = Head {
             pos: (0, 0),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         initial.apply(Move(Direction::R, 5), &mut NOOP {});
-    
+
         let expected = Head {
             pos: (0, 5),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 4),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         assert_eq!(initial, expected);
     }
-    
+
     #[test]
     fn test_up_from_same_horizontal() {
         let mut initial = Head {
             pos: (1, 0),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         initial.apply(Move(Direction::U, 1), &mut NOOP {});
-    
+
         let expected = Head {
             pos: (2, 0),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (1, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         assert_eq!(initial, expected);
     }
-    
+
     #[test]
     fn test_down_from_same_horizontal() {
         let mut initial = Head {
             pos: (-1, 0),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         initial.apply(Move(Direction::D, 1), &mut NOOP {});
-    
+
         let expected = Head {
             pos: (-2, 0),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (-1, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         assert_eq!(initial, expected);
     }
-    
+
     #[test]
     fn test_right_from_same_vertical() {
         let mut initial = Head {
             pos: (0, 1),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         initial.apply(Move(Direction::R, 1), &mut NOOP {});
-    
+
         let expected = Head {
             pos: (0, 2),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 1),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         assert_eq!(initial, expected);
     }
-    
+
     #[test]
     fn test_left_from_same_vertical() {
         let mut initial = Head {
             pos: (0, -1),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         initial.apply(Move(Direction::L, 1), &mut NOOP {});
-    
+
         let expected = Head {
             pos: (0, -2),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, -1),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         assert_eq!(initial, expected);
     }
-    
+
     #[test]
     fn test_up_from_below_left_diagonal() {
         // .....
@@ -414,28 +399,28 @@ mod test {
         //--to--
         // .H...
         // .T...
-        // .....    
+        // .....
         let mut initial = Head {
             pos: (1, 1),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         initial.apply(Move(Direction::U, 1), &mut NOOP {});
-    
+
         let expected = Head {
             pos: (2, 1),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (1, 1),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         assert_eq!(initial, expected);
     }
-    
+
     #[test]
     fn test_down_from_above_right_diagonal() {
         // ....T
@@ -447,25 +432,25 @@ mod test {
         // ...H.
         let mut initial = Head {
             pos: (-1, -1),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         initial.apply(Move(Direction::D, 1), &mut NOOP {});
-    
+
         let expected = Head {
             pos: (-2, -1),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (-1, -1),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         assert_eq!(initial, expected);
     }
-    
+
     #[test]
     fn test_move_up_from_right() {
         // .....
@@ -477,25 +462,25 @@ mod test {
         // T....
         let mut initial = Head {
             pos: (0, 1),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         initial.apply(Move(Direction::U, 1), &mut NOOP {});
-    
+
         let expected = Head {
             pos: (1, 1),
-            tail: Some(Box::new(Head { 
+            tail: Some(Box::new(Head {
                 pos: (0, 0),
-                tail: None
-            }))
+                tail: None,
+            })),
         };
-    
+
         assert_eq!(initial, expected);
     }
-    
+
     #[test]
     fn test_parse_move() {
         assert_eq!("R 2".parse(), Ok(Move(Direction::R, 2)));
@@ -503,7 +488,7 @@ mod test {
         assert_eq!("U 10".parse(), Ok(Move(Direction::U, 10)));
         assert_eq!("D 5".parse(), Ok(Move(Direction::D, 5)));
     }
-    
+
     fn print_trail(w: i32, h: i32, head: &Head, seen: &HashSet<(i32, i32)>) {
         for i in (-h..h).rev() {
             for j in -w..w {
@@ -528,44 +513,42 @@ mod test {
                     }
                 }
                 if !found {
-                    if (0,0) == (i, j) {
+                    if (0, 0) == (i, j) {
                         print!("s");
                     } else if seen.contains(&(i, j)) {
                         print!("#");
                     } else {
                         print!(".");
                     }
-                }            
+                }
             }
             println!("");
         }
     }
-    
+
     #[test]
     fn test_pt1_example() {
         let input = include_str!("input.example.txt");
         assert_eq!(part1(input), 13);
     }
-    
+
     #[test]
     fn depth_n() {
         let result = depth(2).unwrap();
-    
-        assert_eq!(result, Head {
-            pos: (0, 0),
-            tail: Some(Box::new(Head { 
-                pos: (0, 0), 
-                tail: None 
-            }))
-        })
+
+        assert_eq!(
+            result,
+            Head {
+                pos: (0, 0),
+                tail: Some(Box::new(Head {
+                    pos: (0, 0),
+                    tail: None
+                }))
+            }
+        )
     }
-    
-    fn debug_step(
-        move_line: &str, 
-        head: &mut Head, 
-        move_listener: &mut MoveTracker
-    )
-    {
+
+    fn debug_step(move_line: &str, head: &mut Head, move_listener: &mut MoveTracker) {
         let m = move_line.parse::<Move>().unwrap();
         head.apply(m.clone(), move_listener);
         println!("positions after {:?}", m);
@@ -573,23 +556,23 @@ mod test {
         println!("");
         println!("");
     }
-    
+
     #[test]
     fn test_smaller_pt2_example() {
         let mut head = depth(10).unwrap();
         let mut move_listener = MoveTracker::default();
-    
+
         debug_step("R 1", &mut head, &mut move_listener);
         debug_step("R 1", &mut head, &mut move_listener);
         debug_step("R 1", &mut head, &mut move_listener);
         debug_step("R 1", &mut head, &mut move_listener);
-    
+
         debug_step("U 1", &mut head, &mut move_listener);
         debug_step("U 1", &mut head, &mut move_listener);
         debug_step("U 1", &mut head, &mut move_listener);
         debug_step("U 1", &mut head, &mut move_listener);
     }
-    
+
     #[test]
     fn test_pt2_example() {
         assert_eq!(part2(include_str!("input.example2.txt")), 36);

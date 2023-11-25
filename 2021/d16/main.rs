@@ -1,5 +1,4 @@
-use std::{time::Instant};
-
+use std::time::Instant;
 
 fn main() {
     let start = Instant::now();
@@ -28,7 +27,7 @@ fn part2() {
 #[derive(Debug)]
 enum Instruction {
     Operator(i16, InstructionType, Vec<Instruction>),
-    Literal(i16, Vec<String>)
+    Literal(i16, Vec<String>),
 }
 
 #[derive(Debug)]
@@ -39,7 +38,7 @@ enum InstructionType {
     Max,
     GreaterThan,
     LessThan,
-    EqualTo
+    EqualTo,
 }
 
 #[derive(Debug)]
@@ -49,7 +48,7 @@ impl TryFrom<i16> for InstructionType {
     type Error = ParseErr;
 
     fn try_from(value: i16) -> Result<Self, Self::Error> {
-        match value  {
+        match value {
             0 => Ok(InstructionType::Sum),
             1 => Ok(InstructionType::Product),
             2 => Ok(InstructionType::Min),
@@ -57,7 +56,7 @@ impl TryFrom<i16> for InstructionType {
             5 => Ok(InstructionType::GreaterThan),
             6 => Ok(InstructionType::LessThan),
             7 => Ok(InstructionType::EqualTo),
-            _ => Err(ParseErr)
+            _ => Err(ParseErr),
         }
     }
 }
@@ -67,7 +66,6 @@ fn parse(s: &str) -> Vec<Instruction> {
     parse_internal(s, None, &mut instructions);
     instructions
 }
-
 
 fn parse_internal(s: &str, max: Option<usize>, instructions: &mut Vec<Instruction>) -> usize {
     let mut position = 0;
@@ -84,13 +82,13 @@ fn parse_internal(s: &str, max: Option<usize>, instructions: &mut Vec<Instructio
                 return position;
             }
         }
-        remaining = remaining.map(|i| i-1);
+        remaining = remaining.map(|i| i - 1);
 
-        let v = bin_to_i16(&s[position..position+3]);
-        let t = bin_to_i16(&s[position+3..position+6]);
+        let v = bin_to_i16(&s[position..position + 3]);
+        let t = bin_to_i16(&s[position + 3..position + 6]);
 
         position += 6;
-        if t == 4 {        
+        if t == 4 {
             let inc = parse_literal(&s[position..], v, instructions);
             position += inc;
         } else {
@@ -101,12 +99,12 @@ fn parse_internal(s: &str, max: Option<usize>, instructions: &mut Vec<Instructio
                     if position + 15 > s.len() {
                         continue;
                     }
-                    let length = bin_to_usize(&s[position..position+15]);
+                    let length = bin_to_usize(&s[position..position + 15]);
                     position += 15;
                     if position + length > s.len() {
                         continue;
-                    }                    
-                    let children = parse(&s[position..position+length]);
+                    }
+                    let children = parse(&s[position..position + length]);
                     instructions.push(Instruction::Operator(v, t.try_into().unwrap(), children));
                     position += length;
                 } else {
@@ -114,7 +112,7 @@ fn parse_internal(s: &str, max: Option<usize>, instructions: &mut Vec<Instructio
                     if position + 11 > s.len() {
                         continue;
                     }
-                    let length = bin_to_usize(&s[position..position+11]);
+                    let length = bin_to_usize(&s[position..position + 11]);
                     position += 11;
 
                     let mut children = Vec::new();
@@ -122,7 +120,7 @@ fn parse_internal(s: &str, max: Option<usize>, instructions: &mut Vec<Instructio
                     instructions.push(Instruction::Operator(v, t.try_into().unwrap(), children));
                     position += inc;
                 }
-            }            
+            }
         }
     }
     position
@@ -135,10 +133,10 @@ fn parse_literal(s: &str, version: i16, to_append: &mut Vec<Instruction>) -> usi
     loop {
         let first = s.chars().nth(position).unwrap();
         if first == '1' {
-            parts.push(s[position+1..position+5].to_string());
+            parts.push(s[position + 1..position + 5].to_string());
             position += 5;
         } else {
-            parts.push(s[position+1..position+5].to_string());
+            parts.push(s[position + 1..position + 5].to_string());
             position += 5;
 
             break;
@@ -147,7 +145,7 @@ fn parse_literal(s: &str, version: i16, to_append: &mut Vec<Instruction>) -> usi
 
     let lit = Instruction::Literal(version, parts);
     to_append.push(lit);
-    
+
     position
 }
 
@@ -162,7 +160,7 @@ fn sum(i: &Vec<Instruction>) -> i64 {
             }
         }
     }
-    
+
     total
 }
 
@@ -175,37 +173,37 @@ impl Instruction {
                     accum.push_str(&s);
                 }
                 bin_to_i64(&accum)
-            },
+            }
             Instruction::Operator(_, InstructionType::EqualTo, items) => {
                 if &items[0].calc() == &items[1].calc() {
                     1
                 } else {
                     0
                 }
-            },
+            }
             Instruction::Operator(_, InstructionType::GreaterThan, items) => {
                 if &items[0].calc() > &items[1].calc() {
                     1
                 } else {
                     0
                 }
-            },
+            }
             Instruction::Operator(_, InstructionType::LessThan, items) => {
                 if &items[0].calc() < &items[1].calc() {
                     1
                 } else {
                     0
                 }
-            },
+            }
             Instruction::Operator(_, InstructionType::Max, items) => {
                 items.iter().map(|item| item.calc()).max().unwrap()
-            },
+            }
             Instruction::Operator(_, InstructionType::Min, items) => {
                 items.iter().map(|item| item.calc()).min().unwrap()
-            },
+            }
             Instruction::Operator(_, InstructionType::Product, items) => {
                 items.iter().map(|item| item.calc()).product()
-            },
+            }
             Instruction::Operator(_, InstructionType::Sum, items) => {
                 items.iter().map(|item| item.calc()).sum()
             }
@@ -239,7 +237,10 @@ fn test_hex() {
     let s = "D2FE28";
     let result = hex_to_bin(s);
     assert_eq!("110100101111111000101000", result);
-    assert_eq!(hex_to_bin("38006F45291200"), "00111000000000000110111101000101001010010001001000000000")
+    assert_eq!(
+        hex_to_bin("38006F45291200"),
+        "00111000000000000110111101000101001010010001001000000000"
+    )
 }
 
 #[test]
@@ -261,7 +262,6 @@ fn test_parse_operator_15() {
     println!("{:?}", result);
     assert_eq!(result.len(), 1);
 }
-
 
 #[test]
 fn test_parse_operator_11() {
@@ -286,7 +286,6 @@ fn test_pt1_examples() {
     result = parse(&hex_to_bin("A0016C880162017C3686B18A3D4780"));
     println!("****{:?} -> {}", &result, sum(&result));
     assert_eq!(31, sum(&result));
-
 }
 
 #[test]
@@ -298,27 +297,27 @@ fn calc_examples() {
     instructions = parse(&hex_to_bin("04005AC33890"));
     result = instructions.iter().map(Instruction::calc).collect();
     assert_eq!(result[0], 54);
-    
+
     instructions = parse(&hex_to_bin("880086C3E88112"));
     result = instructions.iter().map(Instruction::calc).collect();
     assert_eq!(result[0], 7);
-    
+
     instructions = parse(&hex_to_bin("CE00C43D881120"));
     result = instructions.iter().map(Instruction::calc).collect();
     assert_eq!(result[0], 9);
-    
+
     instructions = parse(&hex_to_bin("D8005AC2A8F0"));
     result = instructions.iter().map(Instruction::calc).collect();
     assert_eq!(result[0], 1);
-    
+
     instructions = parse(&hex_to_bin("F600BC2D8F"));
     result = instructions.iter().map(Instruction::calc).collect();
     assert_eq!(result[0], 0);
-    
+
     instructions = parse(&hex_to_bin("9C005AC2F8F0"));
     result = instructions.iter().map(Instruction::calc).collect();
     assert_eq!(result[0], 0);
-    
+
     instructions = parse(&hex_to_bin("9C0141080250320F1802104A08"));
     result = instructions.iter().map(Instruction::calc).collect();
     assert_eq!(result[0], 1);

@@ -13,7 +13,7 @@ fn main() {
 
 #[derive(Debug, PartialEq, Clone)]
 struct Stacks {
-    crates: Vec<Vec<Crate>>
+    crates: Vec<Vec<Crate>>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -30,27 +30,23 @@ struct Move {
 struct Input(Stacks, Vec<Move>);
 
 #[derive(Debug, PartialEq)]
-enum InputError {
-}
+enum InputError {}
 
 impl FromStr for Input {
     type Err = InputError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let stacks: Vec<_> = s
-            .lines()
-            .take_while(|line| !line.is_empty())            
-            .collect();
+        let stacks: Vec<_> = s.lines().take_while(|line| !line.is_empty()).collect();
         let moves: Vec<_> = s
             .lines()
             .skip_while(|line| !line.is_empty())
             .skip(1)
             .map(|line| {
                 let parts: Vec<_> = line.split(" ").collect();
-                Move { 
-                    crate_count: parts[1].parse().unwrap(), 
-                    from: parts[3].parse().unwrap(), 
-                    to: parts[5].parse().unwrap()
+                Move {
+                    crate_count: parts[1].parse().unwrap(),
+                    from: parts[3].parse().unwrap(),
+                    to: parts[5].parse().unwrap(),
                 }
             })
             .collect();
@@ -67,17 +63,22 @@ impl FromStr for Input {
         for width in 0..stack_count {
             let mut width_stack: Vec<Crate> = Vec::new();
             let width_pos = (width as usize * 4) + 1;
-            for height in (0..(stacks.len()-1)).rev() {                
+            for height in (0..(stacks.len() - 1)).rev() {
                 let stack_line = stacks[height];
                 let stack_code = stack_line.chars().nth(width_pos).unwrap();
                 match stack_code {
-                    ' ' => {},
+                    ' ' => {}
                     other => width_stack.push(Crate(other)),
                 };
             }
             parsed_stacks.push(width_stack);
         }
-        Ok(Input(Stacks { crates: parsed_stacks }, moves))
+        Ok(Input(
+            Stacks {
+                crates: parsed_stacks,
+            },
+            moves,
+        ))
     }
 }
 
@@ -96,9 +97,9 @@ trait Crane {
     fn apply_moves(&self, stacks: &mut Stacks, moves: &Vec<Move>);
 }
 
-struct CrateMover9000{}
+struct CrateMover9000 {}
 
-struct CrateMover9001{}
+struct CrateMover9001 {}
 
 impl Crane for CrateMover9000 {
     fn apply_moves(&self, stacks: &mut Stacks, moves: &Vec<Move>) {
@@ -139,16 +140,40 @@ fn test_parse_example() {
     let input = include_str!("input.example.txt");
     let parsed: Input = input.parse().unwrap();
 
-    assert_eq!(Input(Stacks { crates: vec![
-        vec![Crate('Z'), Crate('N')], 
-        vec![Crate('M'), Crate('C'), Crate('D')], 
-        vec![Crate('P')]
-    ] }, vec![
-        Move { crate_count: 1, from: 2, to: 1 },
-        Move { crate_count: 3, from: 1, to: 3 },
-        Move { crate_count: 2, from: 2, to: 1 },
-        Move { crate_count: 1, from: 1, to: 2 },
-    ]), parsed);
+    assert_eq!(
+        Input(
+            Stacks {
+                crates: vec![
+                    vec![Crate('Z'), Crate('N')],
+                    vec![Crate('M'), Crate('C'), Crate('D')],
+                    vec![Crate('P')]
+                ]
+            },
+            vec![
+                Move {
+                    crate_count: 1,
+                    from: 2,
+                    to: 1
+                },
+                Move {
+                    crate_count: 3,
+                    from: 1,
+                    to: 3
+                },
+                Move {
+                    crate_count: 2,
+                    from: 2,
+                    to: 1
+                },
+                Move {
+                    crate_count: 1,
+                    from: 1,
+                    to: 2
+                },
+            ]
+        ),
+        parsed
+    );
 }
 
 #[test]
@@ -156,7 +181,7 @@ fn test_part_1_example() {
     let input = include_str!("input.example.txt");
     let parsed: Input = input.parse().unwrap();
 
-    let result = solve(CrateMover9000{}, parsed);
+    let result = solve(CrateMover9000 {}, parsed);
     assert_eq!("CMZ", result);
 }
 
@@ -165,6 +190,6 @@ fn test_part_2_example() {
     let input = include_str!("input.example.txt");
     let parsed: Input = input.parse().unwrap();
 
-    let result = solve(CrateMover9001{}, parsed);
+    let result = solve(CrateMover9001 {}, parsed);
     assert_eq!("MCD", result);
 }

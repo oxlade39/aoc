@@ -1,5 +1,5 @@
 use std::time::Instant;
-use std::{str::FromStr, fmt::Debug, collections::HashMap};
+use std::{collections::HashMap, fmt::Debug, str::FromStr};
 
 fn main() {
     let start = Instant::now();
@@ -22,7 +22,8 @@ fn part1() {
         let (start_y, end_y) = parse_parts(axis.pop().unwrap());
         let (start_x, end_x) = parse_parts(axis.pop().unwrap());
 
-        if start_z < 0 || end_z > 100 || start_y < 0 || end_y > 100 || start_x < 0 || start_x > 100 {
+        if start_z < 0 || end_z > 100 || start_y < 0 || end_y > 100 || start_x < 0 || start_x > 100
+        {
             println!("bad line: {}", line);
             continue;
         }
@@ -42,13 +43,11 @@ fn part1() {
                             count -= 1;
                         }
                     }
-
                 }
             }
         }
     }
     println!("pt1 result: {}", count);
-    
 }
 
 fn parse_parts(axis_str: &str) -> (i64, i64) {

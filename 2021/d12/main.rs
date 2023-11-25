@@ -1,5 +1,5 @@
-use std::collections::HashSet;
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 fn main() {
     part1();
@@ -9,12 +9,8 @@ fn main() {
 fn part1() {
     let input = include_str!("input.txt");
     let connections = parse(input);
-    
-    let result = count(
-        "start".to_string(),
-        &connections,
-        &mut Vec::new(),
-    );
+
+    let result = count("start".to_string(), &connections, &mut Vec::new());
     println!("part1: {:?}", result);
 }
 
@@ -40,7 +36,7 @@ fn parse(input: &str) -> HashMap<String, Vec<String>> {
                 v.push(right.clone());
                 connections.insert(left.clone(), v);
             }
-        }        
+        }
 
         if left != "start" {
             if let Some(it) = connections.get_mut(&right) {
@@ -56,11 +52,7 @@ fn parse(input: &str) -> HashMap<String, Vec<String>> {
     connections
 }
 
-fn count(
-    curr: String,
-    mappings: &HashMap<String, Vec<String>>,
-    path: &mut Vec<String>,
-) -> i32 {
+fn count(curr: String, mappings: &HashMap<String, Vec<String>>, path: &mut Vec<String>) -> i32 {
     let is_lower = curr.to_lowercase() == curr;
 
     if is_lower && path.contains(&curr) {
@@ -84,26 +76,18 @@ fn count(
 
 fn pt2(input: &str) {
     let connections = parse(input);
-    
-    let result = count2(
-        "start".to_string(),
-        &connections,
-        &mut Vec::new(),
-    );
+
+    let result = count2("start".to_string(), &connections, &mut Vec::new());
     println!("part2: {:?}", result);
 }
 
-fn count2(
-    curr: String,
-    mappings: &HashMap<String, Vec<String>>,
-    smalls: &mut Vec<String>,
-) -> i32 {
+fn count2(curr: String, mappings: &HashMap<String, Vec<String>>, smalls: &mut Vec<String>) -> i32 {
     let is_lower = curr.to_lowercase() == curr;
 
     let unique_small: HashSet<String> = HashSet::from_iter(smalls.clone());
     let already_two = unique_small.len() < smalls.len();
 
-    if is_lower && already_two && unique_small.contains(&curr) { 
+    if is_lower && already_two && unique_small.contains(&curr) {
         0
     } else {
         if curr == "end" {
@@ -111,7 +95,7 @@ fn count2(
         } else {
             if is_lower {
                 smalls.push(curr.clone());
-            }            
+            }
             let children = mappings.get(&curr).unwrap();
             let mut child_count = 0;
             for child in children {

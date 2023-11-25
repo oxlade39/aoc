@@ -2,7 +2,7 @@
 use std::collections::BTreeSet;
 
 use std::time::Instant;
-use std::{str::FromStr, fmt::Debug, collections::HashMap};
+use std::{collections::HashMap, fmt::Debug, str::FromStr};
 
 /// Use sufficiently high number that a real hueristic wouldn't be above
 const INFINITY: i64 = 1000000;
@@ -29,7 +29,7 @@ fn part2() {
     grid = expand(&grid, 5);
     let height: i64 = grid.1 as i64;
     let width: i64 = grid.2 as i64;
-    
+
     let result = astar(&grid, (0, 0), (height - 1, width - 1));
     println!("result: {}", result);
 }
@@ -59,13 +59,11 @@ impl Ord for Candidate {
 
 /// Based on https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
 fn astar(grid: &Grid, start: (i64, i64), end: (i64, i64)) -> i64 {
-
     let mut open_set: BTreeSet<Candidate> = BTreeSet::new();
     let mut came_from: HashMap<(i64, i64), (i64, i64)> = HashMap::new();
 
     let mut g_scores: HashMap<(i64, i64), i64> = HashMap::new();
     let mut f_scores: HashMap<(i64, i64), i64> = HashMap::new();
-
 
     open_set.insert(Candidate(start, (grid.1 * grid.2) as i64));
     g_scores.insert(start, 0);
@@ -84,10 +82,10 @@ fn astar(grid: &Grid, start: (i64, i64), end: (i64, i64)) -> i64 {
             let mut path_node = Some(curr_node);
             let mut sum = 0;
             loop {
-                if let Some(x)  = path_node {
+                if let Some(x) = path_node {
                     let cost = grid.0[x.0 as usize][x.1 as usize];
                     sum += cost;
-                    path_node = came_from.get(&x).map(|item|*item);
+                    path_node = came_from.get(&x).map(|item| *item);
                 } else {
                     return sum - grid.0[start.0 as usize][start.1 as usize];
                 }
@@ -97,11 +95,18 @@ fn astar(grid: &Grid, start: (i64, i64), end: (i64, i64)) -> i64 {
         open_set.remove(&curr_candid);
 
         for neighbour_coord in [(-1, 0), (1, 0), (0, 1), (0, -1)] {
-            let neighbour = (curr_node.0 + neighbour_coord.0, curr_node.1 + neighbour_coord.1);
-            if neighbour.0 < 0 || neighbour.0 >= grid.1 as i64 || neighbour.1 < 0 || neighbour.1 >= grid.2 as i64 {
+            let neighbour = (
+                curr_node.0 + neighbour_coord.0,
+                curr_node.1 + neighbour_coord.1,
+            );
+            if neighbour.0 < 0
+                || neighbour.0 >= grid.1 as i64
+                || neighbour.1 < 0
+                || neighbour.1 >= grid.2 as i64
+            {
                 continue;
             }
-            
+
             let neighbour_row = &grid.0[neighbour.0 as usize];
             let neighbour_cost = neighbour_row[neighbour.1 as usize];
             let neighbour_g_score = g_scores.get(&neighbour).unwrap_or(&INFINITY);
@@ -111,7 +116,7 @@ fn astar(grid: &Grid, start: (i64, i64), end: (i64, i64)) -> i64 {
                 g_scores.insert(neighbour, tentative_g_score);
 
                 // distance to target
-                let hueristic = i64::abs(end.0 - neighbour.0) + i64::abs(end.1 - neighbour.1);                
+                let hueristic = i64::abs(end.0 - neighbour.0) + i64::abs(end.1 - neighbour.1);
                 f_scores.insert(neighbour, tentative_g_score + hueristic);
                 open_set.insert(Candidate(neighbour, tentative_g_score + hueristic));
             }
@@ -121,14 +126,13 @@ fn astar(grid: &Grid, start: (i64, i64), end: (i64, i64)) -> i64 {
     return -1;
 }
 
-
 struct Grid(Vec<Vec<i64>>, usize, usize);
 
 #[derive(Debug, PartialEq, Eq)]
 struct GridParseErr {
     line: usize,
     col: usize,
-    value: char
+    value: char,
 }
 
 impl FromStr for Grid {
@@ -140,12 +144,16 @@ impl FromStr for Grid {
         let mut grid: Vec<Vec<i64>> = Vec::new();
 
         for (i, line) in s.lines().enumerate() {
-            let mut row = Vec::new();            
+            let mut row = Vec::new();
             for (j, c) in line.chars().enumerate() {
                 if let Some(value) = c.to_digit(RADIX) {
                     row.push(value as i64);
                 } else {
-                    return Err(GridParseErr{ line: i, col: j, value: c });
+                    return Err(GridParseErr {
+                        line: i,
+                        col: j,
+                        value: c,
+                    });
                 }
             }
             grid.push(row);
@@ -165,33 +173,37 @@ impl Debug for Grid {
     }
 }
 
-fn expand(grid: &Grid, times: usize) -> Grid {    
+fn expand(grid: &Grid, times: usize) -> Grid {
     let new_rows = grid.1 * times;
     let new_cols = grid.2 * times;
     let mut result: Vec<Vec<i64>> = Vec::with_capacity(new_rows);
-    println!("expanding grid to h:{} w:{} from {},{}", new_rows, new_cols, grid.1, grid.2);
+    println!(
+        "expanding grid to h:{} w:{} from {},{}",
+        new_rows, new_cols, grid.1, grid.2
+    );
 
     for row in 0..new_rows {
         let mut row_vals: Vec<i64> = Vec::with_capacity(new_cols);
 
         for col in 0..new_cols {
-
             if row < grid.1 && col < grid.2 {
                 row_vals.push(grid.0[row][col]);
             } else {
-
                 if col < grid.2 {
                     let v = result[row - grid.1][col] + 1;
                     let mut wrap_around = v % 10;
-                    if wrap_around == 0 { wrap_around = 1; }
+                    if wrap_around == 0 {
+                        wrap_around = 1;
+                    }
                     row_vals.push(wrap_around);
                 } else {
                     let v = row_vals[col - grid.2] + 1;
                     let mut wrap_around = v % 10;
-                    if wrap_around == 0 { wrap_around = 1; }
+                    if wrap_around == 0 {
+                        wrap_around = 1;
+                    }
                     row_vals.push(wrap_around);
                 }
-
             }
         }
         result.push(row_vals);
@@ -204,7 +216,7 @@ fn expand(grid: &Grid, times: usize) -> Grid {
 fn test_expand_example() {
     let input = include_str!("input.test.txt");
     let grid: Grid = input.parse().unwrap();
-    
+
     let input = include_str!("input.test.expanded.txt");
     let expanded_grid: Grid = input.parse().unwrap();
 

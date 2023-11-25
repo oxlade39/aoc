@@ -1,5 +1,4 @@
-use std::{time::Instant, str::FromStr, collections::HashSet};
-
+use std::{collections::HashSet, str::FromStr, time::Instant};
 
 fn main() {
     let start = Instant::now();
@@ -12,11 +11,10 @@ fn part1() {
     let input = include_str!("input.txt");
     let target_area = input.parse::<Box>().unwrap();
 
-    
     let mut max_y = 0;
     let mut end_y = 0;
     let mut max_n = 0;
-    
+
     let mut trial_y_v = 0;
     loop {
         let mut max_y_in_run = 0;
@@ -28,10 +26,8 @@ fn part1() {
                 break;
             }
             end_y = y_pos;
-            
         }
         trial_y_v += 1;
-        
 
         if end_y == 0 {
             break;
@@ -51,7 +47,7 @@ fn part2() {
             for y in target_area.bottom()..1000 {
                 let x_pos = calc_x(n, x);
                 let y_pos = calc_y(n, y);
-                let p = Point{ x: x_pos, y: y_pos };
+                let p = Point { x: x_pos, y: y_pos };
                 let velocity = (x, y);
                 if target_area.contains(&p) {
                     matches.insert(velocity);
@@ -67,7 +63,7 @@ fn calc_y(n: i64, v: i64) -> i64 {
     (n * v) - (((n - 1) * n) / 2)
 }
 
-fn calc_x(n: i64, v: i64) -> i64 {    
+fn calc_x(n: i64, v: i64) -> i64 {
     let modified_n = i64::min(n, v);
     let inc = modified_n * v;
     let sub = ((modified_n - 1) * modified_n) / 2;
@@ -75,48 +71,50 @@ fn calc_x(n: i64, v: i64) -> i64 {
     result
 }
 
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct Point {
     x: i64,
-    y: i64
+    y: i64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Velocity {
     x: i64,
-    y: i64
+    y: i64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Box {
     top_left: Point,
-    bottom_right: Point
+    bottom_right: Point,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Probe {
     position: Point,
-    velocity: Velocity
+    velocity: Velocity,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Board {
     probe: Probe,
-    target_area: Box,    
+    target_area: Box,
 }
 
 impl Box {
     fn new(a: Point, b: Point) -> Self {
-        let top_left = Point{ 
-            x: i64::min(a.x, b.x), 
-            y: i64::max(a.y, b.y)
+        let top_left = Point {
+            x: i64::min(a.x, b.x),
+            y: i64::max(a.y, b.y),
         };
         let bottom_right = Point {
             x: i64::max(a.x, b.x),
-            y: i64::min(a.y, b.y)
+            y: i64::min(a.y, b.y),
         };
-        Self{ top_left, bottom_right }
+        Self {
+            top_left,
+            bottom_right,
+        }
     }
 
     fn left(&self) -> i64 {
@@ -208,22 +206,19 @@ fn test_calc_x() {
 
 #[test]
 fn test_box_contains() {
-    let b = Box::new(
-        Point{ x: 20, y: -10 },
-        Point{ x: 30, y: -5 }
-    );
+    let b = Box::new(Point { x: 20, y: -10 }, Point { x: 30, y: -5 });
 
-    assert_eq!(true, b.contains(&Point {x: 20,y: -5}));
-    assert_eq!(true, b.contains(&Point {x: 30,y: -5}));
+    assert_eq!(true, b.contains(&Point { x: 20, y: -5 }));
+    assert_eq!(true, b.contains(&Point { x: 30, y: -5 }));
 
-    assert_eq!(false, b.contains(&Point {x: 19,y: -5}));
-    assert_eq!(false, b.contains(&Point {x: 31,y: -5}));
+    assert_eq!(false, b.contains(&Point { x: 19, y: -5 }));
+    assert_eq!(false, b.contains(&Point { x: 31, y: -5 }));
 
-    assert_eq!(true, b.contains(&Point {x: 20,y: -5}));
-    assert_eq!(true, b.contains(&Point {x: 20,y: -10}));
+    assert_eq!(true, b.contains(&Point { x: 20, y: -5 }));
+    assert_eq!(true, b.contains(&Point { x: 20, y: -10 }));
 
-    assert_eq!(false, b.contains(&Point {x: 20,y: -4}));
-    assert_eq!(false, b.contains(&Point {x: 20,y: -11}));    
+    assert_eq!(false, b.contains(&Point { x: 20, y: -4 }));
+    assert_eq!(false, b.contains(&Point { x: 20, y: -11 }));
 }
 
 #[test]
@@ -231,5 +226,11 @@ fn test_parse_box() {
     let input = "target area: x=20..30, y=-10..-5";
     let b = input.parse::<Box>();
 
-    assert_eq!(Ok(Box{ top_left: Point { x: 20, y: -5 }, bottom_right: Point { x: 30, y: -10 }}), b);
+    assert_eq!(
+        Ok(Box {
+            top_left: Point { x: 20, y: -5 },
+            bottom_right: Point { x: 30, y: -10 }
+        }),
+        b
+    );
 }

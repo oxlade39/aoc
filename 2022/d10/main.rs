@@ -1,7 +1,6 @@
-use std::{str::FromStr, num::ParseIntError};
+use std::{num::ParseIntError, str::FromStr};
 
 use itertools::Itertools;
-
 
 fn main() {
     let input = include_str!("input.txt");
@@ -28,13 +27,13 @@ struct Register<const N: usize> {
 
 impl Register<1> {
     fn new() -> Self {
-        Register{ values: [1; 1]}
+        Register { values: [1; 1] }
     }
 }
 
 fn process_instructions<const N: usize>(
     instructions: &Vec<Instruction>,
-    reg: &Register<N>
+    reg: &Register<N>,
 ) -> Vec<Register<N>> {
     let mut register_outputs = Vec::new();
     let mut register = reg.clone();
@@ -42,7 +41,7 @@ fn process_instructions<const N: usize>(
         match i {
             Instruction::Noop => {
                 register_outputs.push(register.clone());
-            },
+            }
             Instruction::Addx(x) => {
                 register_outputs.push(register.clone());
                 register_outputs.push(register.clone());
@@ -64,11 +63,17 @@ impl FromStr for Instruction {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts: Vec<_> = s.split(" ").collect();
-            match parts[0] {
-                "addx" => Ok(Instruction::Addx(parts[1].parse::<i32>().map_err(|e| InstructionParseError::BadAddx(e))?)),
-                "noop" => Ok(Instruction::Noop),
-                unexpected => Err(InstructionParseError::UnexpectedInstruction(unexpected.to_string())),
-            }
+        match parts[0] {
+            "addx" => Ok(Instruction::Addx(
+                parts[1]
+                    .parse::<i32>()
+                    .map_err(|e| InstructionParseError::BadAddx(e))?,
+            )),
+            "noop" => Ok(Instruction::Noop),
+            unexpected => Err(InstructionParseError::UnexpectedInstruction(
+                unexpected.to_string(),
+            )),
+        }
     }
 }
 
@@ -78,8 +83,8 @@ fn part1(input: &str) -> i32 {
         .map(|line| line.parse::<Instruction>().unwrap())
         .collect();
     let reg = Register::new();
-    let results = process_instructions(&instructions, &reg);    
-    
+    let results = process_instructions(&instructions, &reg);
+
     results
         .iter()
         .enumerate()
@@ -106,12 +111,15 @@ fn part2(input: &str) -> [[char; 40]; 6] {
     let mut crt_lines = [[' '; 40]; 6];
     let results = process_instructions(&instructions, &reg);
     let mut results_itr = results.iter();
-    
+
     for i in 0..crt_lines.len() {
         for j in 0..crt_lines[0].len() {
             let register_val = results_itr.next().unwrap().values[0];
             let sprite_vals = [register_val - 1, register_val, register_val + 1];
-            if j as i32 == sprite_vals[0] || j as i32 == sprite_vals[1] || j as i32 == sprite_vals[2] {
+            if j as i32 == sprite_vals[0]
+                || j as i32 == sprite_vals[1]
+                || j as i32 == sprite_vals[2]
+            {
                 crt_lines[i][j] = '#';
             } else {
                 crt_lines[i][j] = '.';
@@ -124,7 +132,7 @@ fn part2(input: &str) -> [[char; 40]; 6] {
                 println!("Pixel: {}", j);
                 println!("Sprite Position: {:?}", sprite_vals);
                 print_crt(&crt_lines);
-                println!("");    
+                println!("");
             }
         }
     }
@@ -140,10 +148,9 @@ fn print_crt(crt: &[[char; 40]; 6]) {
     }
 }
 
-
 #[cfg(test)]
 mod test {
-    use crate::{Instruction, process_instructions, Register, part1, part2, print_crt};
+    use crate::{part1, part2, print_crt, process_instructions, Instruction, Register};
 
     #[test]
     fn test_parse() {

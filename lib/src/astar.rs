@@ -1,14 +1,20 @@
-use std::{collections::{HashMap, BinaryHeap}, cmp::Ordering};
+use std::{
+    cmp::Ordering,
+    collections::{BinaryHeap, HashMap},
+};
 
-use crate::{cartesian::{Point, Plane, Vector, Transform}, distance::StraightLineDistance};
+use crate::{
+    cartesian::{Plane, Point, Transform, Vector},
+    distance::StraightLineDistance,
+};
 
 /// Use sufficiently high number that a real hueristic wouldn't be above
 const INFINITY: i64 = 1000000;
 
 #[derive(Clone, Debug)]
-struct Candidate { 
+struct Candidate {
     point: Point,
-    cost: i64
+    cost: i64,
 }
 
 impl Candidate {
@@ -33,7 +39,9 @@ impl Ord for Candidate {
         // Notice that the we flip the ordering on costs.
         // In case of a tie we compare positions - this step is necessary
         // to make implementations of `PartialEq` and `Ord` consistent.
-        other.cost.cmp(&self.cost)
+        other
+            .cost
+            .cmp(&self.cost)
             .then_with(|| self.point.cmp(&other.point))
     }
 }
@@ -111,47 +119,58 @@ impl Neighbours for DirectNeighbours<'_> {
 
 impl Neighbours for TouchingNeighbours<'_> {
     fn neighbours(&self, p: &Point) -> Vec<Point> {
-        [(-1, 0), (1, 0), (0, 1), (0, -1), (-1, -1), (1, 1), (-1, 1), (1, -1)]
-            .map(|t| {
-                let into: Transform = t.into();
-                into
-            })
-            .into_iter()
-            .filter_map(|t| {
-                let transformed = p.transform(&t);
-                if transformed.within(self.0) {
-                    Some(transformed)
-                } else {
-                    None
-                }
-            })
-            .collect()
+        [
+            (-1, 0),
+            (1, 0),
+            (0, 1),
+            (0, -1),
+            (-1, -1),
+            (1, 1),
+            (-1, 1),
+            (1, -1),
+        ]
+        .map(|t| {
+            let into: Transform = t.into();
+            into
+        })
+        .into_iter()
+        .filter_map(|t| {
+            let transformed = p.transform(&t);
+            if transformed.within(self.0) {
+                Some(transformed)
+            } else {
+                None
+            }
+        })
+        .collect()
     }
 }
 
 #[derive(Debug, PartialEq)]
 pub struct ShortestPath {
     pub path: Vec<(Point, i64)>,
-    pub total_cost: i64
+    pub total_cost: i64,
 }
 
-/// Extendable implementation of 
+/// Extendable implementation of
 /// <a href="https://en.wikipedia.org/wiki/A*_search_algorithm">astar</a> shortest path.
 pub fn astar<H, C, N>(
-    start: Point, 
+    start: Point,
     end: Point,
     heuristic: &H,
     cost: &C,
-    neighbours: &N
-) -> Option<ShortestPath> 
-where H: Hueristic, C: Cost, N: Neighbours
+    neighbours: &N,
+) -> Option<ShortestPath>
+where
+    H: Hueristic,
+    C: Cost,
+    N: Neighbours,
 {
     let mut open_set: BinaryHeap<Candidate> = BinaryHeap::new();
     let mut came_from: HashMap<Point, Point> = HashMap::new();
 
     let mut g_scores: HashMap<Point, i64> = HashMap::new();
     let mut f_scores: HashMap<Point, i64> = HashMap::new();
-
 
     let start_f_score = heuristic.measure(&start, &end);
     open_set.push(Candidate::new(start.clone(), start_f_score));
@@ -166,7 +185,7 @@ where H: Hueristic, C: Cost, N: Neighbours
             let mut path_node = Some(curr_node);
             let mut total_cost = 0;
 
-            while let Some(p) = path_node  {
+            while let Some(p) = path_node {
                 let next = came_from.remove(&p);
                 if let Some(ref p1) = next {
                     let node_cost = cost.measure(&p1, &p);
@@ -176,10 +195,7 @@ where H: Hueristic, C: Cost, N: Neighbours
                 path_node = next;
             }
             // fix to take ownership of points
-            return Some(ShortestPath {
-                path,
-                total_cost,
-            });
+            return Some(ShortestPath { path, total_cost });
         }
 
         for neighbour in neighbours.neighbours(&curr_node) {
@@ -193,7 +209,10 @@ where H: Hueristic, C: Cost, N: Neighbours
                 // distance to target
                 let hueristic = heuristic.measure(&neighbour, &end);
                 f_scores.insert(neighbour.clone(), tentative_g_score + hueristic);
-                open_set.push(Candidate::new(neighbour.clone(), tentative_g_score + hueristic));
+                open_set.push(Candidate::new(
+                    neighbour.clone(),
+                    tentative_g_score + hueristic,
+                ));
             }
         }
     }
@@ -229,10 +248,7 @@ mod tests {
         let neighbours = DirectNeighbours(&plane);
         let n = neighbours.neighbours(&p);
 
-        let expected: Vec<Point> = vec![            
-            (1, 0).into(),
-            (0, 1).into(),
-        ];
+        let expected: Vec<Point> = vec![(1, 0).into(), (0, 1).into()];
         assert_eq!(n, expected);
     }
 
@@ -244,12 +260,20 @@ mod tests {
         let plane: Plane = (3, 3).into();
         let p: Point = (1, 1).into();
 
-        let expected: HashSet<Point> = HashSet::from_iter(vec![
-            (0, 2), (1, 2), (2, 2),
-            (0, 1),         (2, 1),
-            (0, 0), (1, 0), (2, 0)
-        ].into_iter()
-        .map(|p| p.into()));
+        let expected: HashSet<Point> = HashSet::from_iter(
+            vec![
+                (0, 2),
+                (1, 2),
+                (2, 2),
+                (0, 1),
+                (2, 1),
+                (0, 0),
+                (1, 0),
+                (2, 0),
+            ]
+            .into_iter()
+            .map(|p| p.into()),
+        );
 
         let neighbours = TouchingNeighbours(&plane);
         let n: HashSet<Point> = HashSet::from_iter(neighbours.neighbours(&p));
@@ -264,9 +288,9 @@ mod tests {
         let end = (5, 5).into();
 
         let result = astar(
-            start, 
-            end, 
-            &ManhattenDistance, 
+            start,
+            end,
+            &ManhattenDistance,
             &ManhattenDistance,
             &DirectNeighbours(&plane),
         );
@@ -287,14 +311,8 @@ mod tests {
         let end = (1, 1).into();
         let heuristic = StraightLine;
         let cost = StraightLine;
-        
-        let shortest_path = astar(
-            start, 
-            end, 
-            &heuristic, 
-            &cost,
-            &TouchingNeighbours(&plane),
-        );
+
+        let shortest_path = astar(start, end, &heuristic, &cost, &TouchingNeighbours(&plane));
         assert_eq!(1, shortest_path.unwrap().total_cost);
     }
 
@@ -315,14 +333,8 @@ mod tests {
         let end = (4, 3).into();
         let heuristic = StraightLine;
         let cost = StraightLine;
-        
-        let shortest_path = astar(
-            start, 
-            end, 
-            &heuristic, 
-            &cost,
-            &TouchingNeighbours(&plane),
-        );
+
+        let shortest_path = astar(start, end, &heuristic, &cost, &TouchingNeighbours(&plane));
         let tc = shortest_path.as_ref().unwrap().total_cost;
         assert_eq!(4, tc, "{:?}", shortest_path);
     }
@@ -353,15 +365,8 @@ mod tests {
             vec![INFINITY, INFINITY, INFINITY, INFINITY, 1],
             vec![1, 1, 1, 1, 1],
         ];
-        
-        let shortest_path = astar(
-            start, 
-            end, 
-            &heuristic, 
-            &cost,
-            &TouchingNeighbours(&plane),
-        );
+
+        let shortest_path = astar(start, end, &heuristic, &cost, &TouchingNeighbours(&plane));
         assert_eq!(12, shortest_path.unwrap().total_cost);
     }
-
 }

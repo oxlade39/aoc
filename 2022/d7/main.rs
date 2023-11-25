@@ -1,6 +1,5 @@
 use std::{collections::HashMap, slice::Iter};
 
-
 fn main() {
     let input = include_str!("input.txt");
     let root = parse(input);
@@ -8,11 +7,8 @@ fn main() {
 
     println!("root: {:?}    ", root);
     println!("found: {}", found.len());
-    
-    let total_size: i32 = found
-        .iter()
-        .map(|dir| dir.size())
-        .sum();
+
+    let total_size: i32 = found.iter().map(|dir| dir.size()).sum();
     println!("part1: {}", total_size);
 
     let total_disk_space = 70000000;
@@ -26,7 +22,10 @@ fn main() {
     println!("used: \t\t\t\t{}", used_space);
     println!("free: \t\t\t\t{}", free_space);
     println!("required to free: \t\t{}", required_to_free);
-    println!("smallest satisfying: \t\t{}", dirs_that_could_make_space[0].size());
+    println!(
+        "smallest satisfying: \t\t{}",
+        dirs_that_could_make_space[0].size()
+    );
 }
 
 fn to_command_chunks(input: &str) -> Vec<Vec<&str>> {
@@ -47,11 +46,7 @@ fn parse(input: &str) -> Dir {
     process_commands(commands, Dir::new("/"), vec![])
 }
 
-fn process_commands(
-    mut commands: Iter<Vec<&str>>, 
-    mut cwd: Dir, 
-    mut parents: Vec<Dir>
-) -> Dir {
+fn process_commands(mut commands: Iter<Vec<&str>>, mut cwd: Dir, mut parents: Vec<Dir>) -> Dir {
     if let Some(command) = commands.next() {
         // println!("processing: {:?}", command);
         // println!("with: \n\t{:?}\n\t{:?}", cwd, parents);
@@ -75,13 +70,13 @@ fn process_commands(
                 if file_parts[0] == "dir" {
                     cwd.add_dir(Dir::new(file_parts[1]));
                 } else {
-                    cwd.add_file(File { 
-                        name: file_parts[1].to_string(), 
-                        size: file_parts[0].parse().expect("file size") 
+                    cwd.add_file(File {
+                        name: file_parts[1].to_string(),
+                        size: file_parts[0].parse().expect("file size"),
                     });
                 }
             }
-            return process_commands(commands, cwd, parents)
+            return process_commands(commands, cwd, parents);
         }
     }
     // println!("going back up stack");
@@ -97,7 +92,7 @@ fn process_commands(
 
 fn find_dirs_smaller_than(dir: &Dir, size: i32) -> Vec<&Dir> {
     let mut matching: Vec<&Dir> = Vec::new();
-    // println!("scanning children of {:?}: {:?}", 
+    // println!("scanning children of {:?}: {:?}",
     //     dir.name,
     //     dir.child_dirs.values().map(|c|&c.name).collect::<Vec<_>>());
 
@@ -113,7 +108,7 @@ fn find_dirs_smaller_than(dir: &Dir, size: i32) -> Vec<&Dir> {
 
 fn find_dirs_larger_than(dir: &Dir, size: i32) -> Vec<&Dir> {
     let mut matching: Vec<&Dir> = Vec::new();
-    // println!("scanning children of {:?}: {:?}", 
+    // println!("scanning children of {:?}: {:?}",
     //     dir.name,
     //     dir.child_dirs.values().map(|c|&c.name).collect::<Vec<_>>());
 
@@ -155,9 +150,7 @@ impl INode for Dir {
         self.child_dirs
             .iter()
             .map(|dir| dir.1 as &dyn INode)
-            .chain(self.child_files
-                .iter()
-                .map(|f| f as &dyn INode))
+            .chain(self.child_files.iter().map(|f| f as &dyn INode))
             .map(|inode| inode.size())
             .sum()
     }
@@ -165,10 +158,10 @@ impl INode for Dir {
 
 impl Dir {
     fn new(name: &str) -> Dir {
-        Dir { 
-            name: name.to_string(), 
-            child_dirs: HashMap::new(), 
-            child_files: vec![] 
+        Dir {
+            name: name.to_string(),
+            child_dirs: HashMap::new(),
+            child_files: vec![],
         }
     }
 
@@ -179,26 +172,32 @@ impl Dir {
     fn add_file(&mut self, child: File) {
         self.child_files.push(child);
     }
-
 }
 
 #[derive(Debug, PartialEq, Clone)]
 struct DirState {
     dirs: Vec<String>,
-    files: Vec<(i32, String)>
+    files: Vec<(i32, String)>,
 }
 
 #[test]
 fn test_size() {
     let mut root = Dir::new("/");
-    root.add_file(File { name: ".tmp".to_string(), size: 1000 });
-    root.add_file(File { name: ".tmp1".to_string(), size: 50 });
-    root.add_dir(Dir { 
-        name: "a".to_string(), 
-        child_dirs: HashMap::new(), 
-        child_files: vec![
-            File { name: "a.tmp".to_string(), size: 10 }
-        ] 
+    root.add_file(File {
+        name: ".tmp".to_string(),
+        size: 1000,
+    });
+    root.add_file(File {
+        name: ".tmp1".to_string(),
+        size: 50,
+    });
+    root.add_dir(Dir {
+        name: "a".to_string(),
+        child_dirs: HashMap::new(),
+        child_files: vec![File {
+            name: "a.tmp".to_string(),
+            size: 10,
+        }],
     });
 
     let total_size = root.size();
@@ -210,11 +209,8 @@ fn test_part1_example() {
     let input = include_str!("input.example.txt");
     let root = parse(input);
     let found = find_dirs_smaller_than(&root, 100000);
-    
-    let total_size: i32 = found
-        .iter()
-        .map(|dir| dir.size())
-        .sum();
+
+    let total_size: i32 = found.iter().map(|dir| dir.size()).sum();
 
     assert_eq!(95437, total_size);
 }

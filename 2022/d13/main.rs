@@ -1,7 +1,6 @@
-use std::{str::FromStr, fmt::Debug};
+use std::{fmt::Debug, str::FromStr};
 
 use itertools::Itertools;
-
 
 fn main() {
     let input = include_str!("input.txt");
@@ -58,21 +57,19 @@ impl PacketItem {
                     } else {
                         Order::Incorrect
                     }
-                },
+                }
                 PacketItem::ComplexPacketItem(_) => {
-                    let as_complex = PacketItem::ComplexPacketItem(vec![
-                        PacketItem::SimplePacketItem(*left_i)
-                    ]);
+                    let as_complex =
+                        PacketItem::ComplexPacketItem(vec![PacketItem::SimplePacketItem(*left_i)]);
                     as_complex.order(right)
                 }
             },
             PacketItem::ComplexPacketItem(left_children) => match right {
                 PacketItem::SimplePacketItem(right_i) => {
-                    let as_complex = PacketItem::ComplexPacketItem(vec![
-                        PacketItem::SimplePacketItem(*right_i)
-                    ]);
+                    let as_complex =
+                        PacketItem::ComplexPacketItem(vec![PacketItem::SimplePacketItem(*right_i)]);
                     self.order(&as_complex)
-                },
+                }
                 PacketItem::ComplexPacketItem(right_children) => {
                     let mut left_itr = left_children.iter();
                     let mut right_itr = right_children.iter();
@@ -80,7 +77,7 @@ impl PacketItem {
                     loop {
                         let next_left = left_itr.next();
                         let next_right = right_itr.next();
-                        
+
                         match (next_left, next_right) {
                             (None, None) => return Order::Unknown,
                             (None, _) => return Order::Correct,
@@ -93,27 +90,27 @@ impl PacketItem {
                             }
                         }
                     }
-                },
-            }
+                }
+            },
         }
     }
 }
 
 fn parse(s: &str, index: usize, mut stack: Vec<Vec<PacketItem>>) -> Vec<Vec<PacketItem>> {
-    if index >= s.len() {        
-        if s != "" {        
+    if index >= s.len() {
+        if s != "" {
             let pi = PacketItem::SimplePacketItem(s.parse().expect(format!("{:?}", s).as_str()));
             let mut top = stack.pop().unwrap_or(vec![]);
             top.push(pi);
             stack.push(top);
-        };        
+        };
         return stack;
     }
-    
-    let current_str = &s[index..index+1];
+
+    let current_str = &s[index..index + 1];
     if current_str == "[" {
         stack.push(vec![]);
-        parse(&s[index+1..], 0, stack)
+        parse(&s[index + 1..], 0, stack)
     } else if current_str == "]" {
         let left = &s[..index];
         let right = &s[index + 1..];
@@ -137,15 +134,15 @@ fn parse(s: &str, index: usize, mut stack: Vec<Vec<PacketItem>>) -> Vec<Vec<Pack
 
 fn part1(input: &str) -> i64 {
     let items: Vec<Vec<PacketItem>> = input
-            .lines()
-            .chunks(3)
-            .into_iter()
-            .map(|c| {
-                c.take(2)
+        .lines()
+        .chunks(3)
+        .into_iter()
+        .map(|c| {
+            c.take(2)
                 .map(|item| item.parse().unwrap())
                 .collect::<Vec<_>>()
-            })
-            .collect();
+        })
+        .collect();
     for pair in &items {
         println!("{:?}", pair[0]);
         println!("{:?}", pair[1]);
@@ -187,26 +184,21 @@ impl Ord for PacketItem {
 }
 
 fn part2(input: &str) -> usize {
-    let divider_packets: Vec<PacketItem> = vec![
-        "[[2]]".parse().unwrap(),
-        "[[6]]".parse().unwrap(),
-    ];
+    let divider_packets: Vec<PacketItem> = vec!["[[2]]".parse().unwrap(), "[[6]]".parse().unwrap()];
 
     let mut items = divider_packets.clone();
-    let mut input_packets: Vec<_> = input.lines()
+    let mut input_packets: Vec<_> = input
+        .lines()
         .filter_map(|line| line.parse::<PacketItem>().ok())
         .collect();
     items.append(&mut input_packets);
     items.sort();
-    
+
     divider_packets
         .iter()
-        .map(|p| {
-            items.iter().position(|item| item == p).unwrap() + 1
-        })
+        .map(|p| items.iter().position(|item| item == p).unwrap() + 1)
         .product()
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -215,67 +207,76 @@ mod tests {
     #[test]
     fn test_parse_base_case() {
         let result: PacketItem = "[]".parse().unwrap();
-        
+
         assert_eq!(result, PacketItem::ComplexPacketItem(vec![]));
     }
 
     #[test]
     fn test_parse_single_item() {
         let result: PacketItem = "[1]".parse().unwrap();
-        
-        assert_eq!(result, PacketItem::ComplexPacketItem(vec![
-            PacketItem::SimplePacketItem(1),
-        ]));
+
+        assert_eq!(
+            result,
+            PacketItem::ComplexPacketItem(vec![PacketItem::SimplePacketItem(1),])
+        );
     }
 
     #[test]
     fn test_parse_two_items() {
         let result: PacketItem = "[1,2]".parse().unwrap();
-        
-        assert_eq!(result, PacketItem::ComplexPacketItem(vec![
-            PacketItem::SimplePacketItem(1),
-            PacketItem::SimplePacketItem(2),
-        ]));
+
+        assert_eq!(
+            result,
+            PacketItem::ComplexPacketItem(vec![
+                PacketItem::SimplePacketItem(1),
+                PacketItem::SimplePacketItem(2),
+            ])
+        );
     }
 
     #[test]
     fn test_parse_three_items() {
         let result: PacketItem = "[1,2,3]".parse().unwrap();
-        
-        assert_eq!(result, PacketItem::ComplexPacketItem(vec![
-            PacketItem::SimplePacketItem(1),
-            PacketItem::SimplePacketItem(2),
-            PacketItem::SimplePacketItem(3),
-        ]))
+
+        assert_eq!(
+            result,
+            PacketItem::ComplexPacketItem(vec![
+                PacketItem::SimplePacketItem(1),
+                PacketItem::SimplePacketItem(2),
+                PacketItem::SimplePacketItem(3),
+            ])
+        )
     }
 
     #[test]
     fn test_parse_single_nest_items() {
         let result: PacketItem = "[1,2,[3]]".parse().unwrap();
-        
-        assert_eq!(result, PacketItem::ComplexPacketItem(vec![
-            PacketItem::SimplePacketItem(1),
-            PacketItem::SimplePacketItem(2),
+
+        assert_eq!(
+            result,
             PacketItem::ComplexPacketItem(vec![
-                PacketItem::SimplePacketItem(3)
-            ]),
-        ]))
+                PacketItem::SimplePacketItem(1),
+                PacketItem::SimplePacketItem(2),
+                PacketItem::ComplexPacketItem(vec![PacketItem::SimplePacketItem(3)]),
+            ])
+        )
     }
 
     #[test]
     fn test_parse_more_complex_nested() {
         let result: PacketItem = "[[1],[2,3,4]]".parse().unwrap();
-        
-        assert_eq!(result, PacketItem::ComplexPacketItem(vec![
+
+        assert_eq!(
+            result,
             PacketItem::ComplexPacketItem(vec![
-                PacketItem::SimplePacketItem(1),
-            ]),
-            PacketItem::ComplexPacketItem(vec![
-                PacketItem::SimplePacketItem(2),
-                PacketItem::SimplePacketItem(3),
-                PacketItem::SimplePacketItem(4),
-            ]),
-        ]));
+                PacketItem::ComplexPacketItem(vec![PacketItem::SimplePacketItem(1),]),
+                PacketItem::ComplexPacketItem(vec![
+                    PacketItem::SimplePacketItem(2),
+                    PacketItem::SimplePacketItem(3),
+                    PacketItem::SimplePacketItem(4),
+                ]),
+            ])
+        );
     }
 
     #[test]
@@ -343,5 +344,4 @@ mod tests {
         let result = part2(input);
         assert_eq!(140, result);
     }
-
 }

@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 itertools = "0.10.5"
+rayon = "1.6.1"
 aoclib = {path = "../lib"}
 
 [[bin]]
@@ -66,3 +67,7 @@ path = "d14/main.rs"
 [[bin]]
 name = "d15"
 path = "d15/main.rs"
+
+[[bin]]
+name = "d16"
+path = "d16/main.rs"

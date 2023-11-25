@@ -1,4 +1,7 @@
-use std::{str::FromStr, collections::{HashSet, HashMap}};
+use std::{
+    collections::{HashMap, HashSet},
+    str::FromStr,
+};
 
 fn main() {
     part1();
@@ -7,7 +10,7 @@ fn main() {
 
 fn part1() {
     let input = include_str!("input.txt");
-    
+
     let chain = input.lines().nth(0).unwrap();
     let mut insertions: HashMap<[char; 2], Insertion> = HashMap::new();
 
@@ -15,7 +18,6 @@ fn part1() {
         let i: Insertion = line.parse().unwrap();
         insertions.insert(i.chain, i);
     }
-
 
     let mut input: Vec<_> = chain.chars().collect();
     let n = 10;
@@ -31,24 +33,24 @@ fn part1() {
         }
     }
 
-    let (_, max_count) = counts.iter()
+    let (_, max_count) = counts
+        .iter()
         .max_by(|left, right| left.1.cmp(right.1))
         .unwrap();
 
-    let (_, min_count) = counts.iter()
+    let (_, min_count) = counts
+        .iter()
         .min_by(|left, right| left.1.cmp(right.1))
-        .unwrap();  
+        .unwrap();
 
     println!("after n {}: len: {:?}", n, input.len());
     println!("pt1: {}", max_count - min_count);
-
-
 }
 
 fn step(input: &Vec<char>, insertions: &HashMap<[char; 2], Insertion>) -> Vec<char> {
     let mut result: Vec<char> = Vec::new();
     result.push(input[0]);
-    for chunk in input.windows(2) {        
+    for chunk in input.windows(2) {
         if let Some(insertion) = insertions.get(chunk) {
             let next = insertion.insert();
             result.push(next[1]);
@@ -61,11 +63,11 @@ fn step(input: &Vec<char>, insertions: &HashMap<[char; 2], Insertion>) -> Vec<ch
 #[derive(Debug, PartialEq, Eq, Hash)]
 struct Insertion {
     chain: [char; 2],
-    element: char
+    element: char,
 }
 
 impl Insertion {
-    fn insert(&self) -> [char; 3]{
+    fn insert(&self) -> [char; 3] {
         [self.chain[0], self.element, self.chain[1]]
     }
 }
@@ -80,14 +82,16 @@ impl FromStr for Insertion {
         let parts: Vec<_> = s.split(" -> ").collect();
         let c: Vec<_> = parts[0].chars().collect();
         let element = parts[1].chars().nth(0).unwrap();
-        Ok(Insertion{ chain: [c[0], c[1]], element })
+        Ok(Insertion {
+            chain: [c[0], c[1]],
+            element,
+        })
     }
 }
 
-
 fn part2() {
     let input = include_str!("input.txt");
-    
+
     let chain = input.lines().nth(0).unwrap();
     let mut insertions: HashMap<[char; 2], Insertion> = HashMap::new();
 
@@ -108,14 +112,12 @@ fn part2() {
             pairs.insert(item, 1);
         }
     }
-    
-    let n = 40;
 
+    let n = 40;
 
     for _ in 0..n {
         pairs = step2(&pairs, &insertions);
     }
-
 
     let mut counts: HashMap<char, i64> = HashMap::new();
     let mut all_chars: HashSet<char> = HashSet::new();
@@ -135,18 +137,30 @@ fn part2() {
         counts.insert(c, sum);
     }
 
-    let (max, max_count) = counts.iter()
+    let (max, max_count) = counts
+        .iter()
         .max_by(|left, right| left.1.cmp(right.1))
         .unwrap();
 
-    let (min, min_count) = counts.iter()
+    let (min, min_count) = counts
+        .iter()
         .min_by(|left, right| left.1.cmp(right.1))
-        .unwrap();        
+        .unwrap();
 
-    println!("pt2: {} ({} -> {}, {} -> {})", max_count - min_count, min, min_count, max, max_count);
+    println!(
+        "pt2: {} ({} -> {}, {} -> {})",
+        max_count - min_count,
+        min,
+        min_count,
+        max,
+        max_count
+    );
 }
 
-fn step2(input: &HashMap<[char; 2], i64>, insertions: &HashMap<[char; 2], Insertion>) -> HashMap<[char; 2], i64> {
+fn step2(
+    input: &HashMap<[char; 2], i64>,
+    insertions: &HashMap<[char; 2], Insertion>,
+) -> HashMap<[char; 2], i64> {
     let mut result: HashMap<[char; 2], i64> = HashMap::new();
 
     for (k, v) in input {

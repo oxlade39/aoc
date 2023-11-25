@@ -20,10 +20,7 @@ fn char_priority(c: char) -> i32 {
 }
 
 fn sum_intersection_priority(left: HashSet<char>, right: HashSet<char>) -> i32 {
-    left
-        .intersection(&right)
-        .map(|c| char_priority(*c))
-        .sum()
+    left.intersection(&right).map(|c| char_priority(*c)).sum()
 }
 
 fn total_priorities(input: &str) -> i32 {
@@ -60,7 +57,6 @@ fn chunk_3(input: &str) -> i32 {
         })
         .sum()
 }
-
 
 #[test]
 fn test_char_priority() {

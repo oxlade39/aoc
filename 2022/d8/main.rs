@@ -1,6 +1,5 @@
 use std::collections::{HashMap, HashSet};
 
-
 fn main() {
     let input = include_str!("input.txt");
     let visible = resolve_visible(input);
@@ -8,11 +7,7 @@ fn main() {
 
     let heights = parse_heights(input);
     let scores = build_scenic_score_grid(&heights);
-    let max_score = scores
-        .iter()
-        .flat_map(|row| row)
-        .max()
-        .unwrap();
+    let max_score = scores.iter().flat_map(|row| row).max().unwrap();
     println!("part2: {}", max_score);
 }
 
@@ -69,15 +64,15 @@ fn print_visible(visible: &HashSet<(usize, usize)>, width: usize, height: usize)
 fn parse_heights(input: &str) -> Vec<Vec<i32>> {
     input
         .lines()
-        .map(|line| line
-            .chars()
-            .map(|digit| digit.to_digit(10).expect("digit") as i32)
-            .collect::<Vec<_>>())
+        .map(|line| {
+            line.chars()
+                .map(|digit| digit.to_digit(10).expect("digit") as i32)
+                .collect::<Vec<_>>()
+        })
         .collect::<Vec<_>>()
 }
 
 fn resolve_visible(input: &str) -> HashSet<(usize, usize)> {
-    
     let heights = parse_heights(input);
 
     let mut visible: HashSet<(usize, usize)> = HashSet::new();
@@ -90,7 +85,7 @@ fn resolve_visible(input: &str) -> HashSet<(usize, usize)> {
             if item > max {
                 max = item;
                 visible.insert((height, width));
-            }            
+            }
         }
     }
 
@@ -102,7 +97,7 @@ fn resolve_visible(input: &str) -> HashSet<(usize, usize)> {
             if item > max {
                 max = item;
                 visible.insert((height, width));
-            }            
+            }
         }
     }
 
@@ -114,7 +109,7 @@ fn resolve_visible(input: &str) -> HashSet<(usize, usize)> {
             if item > max {
                 max = item;
                 visible.insert((height, width));
-            }            
+            }
         }
     }
 
@@ -126,7 +121,7 @@ fn resolve_visible(input: &str) -> HashSet<(usize, usize)> {
             if item > max {
                 max = item;
                 visible.insert((height, width));
-            }            
+            }
         }
     }
     visible
@@ -152,7 +147,6 @@ fn build_scenic_score_grid(heights: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
 
     for height in 1..=(max_height - 1) {
         for width in 1..=(max_width - 1) {
-
             let current_height = heights[height][width];
 
             let mut tree_counts = [0, 0, 0, 0];
@@ -197,7 +191,8 @@ fn build_scenic_score_grid(heights: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
                 }
             }
 
-            scenic_scores[height][width] = tree_counts[0] * tree_counts[1] * tree_counts[2] * tree_counts[3];
+            scenic_scores[height][width] =
+                tree_counts[0] * tree_counts[1] * tree_counts[2] * tree_counts[3];
         }
     }
 

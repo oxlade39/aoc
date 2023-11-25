@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-
 fn main() {
     let input = include_str!("input.txt");
     let total: i32 = total_score(input);
@@ -13,7 +12,7 @@ fn main() {
 enum HandShape {
     Rock,
     Paper,
-    Sissors
+    Sissors,
 }
 
 #[derive(Debug, PartialEq)]
@@ -49,14 +48,14 @@ impl FromStr for Round {
             "A" => Ok(HandShape::Rock),
             "B" => Ok(HandShape::Paper),
             "C" => Ok(HandShape::Sissors),
-            other => Err(RoundParseError::BadOpponent(other.into()))
+            other => Err(RoundParseError::BadOpponent(other.into())),
         }?;
 
         let ours = match parts[1] {
             "X" => Ok(HandShape::Rock),
-            "Y" => Ok(HandShape::Paper),            
+            "Y" => Ok(HandShape::Paper),
             "Z" => Ok(HandShape::Sissors),
-            other => Err(RoundParseError::BadOurs(other.into()))
+            other => Err(RoundParseError::BadOurs(other.into())),
         }?;
 
         Ok(Round(oppononent, ours))
@@ -76,14 +75,14 @@ impl FromStr for RoundStrategy {
             "A" => Ok(HandShape::Rock),
             "B" => Ok(HandShape::Paper),
             "C" => Ok(HandShape::Sissors),
-            other => Err(RoundStategyParseError::BadOpponent(other.into()))
+            other => Err(RoundStategyParseError::BadOpponent(other.into())),
         }?;
 
         let pr = match parts[1] {
             "X" => Ok(PlayResult::Lose),
-            "Y" => Ok(PlayResult::Draw),            
+            "Y" => Ok(PlayResult::Draw),
             "Z" => Ok(PlayResult::Win),
-            other => Err(RoundStategyParseError::BadResult(other.into()))
+            other => Err(RoundStategyParseError::BadResult(other.into())),
         }?;
 
         Ok(RoundStrategy(oppononent, pr))
@@ -94,23 +93,41 @@ impl FromStr for RoundStrategy {
 enum PlayResult {
     Draw,
     Win,
-    Lose
+    Lose,
 }
 
 impl RoundStrategy {
     fn to_round(&self) -> Round {
         match self {
-            RoundStrategy(HandShape::Paper, PlayResult::Draw) => Round(HandShape::Paper, HandShape::Paper),
-            RoundStrategy(HandShape::Paper, PlayResult::Lose) => Round(HandShape::Paper, HandShape::Rock),
-            RoundStrategy(HandShape::Paper, PlayResult::Win) => Round(HandShape::Paper, HandShape::Sissors),
+            RoundStrategy(HandShape::Paper, PlayResult::Draw) => {
+                Round(HandShape::Paper, HandShape::Paper)
+            }
+            RoundStrategy(HandShape::Paper, PlayResult::Lose) => {
+                Round(HandShape::Paper, HandShape::Rock)
+            }
+            RoundStrategy(HandShape::Paper, PlayResult::Win) => {
+                Round(HandShape::Paper, HandShape::Sissors)
+            }
 
-            RoundStrategy(HandShape::Rock, PlayResult::Draw) => Round(HandShape::Rock, HandShape::Rock),
-            RoundStrategy(HandShape::Rock, PlayResult::Lose) => Round(HandShape::Rock, HandShape::Sissors),
-            RoundStrategy(HandShape::Rock, PlayResult::Win) => Round(HandShape::Rock, HandShape::Paper),
+            RoundStrategy(HandShape::Rock, PlayResult::Draw) => {
+                Round(HandShape::Rock, HandShape::Rock)
+            }
+            RoundStrategy(HandShape::Rock, PlayResult::Lose) => {
+                Round(HandShape::Rock, HandShape::Sissors)
+            }
+            RoundStrategy(HandShape::Rock, PlayResult::Win) => {
+                Round(HandShape::Rock, HandShape::Paper)
+            }
 
-            RoundStrategy(HandShape::Sissors, PlayResult::Draw) => Round(HandShape::Sissors, HandShape::Sissors),
-            RoundStrategy(HandShape::Sissors, PlayResult::Lose) => Round(HandShape::Sissors, HandShape::Paper),
-            RoundStrategy(HandShape::Sissors, PlayResult::Win) => Round(HandShape::Sissors, HandShape::Rock)
+            RoundStrategy(HandShape::Sissors, PlayResult::Draw) => {
+                Round(HandShape::Sissors, HandShape::Sissors)
+            }
+            RoundStrategy(HandShape::Sissors, PlayResult::Lose) => {
+                Round(HandShape::Sissors, HandShape::Paper)
+            }
+            RoundStrategy(HandShape::Sissors, PlayResult::Win) => {
+                Round(HandShape::Sissors, HandShape::Rock)
+            }
         }
     }
 }
@@ -127,7 +144,7 @@ impl Round {
             Round(HandShape::Rock, HandShape::Sissors) => PlayResult::Lose,
             Round(HandShape::Sissors, HandShape::Rock) => PlayResult::Win,
 
-            _ => PlayResult::Draw
+            _ => PlayResult::Draw,
         }
     }
 
@@ -135,12 +152,12 @@ impl Round {
         let result_score = match self.play() {
             PlayResult::Lose => 0,
             PlayResult::Draw => 3,
-            PlayResult::Win => 6
+            PlayResult::Win => 6,
         };
         let choice_score = match self.1 {
-            HandShape::Rock => 1, 
-            HandShape::Paper => 2, 
-            HandShape::Sissors => 3 
+            HandShape::Rock => 1,
+            HandShape::Paper => 2,
+            HandShape::Sissors => 3,
         };
 
         result_score + choice_score
@@ -149,19 +166,19 @@ impl Round {
 
 fn total_score(input: &str) -> i32 {
     input
-    .lines()
-    .map(|l| l.parse::<Round>().unwrap())
-    .map(|round| round.score())
-    .sum()
+        .lines()
+        .map(|l| l.parse::<Round>().unwrap())
+        .map(|round| round.score())
+        .sum()
 }
 
 fn total_score_2(input: &str) -> i32 {
     input
-    .lines()
-    .map(|l| l.parse::<RoundStrategy>().unwrap())
-    .map(|rs| rs.to_round())
-    .map(|r| r.score())
-    .sum()
+        .lines()
+        .map(|l| l.parse::<RoundStrategy>().unwrap())
+        .map(|rs| rs.to_round())
+        .map(|r| r.score())
+        .sum()
 }
 
 #[test]
@@ -177,28 +194,58 @@ fn test_parse_round_strategy() {
     let line = "A Y";
     let round_strategy = line.parse().unwrap();
 
-    assert_eq!(RoundStrategy(HandShape::Rock, PlayResult::Draw), round_strategy);
+    assert_eq!(
+        RoundStrategy(HandShape::Rock, PlayResult::Draw),
+        round_strategy
+    );
 }
 
 #[test]
 fn test_play_rock() {
-    assert_eq!(PlayResult::Win, Round(HandShape::Sissors, HandShape::Rock).play());
-    assert_eq!(PlayResult::Lose, Round(HandShape::Paper, HandShape::Rock).play());
-    assert_eq!(PlayResult::Draw, Round(HandShape::Rock, HandShape::Rock).play());
+    assert_eq!(
+        PlayResult::Win,
+        Round(HandShape::Sissors, HandShape::Rock).play()
+    );
+    assert_eq!(
+        PlayResult::Lose,
+        Round(HandShape::Paper, HandShape::Rock).play()
+    );
+    assert_eq!(
+        PlayResult::Draw,
+        Round(HandShape::Rock, HandShape::Rock).play()
+    );
 }
 
 #[test]
 fn test_play_paper() {
-    assert_eq!(PlayResult::Win, Round(HandShape::Rock, HandShape::Paper).play());
-    assert_eq!(PlayResult::Lose, Round(HandShape::Sissors, HandShape::Paper).play());
-    assert_eq!(PlayResult::Draw, Round(HandShape::Paper, HandShape::Paper).play());
+    assert_eq!(
+        PlayResult::Win,
+        Round(HandShape::Rock, HandShape::Paper).play()
+    );
+    assert_eq!(
+        PlayResult::Lose,
+        Round(HandShape::Sissors, HandShape::Paper).play()
+    );
+    assert_eq!(
+        PlayResult::Draw,
+        Round(HandShape::Paper, HandShape::Paper).play()
+    );
 }
 
 #[test]
 fn test_play_scissors() {
-    assert_eq!(PlayResult::Win, Round(HandShape::Paper, HandShape::Sissors).play());
-    assert_eq!(PlayResult::Lose, Round(HandShape::Rock, HandShape::Sissors).play());
-    assert_eq!(PlayResult::Draw, Round(HandShape::Sissors, HandShape::Sissors).play());
+    assert_eq!(
+        PlayResult::Win,
+        Round(HandShape::Paper, HandShape::Sissors).play()
+    );
+    assert_eq!(
+        PlayResult::Lose,
+        Round(HandShape::Rock, HandShape::Sissors).play()
+    );
+    assert_eq!(
+        PlayResult::Draw,
+        Round(HandShape::Sissors, HandShape::Sissors).play()
+    );
 }
 
 #[test]

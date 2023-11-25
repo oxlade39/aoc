@@ -28,7 +28,8 @@ fn part1() {
 }
 
 fn part2() {
-    let items: Vec<_> = include_str!("input.txt").lines()
+    let items: Vec<_> = include_str!("input.txt")
+        .lines()
         .map(|line| line.parse::<SnailFishPair>().unwrap())
         .collect();
 
@@ -39,14 +40,14 @@ fn part2() {
             let mut flatten_right: Vec<(i8, Item)> = Vec::new();
             flatten(left, &mut flatten_left, 0);
             flatten(right, &mut flatten_right, 0);
-            
+
             let combined = combine(&flatten_left, &flatten_right);
             let result = step(&combined);
             let mag = to_num(&magnitude(&result, 3)[0].1);
             max = i64::max(max, mag);
         }
     }
-    
+
     println!("part2: {}", max);
 }
 
@@ -120,7 +121,6 @@ fn test_explode() {
     // let snf: SnailFishPair = "[[[[4,3],4],4],[7,[[8,4],9]]]".parse().unwrap();
     // let snf: SnailFishPair = "[[[[[1,1],[2,2]],[3,3]],[4,4]],[5,5]]".parse().unwrap();
 
-    
     let mut flattened: Vec<(i8, Item)> = Vec::new();
     flatten(&snf, &mut flattened, 0);
 
@@ -142,7 +142,7 @@ fn test_split() {
     println!("before split:\n{:?}", exploded);
 
     let after_split = split(&exploded);
-    
+
     println!("after split\n{:?}", after_split);
 }
 
@@ -151,7 +151,7 @@ fn test_step() {
     let snf: SnailFishPair = "[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]".parse().unwrap();
     let mut flattened: Vec<(i8, Item)> = Vec::new();
     flatten(&snf, &mut flattened, 0);
-    
+
     let results = step(&flattened);
 
     println!("after step:\n{:?}", results);
@@ -170,14 +170,14 @@ fn flatten_item(item: &Item, accum: &mut Vec<(i8, Item)>, depth: i8) {
         Item::Pair(snf) => flatten(snf, accum, depth + 1),
         other => {
             accum.push((depth, other.clone()));
-        },        
+        }
     }
 }
 
 fn to_num(item: &Item) -> i64 {
     match item {
         Item::RegularNumber(n) => *n,
-        _ => panic!("expected RegularNumber but found Pair")
+        _ => panic!("expected RegularNumber but found Pair"),
     }
 }
 
@@ -209,7 +209,6 @@ fn explode(flattened: &Vec<(i8, Item)>) -> Vec<(i8, Item)> {
     let mut done_explode = false;
 
     for (depth, item) in flattened {
-
         if done_explode {
             to_return.push((*depth, item.clone()));
         } else if left_right.len() == 2 {
@@ -234,7 +233,6 @@ fn explode(flattened: &Vec<(i8, Item)>) -> Vec<(i8, Item)> {
                 to_return.push((*depth, item.clone()));
             }
         }
-
     }
 
     if !done_explode && left_right.len() == 2 {
@@ -246,7 +244,7 @@ fn explode(flattened: &Vec<(i8, Item)>) -> Vec<(i8, Item)> {
         to_return.push((last.0, Item::RegularNumber(sum)));
         to_return.push((3, Item::RegularNumber(0)));
     }
-    
+
     to_return
 }
 
@@ -274,7 +272,9 @@ fn split(to_split: &Vec<(i8, Item)>) -> Vec<(i8, Item)> {
 #[test]
 fn test_magnitude() {
     // let snf: SnailFishPair = "[[1,2],[[3,4],5]]".parse().unwrap();
-    let snf: SnailFishPair = "[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]".parse().unwrap();
+    let snf: SnailFishPair = "[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]"
+        .parse()
+        .unwrap();
     let mut flattened: Vec<(i8, Item)> = Vec::new();
     flatten(&snf, &mut flattened, 0);
 
@@ -295,7 +295,7 @@ fn magnitude(items: &Vec<(i8, Item)>, level: i8) -> Vec<(i8, Item)> {
         for (depth, item) in items {
             if *depth == level {
                 if let Some(left) = pair.pop() {
-                    let m = (3*left)+(2*to_num(item));
+                    let m = (3 * left) + (2 * to_num(item));
                     next.push((level - 1, Item::RegularNumber(m)));
                 } else {
                     pair.push(to_num(item));
@@ -366,7 +366,6 @@ fn test_combine2() {
     let result = step(&combined);
     println!("r:\n{:?}", result);
 }
-
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct SnailFishPair {

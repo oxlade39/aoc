@@ -66,7 +66,7 @@ struct Grid(Vec<Vec<i32>>, usize, usize);
 struct GridParseErr {
     line: usize,
     col: usize,
-    value: char
+    value: char,
 }
 
 impl FromStr for Grid {
@@ -82,7 +82,11 @@ impl FromStr for Grid {
                 if let Some(value) = c.to_digit(RADIX) {
                     grid[i][j] = value as i32;
                 } else {
-                    return Err(GridParseErr{ line: i, col: j, value: c });
+                    return Err(GridParseErr {
+                        line: i,
+                        col: j,
+                        value: c,
+                    });
                 }
             }
         }
@@ -146,11 +150,14 @@ impl Grid {
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 struct Position {
     row: i32,
-    col: i32
+    col: i32,
 }
 
 impl From<(i32, i32)> for Position {
     fn from(pair: (i32, i32)) -> Self {
-        Position { row: pair.0, col: pair.1 }
+        Position {
+            row: pair.0,
+            col: pair.1,
+        }
     }
 }

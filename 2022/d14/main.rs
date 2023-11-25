@@ -1,7 +1,6 @@
-use std::{str::FromStr, collections::HashSet};
+use std::{collections::HashSet, str::FromStr};
 
-use aoclib::cartesian::{Vector, Point, Transform, Plane};
-
+use aoclib::cartesian::{Plane, Point, Transform, Vector};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -26,11 +25,7 @@ impl Cave {
             return Err((p, self));
         }
 
-        let next: [Transform; 3] = [
-            (0, 1).into(),
-            (-1, 1).into(),
-            (1, 1).into(),
-        ];
+        let next: [Transform; 3] = [(0, 1).into(), (-1, 1).into(), (1, 1).into()];
 
         let mut cave = self;
 
@@ -42,7 +37,7 @@ impl Cave {
                 return cave.try_add_point(next_p);
             }
         }
-        
+
         let new_sand_added = cave.sand.insert(p.clone());
         if !new_sand_added {
             Err((p.clone(), cave))
@@ -78,12 +73,16 @@ impl FromStr for Cave {
                 vectors.push((left, right).into());
             }
         }
-        Ok(Cave { rock_paths: vectors, sand: HashSet::new(), max_depth })
+        Ok(Cave {
+            rock_paths: vectors,
+            sand: HashSet::new(),
+            max_depth,
+        })
     }
 }
 
 fn part1(input: &str) -> usize {
-    let mut cave: Cave = input.parse().unwrap();    
+    let mut cave: Cave = input.parse().unwrap();
     let mut count = 0;
     loop {
         let falling_from: Point = (500, 0).into();
@@ -91,9 +90,9 @@ fn part1(input: &str) -> usize {
             Result::Ok(c) => {
                 cave = c;
                 count += 1;
-            },
-            Result::Err(_) => {                    
-                break;   
+            }
+            Result::Err(_) => {
+                break;
             }
         }
     }
@@ -101,10 +100,10 @@ fn part1(input: &str) -> usize {
 }
 
 fn part2(input: &str) -> usize {
-    let mut cave: Cave = input.parse().unwrap();    
-    cave.rock_paths.push(Vector { 
-        start: (i64::MIN, cave.max_depth + 2).into(), 
-        end: (i64::MAX, cave.max_depth + 2).into(), 
+    let mut cave: Cave = input.parse().unwrap();
+    cave.rock_paths.push(Vector {
+        start: (i64::MIN, cave.max_depth + 2).into(),
+        end: (i64::MAX, cave.max_depth + 2).into(),
     });
     cave.max_depth = cave.max_depth + 2;
 
@@ -115,9 +114,9 @@ fn part2(input: &str) -> usize {
             Result::Ok(c) => {
                 cave = c;
                 count += 1;
-            },
-            Result::Err(_) => {                    
-                break;   
+            }
+            Result::Err(_) => {
+                break;
             }
         }
     }
@@ -136,7 +135,7 @@ mod test {
                 let is_wall = !is_sand && c.rock_paths.iter().any(|path| point.on(path));
                 if is_wall {
                     print!("#")
-                } else if is_sand {                
+                } else if is_sand {
                     print!("O")
                 } else {
                     print!(".")
@@ -153,35 +152,18 @@ mod test {
             sand: HashSet::new(),
             rock_paths: vec![
                 // line 1
-                (
-                    (498, 4).into(),
-                    (498, 6).into(),
-                ).into(),
-                (
-                    (498, 6).into(),
-                    (496, 6).into(),
-                ).into(),
-
+                ((498, 4).into(), (498, 6).into()).into(),
+                ((498, 6).into(), (496, 6).into()).into(),
                 // line 2
-                (
-                    (503, 4).into(),
-                    (502, 4).into(),
-                ).into(),
-                (
-                    (502, 4).into(),
-                    (502, 9).into(),
-                ).into(),
-                (
-                    (502, 9).into(),
-                    (494, 9).into(),
-                ).into(),
+                ((503, 4).into(), (502, 4).into()).into(),
+                ((502, 4).into(), (502, 9).into()).into(),
+                ((502, 9).into(), (494, 9).into()).into(),
             ],
-            max_depth: 9
+            max_depth: 9,
         };
 
         assert_eq!(Ok(expected), input.parse())
     }
-
 
     #[test]
     fn test_example_input() {
@@ -199,10 +181,10 @@ mod test {
                     cave = c;
                     count += 1;
                     // println!("{} sand added", count);
-                },
-                Result::Err(_) => {                    
+                }
+                Result::Err(_) => {
                     // println!("overflow at {:?}", overflow);
-                    break;   
+                    break;
                 }
             }
             draw(&cave, &plane);
@@ -224,5 +206,4 @@ mod test {
         let result = part2(input);
         assert_eq!(93, result);
     }
-
 }
