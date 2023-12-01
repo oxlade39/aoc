@@ -1,0 +1,13 @@
+[package]
+name = "aoc2023"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+itertools = "0.10.5"
+rayon = "1.6.1"
+aoclib = {path = "../lib"}
+
+[[bin]]
+name = "d1"
+path = "d1/main.rs"
