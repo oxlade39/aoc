@@ -65,7 +65,6 @@ fn part1(txt: &str) -> i32 {
 
                         if counts {
                             let num = num_chars.parse::<i32>().expect("numeric");
-                            println!("adding: {}", num);
                             total += num;
                         }
                         num_chars.clear();
@@ -76,7 +75,6 @@ fn part1(txt: &str) -> i32 {
         }
         if counts && !num_chars.is_empty() {
             let num = num_chars.parse::<i32>().expect("numeric");
-            println!("adding: {}", num);
             total += num;
         }
         num_chars.clear();
@@ -85,12 +83,111 @@ fn part1(txt: &str) -> i32 {
 }
 
 fn part2(txt: &str) -> i32 {
-    -1
+    let grid = txt.lines()
+        .map(|l| l.chars().collect_vec())
+        .collect_vec();
+    
+    let plane: Plane = (grid.len() as i64, grid[0].len() as i64).into();
+
+    let mut markers: HashMap<Point, HashSet<Number>> = HashMap::new();
+    let mut numbers = Vec::new();
+
+    for row in 0..grid.len() {
+        let mut n = String::new();
+        for col in 0..grid[0].len() {
+
+            let c = grid[row][col];
+
+            match c {
+                other if other.is_numeric() => {
+                    n.push(other);
+                },
+                other => {
+                    if other == '*' {
+                        let p = Point {
+                            x: col as i64,
+                            y: row as i64
+                        };
+                        markers.insert(p, HashSet::new());
+                    }
+
+                    if !n.is_empty() {
+                        let num = n.parse::<i32>().expect("number");
+                        n.clear();
+                        numbers.push(Number {
+                            n: num,
+                            right: Point { x: (col - 1) as i64, y: row as i64 }
+                        });
+                    }
+                }
+            }
+
+        }
+        if !n.is_empty() {
+            let num = n.parse::<i32>().expect("number");
+            numbers.push(Number {
+                n: num,
+                right: Point { x: (grid[0].len() - 1) as i64, y: row as i64 }
+            });
+        }
+    }
+
+    for num in numbers {
+        for n in num.neighbours(&plane) {
+            if let Some(marker) = markers.get_mut(&n) {
+                marker.insert(num.clone());
+            }
+        }
+    }
+
+    markers.iter()
+        .filter(|(_, v)| v.len() == 2)
+        .map(|(_, v)| {
+            v.iter().map(|n| n.n)
+            .product::<i32>()
+        })
+        .sum()
+}
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
+struct Number {
+    n: i32,
+    right: Point,
+}
+
+impl Number {
+    fn left(&self) -> Point {
+        let width = format!("{}", self.n).len();
+        Point { x: self.right.x + 1 - (width as i64), y: self.right.y }
+    }
+
+    fn neighbours(&self, plane: &Plane) -> HashSet<Point> {
+        let mut result = HashSet::new();
+        let n = TouchingNeighbours(plane);
+        for x in self.left().x..=self.right.x {
+            result.extend(n.neighbours(&Point { 
+                x: x, 
+                y: self.right.y 
+            }));
+        }
+
+        result
+    }
 }
 
 
 mod tests {
     use crate::*;
+
+    #[test]
+    fn test_left_and_right() {
+        let n = Number {
+            n: 114,
+            right: Point { x: 7, y: 0 }
+        };
+        let left: Point = (5, 0).into();
+        assert_eq!(left, n.left());
+    }
 
     #[test]
     fn test_example_p1() {
@@ -99,6 +196,6 @@ mod tests {
 
     #[test]
     fn test_example_p2() {
-        assert_eq!(-1, part2(include_str!("input.test.txt")));
+        assert_eq!(467835, part2(include_str!("input.test.txt")));
     }
 }
