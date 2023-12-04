@@ -83,6 +83,7 @@ impl FromStr for Card {
 }
 
 
+#[cfg(test)]
 mod tests {
     use crate::*;
 
