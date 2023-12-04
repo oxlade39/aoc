@@ -55,3 +55,51 @@ impl Neighbours for TouchingNeighbours<'_> {
         .collect()
     }
 }
+
+#[cfg(test)]
+mod test {
+    use std::collections::HashSet;
+
+    use crate::{cartesian::{Point, Plane}, neighbour::{DirectNeighbours, Neighbours, TouchingNeighbours}};
+
+
+    #[test]
+    fn test_direct_neighbours_at_edge() {
+        let p: Point = (0, 0).into();
+        let plane: Plane = (10, 10).into();
+        let neighbours = DirectNeighbours(&plane);
+        let n = neighbours.neighbours(&p);
+
+        let expected: Vec<Point> = vec![(1, 0).into(), (0, 1).into()];
+        assert_eq!(n, expected);
+    }
+
+    #[test]
+    fn test_touching_neighbours_includes_diagonals() {
+        // ...
+        // .P.
+        // ...
+        let plane: Plane = (3, 3).into();
+        let p: Point = (1, 1).into();
+
+        let expected: HashSet<Point> = HashSet::from_iter(
+            vec![
+                (0, 2),
+                (1, 2),
+                (2, 2),
+                (0, 1),
+                (2, 1),
+                (0, 0),
+                (1, 0),
+                (2, 0),
+            ]
+            .into_iter()
+            .map(|p| p.into()),
+        );
+
+        let neighbours = TouchingNeighbours(&plane);
+        let n: HashSet<Point> = HashSet::from_iter(neighbours.neighbours(&p));
+
+        assert_eq!(n, expected);
+    }
+}
