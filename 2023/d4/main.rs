@@ -10,24 +10,28 @@ fn main() {
 }
 
 fn part1(txt: &str) -> i64 {
-    // let cards = txt.lines()
-    //     .map(|l| l.parse::<Card>().unwrap())
-    //     .collect_vec();
-
-    // for (i, c) in cards.iter().enumerate() {
-    //     println!("card: {:?}: {:?} points", i + 1, c.points());
-    //     println!("");
-    // }
-    
-
     txt.lines()
         .map(|l| l.parse::<Card>().unwrap())
         .map(|card| card.points())
         .sum()
 }
 
-fn part2(txt: &str) -> i32 {
-    -1
+fn part2(txt: &str) -> u32 {
+    let cards = txt.lines()
+        .map(|l| l.parse::<Card>().unwrap())
+        .collect_vec();
+    let mut card_counts = vec![1; cards.len()];
+
+    for i in 0..cards.len() {
+        let card = &cards[i];
+        let points = card.matches();
+        for _ in 0..card_counts[i] {
+            for j in (i + 1)..(i + 1 + points as usize) {
+                card_counts[j] += 1;
+            }
+        }        
+    }
+    card_counts.iter().sum()
 }
 
 #[derive(Debug)]
@@ -37,13 +41,17 @@ struct Card {
 }
 
 impl Card {
-    fn points(&self) -> i64 {
+    fn matches(&self) -> u32 {
         let intersection = self.numbers.intersection(&self.winners);
-        let count = intersection.count();
+        intersection.count() as u32
+    }
+
+    fn points(&self) -> i64 {
+        let count = *&self.matches();
         if count == 0 {
             0
         } else {
-            2_i64.pow((count - 1) as u32)
+            2_i64.pow(count - 1)
         }
     }
 }
@@ -52,7 +60,7 @@ impl FromStr for Card {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut parts = s.split(" | ").collect_vec();
+        let parts = s.split(" | ").collect_vec();
         
         let winners = parts[0]
             .split(": ")
@@ -116,6 +124,6 @@ mod tests {
 
     #[test]
     fn test_example_p2() {
-        assert_eq!(-1, part2(include_str!("input.test.txt")));
+        assert_eq!(30, part2(include_str!("input.test.txt")));
     }
 }
