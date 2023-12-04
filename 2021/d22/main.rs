@@ -1,5 +1,4 @@
 use std::time::Instant;
-use std::{collections::HashMap, fmt::Debug, str::FromStr};
 
 fn main() {
     let start = Instant::now();
@@ -59,6 +58,6 @@ fn parse_parts(axis_str: &str) -> (i64, i64) {
 }
 
 fn part2() {
-    let input = include_str!("input.txt");
+    let _ = include_str!("input.txt");
     println!("result: {}", 1);
 }

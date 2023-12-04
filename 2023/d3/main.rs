@@ -1,6 +1,6 @@
 use std::collections::{HashSet, HashMap};
 
-use aoclib::{cartesian::{Point, Plane}, astar::TouchingNeighbours, astar::Neighbours};
+use aoclib::{cartesian::{Point, Plane}, neighbour::TouchingNeighbours, neighbour::Neighbours};
 use itertools::Itertools;
 
 
@@ -175,7 +175,7 @@ impl Number {
     }
 }
 
-
+#[cfg(test)]
 mod tests {
     use crate::*;
 

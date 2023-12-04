@@ -1,8 +1,8 @@
 use std::str::FromStr;
 
 use aoclib::{
-    astar::{self, Cost, DirectNeighbours, StraightLine},
-    cartesian::{Plane, Point},
+    astar::{self, Cost, StraightLine},
+    cartesian::{Plane, Point}, neighbour::DirectNeighbours,
 };
 
 fn main() {
@@ -139,7 +139,7 @@ impl<T: Cost> Cost for OnlyUpOneCost<'_, T> {
 
 #[cfg(test)]
 mod tests {
-    use aoclib::astar::{self, DirectNeighbours, StraightLine};
+    use aoclib::astar::{self, StraightLine};
 
     use crate::*;
 

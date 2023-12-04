@@ -1,7 +1,5 @@
 use std::{num::ParseIntError, str::FromStr};
 
-use itertools::Itertools;
-
 fn main() {
     let input = include_str!("input.txt");
     println!("part1: {}", part1(input));

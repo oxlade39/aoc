@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 fn main() {
     let input = include_str!("input.txt");
@@ -48,6 +48,7 @@ fn test_pt2_example() {
     assert_eq!(8, scores[3][2], "3,2");
 }
 
+#[cfg(test)]
 fn print_visible(visible: &HashSet<(usize, usize)>, width: usize, height: usize) {
     for i in 0..=height {
         println!("");

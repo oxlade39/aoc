@@ -1,6 +1,6 @@
 use std::{collections::HashSet, str::FromStr};
 
-use aoclib::cartesian::{Plane, Point, Transform, Vector};
+use aoclib::cartesian::{Point, Transform, Vector};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -125,6 +125,8 @@ fn part2(input: &str) -> usize {
 
 #[cfg(test)]
 mod test {
+    use aoclib::cartesian::Plane;
+
     use super::*;
 
     fn draw(c: &Cave, p: &Plane) {
