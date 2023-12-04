@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     cartesian::{Point, Vector},
-    distance::StraightLineDistance, neighbour::Neighbours,
+    distance::StraightLineDistance, neighbour::{Neighbours},
 };
 
 /// Use sufficiently high number that a real hueristic wouldn't be above
@@ -110,7 +110,7 @@ pub fn astar<H, C, N>(
 where
     H: Hueristic,
     C: Cost,
-    N: Neighbours,
+    N: Neighbours<Point>,
 {
     let mut open_set: BinaryHeap<Candidate> = BinaryHeap::new();
     let mut came_from: HashMap<Point, Point> = HashMap::new();
