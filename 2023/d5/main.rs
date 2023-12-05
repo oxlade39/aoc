@@ -1,5 +1,6 @@
 use std::{str::FromStr, collections::HashMap, i64};
 
+use aoclib::input;
 use itertools::Itertools;
 
 
@@ -10,10 +11,7 @@ fn main() {
 }
 
 fn part1(txt: &str) -> i64 {
-    // TODO make os portable (carriage returns)
-    let sep = "\r\n\r\n";
-
-    let mut parts = txt.split(sep);
+    let mut parts = input::empty_line_chunks(txt);
 
     let seeds = parts.next()
         .expect("first row")
@@ -46,9 +44,7 @@ fn part1(txt: &str) -> i64 {
 } 
 
 fn part2(txt: &str) -> i64 {
-    let sep = "\r\n\r\n";
-
-    let mut parts = txt.split(sep);
+    let mut parts = input::empty_line_chunks(txt);
 
     let seeds = parts.next()
         .expect("first row")
@@ -213,8 +209,7 @@ struct Mapping {
 impl Mapping {
     fn resolve(&self, source: i64) -> i64 {
         match self.ranges.iter()
-            .filter_map(|range| range.resolve(source))
-            .next() {
+            .find_map(|range| range.resolve(source)) {
                 Some(x) => x,
                 _ => source
             }
@@ -222,8 +217,7 @@ impl Mapping {
 
     fn reverse_resolve(&self, target: i64) -> i64 {
         match self.ranges.iter()
-            .filter_map(|range| range.reverse_resolve(target))
-            .next() {
+            .find_map(|range| range.reverse_resolve(target)) {
                 Some(x) => x,
                 _ => target
             }
@@ -324,8 +318,7 @@ mod tests {
     #[test]
     fn test_full_example_pt2() {
         let input = include_str!("input.test.txt");
-        let sep = "\r\n\r\n";
-        let mappings = input.split(sep).skip(1)
+        let mappings = input::empty_line_chunks(input).skip(1)
             .map(|chunk| chunk.parse::<Mapping>().unwrap())
             .collect_vec();
 
@@ -340,7 +333,7 @@ mod tests {
         // 46, and location 46. 
         // So, the lowest location number is 46
 
-        let expects: [i64; 7] = [
+        let _expects: [i64; 7] = [
             82,
             84,
             84,

@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use crate::cartesian::{Point, Transform, Plane, Vector};
 
 pub trait Neighbours<T> {
