@@ -45,47 +45,6 @@ fn part1(txt: &str) -> i64 {
     *locations.iter().min().unwrap()
 } 
 
-fn create_graph(txt: &str) -> (SeedRanges, HashMap<String, Mapping>) {
-    let sep = "\r\n\r\n";
-
-    let mut parts = txt.split(sep);
-
-    let seeds = parts.next()
-        .expect("first row")
-        .parse::<SeedRanges>().expect("seeds");
-
-    let mut graph: HashMap<String, Mapping> = HashMap::new();
-
-    for m in parts
-        .map(|p| p.parse::<Mapping>().expect("mapping")) {
-            let clone = m.clone();
-            graph.insert(
-                clone.to.to_owned(), 
-                clone
-            );
-    }
-
-    (seeds, graph)
-}
-
-fn find_item(
-    graph: &HashMap<String, Mapping>,
-    seeds: &SeedRanges,
-    location: i64
-) -> Option<i64> {
-    let mut key = "location";
-    let mut n = location;
-    while let Some(next) = graph.get(key) {
-        key = &next.from;
-        n = next.resolve(n);
-    }
-    if seeds.within(n) {
-        Some(location)
-    } else {
-        None
-    }
-}
-
 fn part2(txt: &str) -> i64 {
     let sep = "\r\n\r\n";
 
@@ -95,8 +54,6 @@ fn part2(txt: &str) -> i64 {
         .expect("first row")
         .parse::<SeedRanges>().expect("seeds");
 
-    // println!("seeds: {:?}", seeds);
-
     let mut graph: HashMap<String, Mapping> = HashMap::new();
 
     for m in parts
@@ -108,23 +65,54 @@ fn part2(txt: &str) -> i64 {
             );
     }
 
-    let locations = 46..;
-    
+    // let locations = 46..;
+    let mut location = 0;
+    let increment = if seeds.0[0].0 > 1000 {
+        1000
+    } else {
+        10
+    };
 
-    let it = locations.into_iter().find_map(|location| {
-        let mut key = "location";
-        let mut n = location;
-        while let Some(next) = graph.get(key) {
-            key = &next.from;
-            n = next.reverse_resolve(n);
+    loop {
+        match find(location, &graph, &seeds) {
+            Some(_) => {
+                break;
+            },
+            None => {
+                location += increment;
+            }
         }
-        if seeds.within(n) {
-            Some(location)
-        } else {
-            None
+    }
+    
+    loop {
+        match find(location, &graph, &seeds) {
+            Some(_) => {
+                location -= 1;
+            },
+            None => {
+                break;
+            }
         }
-    });
-    it.unwrap()
+    }
+    location + 1    
+}
+
+fn find(
+    location: i64, 
+    graph: &HashMap<String, Mapping>,
+    seeds: &SeedRanges,
+) -> Option<i64> {
+    let mut key = "location";
+    let mut n = location;
+    while let Some(next) = graph.get(key) {
+        key = &next.from;
+        n = next.reverse_resolve(n);
+    }
+    if seeds.within(n) {
+        Some(location)
+    } else {
+        None
+    }
 }
 
 #[derive(Debug)]
@@ -383,6 +371,11 @@ mod tests {
             println!("from {} {} to {} {}", m.from, i, m.to, next);
             i = next;
         }
-        
+    }
+
+    #[test]
+    fn test_regression() {
+        assert_eq!(309796150, part1(include_str!("input.txt")));
+        assert_eq!(50716416, part2(include_str!("input.txt")));
     }
 }
