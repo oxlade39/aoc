@@ -65,7 +65,6 @@ fn part2(txt: &str) -> i64 {
             );
     }
 
-    // let locations = 46..;
     let mut location = 0;
     let increment = if seeds.0[0].0 > 1000 {
         1000
