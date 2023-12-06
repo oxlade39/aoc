@@ -12,7 +12,9 @@ fn main() {
 
 fn part1(txt: &str) -> i64 {
     let input: Part1Input = txt.parse().expect("input");
-    input.pt1()
+    input.0.iter()
+            .map(|race| race.improvements().count() as i64)
+            .product()
 } 
 
 fn part2(txt: &str) -> i64 {
@@ -55,14 +57,6 @@ struct Part1Input(Vec<Race>);
 
 #[derive(Debug, PartialEq, Eq)]
 struct Part2Input(Race);
-
-impl Part1Input {
-    fn pt1(&self) -> i64 {
-        self.0.iter()
-            .map(|race| race.improvements().count() as i64)
-            .product()        
-    }
-}
 
 impl FromStr for Part1Input {
     type Err = String;
