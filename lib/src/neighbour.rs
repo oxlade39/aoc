@@ -302,5 +302,6 @@ mod test {
         let actual: HashSet<Point> = neighbours.neighbours(&vector).into_iter().collect();
 
         assert_eq!(expected, actual);
-    }    
+    }
+    
 }
