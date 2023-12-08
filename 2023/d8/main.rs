@@ -1,13 +1,14 @@
-use std::{str::FromStr, collections::HashMap, marker::PhantomData};
+use std::{collections::HashMap, time::Instant};
 
-use aoclib::input;
-use itertools::Itertools;
+use aoclib::{input, number};
 
 
 fn main() {
     let input = include_str!("input.txt");
+    let now = Instant::now();
     println!("part1: {}", part1(input));
     println!("part2: {}", part2(input));
+    println!("{}ms", now.elapsed().as_millis());
 }
 
 fn part1(txt: &str) -> usize {
@@ -93,37 +94,8 @@ fn part2(txt: &str) -> u64 {
     }
     println!("solved {:?}", steps);
     
-    lcm(steps)
+    number::lcm(&steps[0..])
 }
-
-fn lcm(numbers: Vec<u64>) -> u64 {
-    let mut temp = numbers.clone();
-    
-    // check all the same
-    loop {
-        let mut same = true;
-
-        for idx in 1..temp.len() {
-            if temp[0] != temp[idx] {
-                same = false;
-                break;
-            }
-        }
-
-        if same {
-            return temp[0];
-        }
-
-        // Find lowest index
-        match temp.iter().enumerate().min_by(|(_, a), (_, b)| a.cmp(b)).map(|(index, _)| index) {
-            Some(idx) => {
-                temp[idx] = temp[idx] + numbers[idx];
-            },
-            None => panic!("Not possible")
-        }
-    }
-}
-
 
 #[cfg(test)]
 mod tests {
