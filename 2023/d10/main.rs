@@ -1,6 +1,6 @@
 use std::{collections::HashSet, time::Instant, str::FromStr, i64};
 
-use aoclib::{astar::{Cost, StraightLine}, cartesian::{Point, Plane, Transform}, neighbour::{DirectNeighbours, self, Neighbours}};
+use aoclib::cartesian::{Point, Plane};
 use itertools::Itertools;
 
 
@@ -74,6 +74,9 @@ fn part2(txt: &str) -> usize {
             if !seen.contains(&p) {
                 let mut edge_crosses = 0;
 
+                // need to keep track of how we first crossed the edge
+                // L---7   => crosses once
+                // F---J   => crossed twice
                 let mut start_edge = None;
 
                 for check_x in x..width {
