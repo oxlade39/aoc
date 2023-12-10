@@ -1,6 +1,6 @@
 use std::{collections::HashSet, time::Instant, str::FromStr, i64};
 
-use aoclib::{astar::{Cost, StraightLine}, cartesian::{Point, Plane}, neighbour::DirectNeighbours};
+use aoclib::{astar::{Cost, StraightLine}, cartesian::{Point, Plane, Transform}, neighbour::{DirectNeighbours, self, Neighbours}};
 use itertools::Itertools;
 
 
@@ -29,31 +29,175 @@ fn part1(txt: &str) -> usize {
             }
         }
     }
-    let start_pos = start_pos.expect("must be a start");
-    println!("start: {:?}", start_pos);
-    let mut max = 0;
+    
+    let plane: Plane = (&g).into();
+    let start_pos = start_pos.expect("must be a start");    
+    
+    let mut seen = HashSet::new();
+    path(&g, start_pos, &plane, &mut seen);
+    
+    seen.len() / 2
+}
 
-    let plane = g.clone().into();
+fn part2(txt: &str) -> usize {
+    let g: Grid = txt.parse().expect("valid grid");
+    let mut start_pos = None;    
 
-    for y in 0..height {
+
+    let height = g.height();
+    let width = g.width();
+
+    for row in 0..height {
+        let y = row;
         for x in 0..width {
-            let point = Point{ x: x as i64, y: y as i64};
-            let result = aoclib::astar::astar(
-                point.clone(), 
-                start_pos.clone(), 
-                &StraightLine, 
-                &g, 
-                &DirectNeighbours(&plane), 
-            );
-            max = max.max(result.map(|p| p.path.len()).unwrap_or(0));
+            if g.0[y][x] == Tile::Start {
+                start_pos = Some(Point{ x: x as i64, y: y as i64});
+                break;
+            }
+        }
+    }
+    
+    let plane: Plane = (&g).into();
+    let start_pos = start_pos.expect("must be a start");    
+    
+    let mut seen = HashSet::new();
+    path(&g, start_pos, &plane, &mut seen);
+    
+    // check all points
+    let mut count = 0;
+    for row in 0..height {
+        let y = row;
+        for x in 0..width {
+            let p = Point{ x: x as i64, y: y as i64};
+            // if this point isn't on the path
+            // check if it's inside or outside the path
+            if !seen.contains(&p) {
+                let mut edge_crosses = 0;
+
+                let mut start_edge = None;
+
+                for check_x in x..width {
+                    let check_point: Point = (check_x as i64, y as i64).into();
+                    let pipe_type = g.at(&check_point);
+                    if seen.contains(&check_point) {
+                        match start_edge {
+                            Some(&open) => {
+                                match (open, pipe_type) {
+                                    (Tile::SouthAndEastBend, &Tile::SouthAndWestBend) => {
+                                        edge_crosses += 2;
+                                        start_edge = None;
+                                    },
+                                    (Tile::NorthAndEastBend, &Tile::NorthAndWestBend) => {
+                                        edge_crosses += 2;
+                                        start_edge = None;
+                                    },
+                                    (_, &Tile::Horizonal) => {
+                                        // start_edge = None;
+                                    },
+                                    _ => {
+                                        edge_crosses += 1;
+                                        start_edge = None;
+                                    }
+                                }
+                            },
+                            _ => {
+                                match pipe_type {
+                                    Tile::SouthAndEastBend => {
+                                        start_edge = Some(pipe_type);
+                                    },
+                                    Tile::NorthAndEastBend => {
+                                        start_edge = Some(pipe_type);
+                                    },
+                                    Tile::Horizonal => {
+                                        // start_edge = None;
+                                    },
+                                    _ => {
+                                        edge_crosses += 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if edge_crosses % 2 != 0 {
+                    // odd, so inside the edges
+                    count += 1;
+                    // println!("{:?} inside with {:?} and {:?}", p, edge_crosses, g.at(&p));
+                }
+            }            
         }
     }
 
-    max
-} 
+    count
+}
 
-fn part2(_txt: &str) -> i64 {
-    1
+fn next<'a>(
+    g: &Grid,
+    next: Point,
+    plane: &Plane,
+    seen: &mut HashSet<Point>,
+) -> Option<Point> {
+    if seen.contains(&next) {
+        return None;
+    }
+    seen.insert(next.clone());
+
+    let tile = g.at(&next);
+    let connections = tile.connects();
+    // println!("{:?} connects on {:?}", next, connections);
+    for c in connections {
+        match c {
+            Connects::Down => {
+                let down_point = next.transform(&(0, -1).into());
+                if down_point.within(plane) && !seen.contains(&down_point) {
+                    let down = g.at(&down_point);
+                    if down.connects().contains(&Connects::Up) {
+                        return Some(down_point)
+                    }
+                }                        
+            },
+            Connects::Up => {
+                let up_point = next.transform(&(0, 1).into());                        
+                if up_point.within(&plane) && !seen.contains(&up_point) {
+                    let up = g.at(&up_point);
+                    if up.connects().contains(&Connects::Down) {
+                        return Some(up_point)
+                    }
+                }                        
+            },
+            Connects::Left => {
+                let left_point = next.transform(&(-1, 0).into());
+                if left_point.within(&plane) && !seen.contains(&left_point) {
+                    let left = g.at(&left_point);
+                    if left.connects().contains(&Connects::Right) {
+                        return Some(left_point);
+                    }
+                }                        
+            },
+            Connects::Right => {
+                let right_point = next.transform(&(1, 0).into());
+                if right_point.within(&plane) && !seen.contains(&right_point) {
+                    let right = g.at(&right_point);
+                    if right.connects().contains(&Connects::Left) {
+                        return Some(right_point);
+                    }
+                }                        
+            }
+        }
+    }
+    None
+}
+
+fn path(
+    g: &Grid,
+    start: Point,
+    plane: &Plane,
+    seen: &mut HashSet<Point>,
+) {
+    let mut n = start;    
+    while let Some(x) = next(g, n.clone(), plane, seen) {
+        n = x;
+    }
 }
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
@@ -119,10 +263,14 @@ impl Grid {
     fn height(&self) -> usize {
         self.0.len()
     }
+
+    fn at(&self, p: &Point) -> &Tile {
+        &self.0[p.y as usize][p.x as usize]
+    }
 }
 
-impl From<Grid> for Plane {
-    fn from(value: Grid) -> Self {
+impl From<&Grid> for Plane {
+    fn from(value: &Grid) -> Self {
         let max_y = (value.0.len() - 1) as i64;
         let max_x = (value.0[0].len() - 1) as i64;
         Plane { 
@@ -155,54 +303,6 @@ impl FromStr for Grid {
     }
 }
 
-impl Cost for Grid {
-    fn measure(&self, from: &aoclib::cartesian::Point, to: &aoclib::cartesian::Point) -> i64 {
-        let from_tile = self.0[from.y as usize][from.x as usize];
-        let to_tile = self.0[to.y as usize][to.x as usize];
-
-        let impossible = 1000000000000000;
-
-        let x_delta = to.x - from.x;
-        let y_delta = to.y - from.y;
-
-        match (x_delta, y_delta) {
-            (1, 0) => {
-                // going right
-                if to_tile.connects().contains(&Connects::Left) && from_tile.connects().contains(&Connects::Right) {
-                    1
-                } else {
-                    impossible
-                }
-            },
-            (-1, 0) => {
-                // going left
-                if to_tile.connects().contains(&Connects::Right) && from_tile.connects().contains(&Connects::Left) {
-                    1
-                } else {
-                    impossible
-                }
-            },
-            (0, 1) => {
-                // going up
-                if to_tile.connects().contains(&Connects::Down) && from_tile.connects().contains(&Connects::Up) {
-                    1
-                } else {
-                    impossible
-                }
-            },
-            (0, -1) => {
-                // going down
-                if to_tile.connects().contains(&Connects::Up) && from_tile.connects().contains(&Connects::Down) {
-                    1
-                } else {
-                    impossible
-                }
-            },
-            _ => impossible
-        }
-    }
-}
-
 
 #[cfg(test)]
 mod tests {
@@ -217,7 +317,7 @@ mod tests {
 
     #[test]
     fn test_example_p2() {
-        assert_eq!(1, part2(include_str!("input.test.txt")));
+        assert_eq!(4, part2(include_str!("input.test2.txt")));
     }
 
     #[test]
@@ -229,19 +329,16 @@ mod tests {
     }
 
     #[test]
-    fn test_grid_connections() {
+    fn test_next() {
         let input = include_str!("input.test.txt");
         let g = input.parse::<Grid>().unwrap();
 
-        let p_one = (0, 0).into();
-        let p_two = (1, 0).into();
-        
-        let cost = g.measure(&p_one, &p_two);
-        assert_eq!(true, cost > 1);
-        
-        let p_one = (1, 1).into();
-        let p_two = (2, 1).into();
-        assert_eq!(1, g.measure(&p_one, &p_two));
+        let plane: Plane = (&g).into();
+        let p_one = (1, 3).into();
+
+        let mut seen = HashSet::new();
+        path(&g, p_one, &plane, &mut seen);
+        println!("p: {:?}", seen);
     }
     
 }
