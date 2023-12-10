@@ -134,7 +134,7 @@ where
             while let Some(p) = path_node {
                 let next = came_from.remove(&p);
                 if let Some(ref p1) = next {
-                    let node_cost = cost.measure(&p1, &p);
+                    let node_cost = cost.measure(&p1, &p);                    
                     path.push((p, node_cost));
                     total_cost += node_cost;
                 }
@@ -144,7 +144,8 @@ where
             return Some(ShortestPath { path, total_cost });
         }
 
-        for neighbour in neighbours.neighbours(&curr_node) {
+        let n = neighbours.neighbours(&curr_node);
+        for neighbour in n {
             let neighbour_cost = cost.measure(&curr_node, &neighbour);
             let neighbour_g_score = g_scores.get(&neighbour).unwrap_or(&INFINITY);
             let tentative_g_score = g_scores.get(&curr_node).unwrap_or(&INFINITY) + neighbour_cost;

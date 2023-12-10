@@ -43,8 +43,6 @@ impl Neighbours<Vector> for TouchingNeighbours<'_> {
             let max_x = v.start.x.max(v.end.x);
             let y = v.start.y;
 
-            println!("{:?} -> min_x: {} max_x: {}", v, min_x, max_x);
-
             for x in min_x..=max_x {
                 if x == min_x {
                     let prospective_points = [

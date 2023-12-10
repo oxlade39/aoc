@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Instant, str::FromStr};
+use std::{collections::HashMap, time::Instant, str::FromStr, i64};
 
 use aoclib::{input, number};
 use itertools::Itertools;
@@ -30,6 +30,7 @@ fn part2(txt: &str) -> i64 {
 struct ReportEntry(Vec<i64>);
 
 impl ReportEntry {
+
     fn descend(self) -> i64 {
         let mut row = self.0;
         let mut down: Vec<i64> = Vec::new();
