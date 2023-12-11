@@ -27,9 +27,8 @@ fn calc(txt: &str, expansion: i64) -> i64 {
         m
     };
     map.pairs()
-        .map(|(left, right)| {
-            let v: Vector = (left.clone(), right.clone()).into();
-            ManhattenDistance::from_vector(v)
+        .map(|pair| {
+            ManhattenDistance::from_vector(pair.into())
         })
         .map(|d| d.0)
         .sum()
@@ -43,10 +42,12 @@ struct Map {
 }
 
 impl Map {
-    fn pairs(&self) -> impl Iterator<Item = (&Point, &Point)> {
-        self.galaxies.iter()
+    fn pairs(self) -> impl Iterator<Item = (Point, Point)> {
+        self.galaxies.into_iter()
             .combinations(2)
-            .map(|comb| (comb[0], comb[1]))
+            .map(|mut comb| {
+                (comb.pop().expect("left"), comb.pop().expect("right"))
+            })
     }
 
     fn expand(&mut self, increment: i64) {
