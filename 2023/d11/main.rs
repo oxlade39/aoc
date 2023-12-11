@@ -1,6 +1,6 @@
 use std::{collections::HashSet, time::Instant, str::FromStr, i64};
 
-use aoclib::{cartesian::{Point, Vector}, distance::{ManhattenDistance, Distance}};
+use aoclib::{cartesian::Point, distance::{ManhattenDistance, Distance}};
 use itertools::Itertools;
 
 
