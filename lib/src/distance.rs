@@ -1,3 +1,5 @@
+use std::iter;
+
 use crate::cartesian::Vector;
 
 pub trait Distance {
@@ -33,6 +35,12 @@ impl Distance for ManhattenDistance {
     }
 }
 
+impl iter::Sum for ManhattenDistance {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        ManhattenDistance(iter.map(|mh| mh.0).sum())
+    }
+}
+
 // how do I add a blanked implementation for any Distance
 impl From<Vector> for StraightLineDistance {
     fn from(value: Vector) -> Self {
@@ -45,6 +53,12 @@ mod tests {
     use crate::cartesian::Point;
 
     use super::*;
+
+    #[test]
+    fn test_sum_for_manhatten_distance() {
+        let v = vec![ManhattenDistance(1), ManhattenDistance(2), ManhattenDistance(3)];
+        assert_eq!(ManhattenDistance(6), v.into_iter().sum())
+    }
 
     #[test]
     fn test_straight_line_cost() {

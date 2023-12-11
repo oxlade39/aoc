@@ -26,12 +26,12 @@ fn calc(txt: &str, expansion: i64) -> i64 {
         m.expand(expansion);
         m
     };
-    map.pairs()
+    let ManhattenDistance(d) = map.pairs()
         .map(|pair| {
             ManhattenDistance::from_vector(pair.into())
         })
-        .map(|d| d.0)
-        .sum()
+        .sum();
+    d
 }
 
 #[derive(Debug, Clone)]
