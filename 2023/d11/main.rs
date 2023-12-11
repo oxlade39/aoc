@@ -121,6 +121,6 @@ mod tests {
 
     #[test]
     fn test_example_p2() {
-        assert_eq!(8410, part2(include_str!("input.test.txt")));
+        assert_eq!(8410, calc(include_str!("input.test.txt"), 100));
     }
 }
