@@ -1,6 +1,4 @@
-use std::{collections::HashMap, time::Instant, str::FromStr, i64};
-
-use aoclib::{input, number};
+use std::{time::Instant, str::FromStr, i64};
 use itertools::Itertools;
 
 
