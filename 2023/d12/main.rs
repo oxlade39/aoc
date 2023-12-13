@@ -1,6 +1,5 @@
-use std::{collections::{HashSet, HashMap}, time::Instant, str::FromStr, i64};
+use std::{collections::{HashMap}, time::Instant, str::FromStr};
 
-use aoclib::{cartesian::Point, distance::{ManhattenDistance, Distance}};
 use itertools::Itertools;
 
 
@@ -202,7 +201,7 @@ mod tests {
 
     #[test]
     fn test_example_p2() {
-        assert_eq!(1, part2(include_str!("input.test.txt")));
+        assert_eq!(525152, part2(include_str!("input.test.txt")));
     }
 
     #[test]
@@ -216,77 +215,77 @@ mod tests {
 
     #[test]
     fn test_simple_examples_1() {
-        let mut s: Springs = "? 1".parse().unwrap();
+        let s: Springs = "? 1".parse().unwrap();
         let result = s.check();
         assert_eq!(1, result);
     }
 
     #[test]
     fn test_simple_examples_2() { 
-        let mut s: Springs = "?? 1".parse().unwrap();
+        let s: Springs = "?? 1".parse().unwrap();
         let result = s.check();
         assert_eq!(2, result);
     }
 
     #[test]
     fn test_simple_examples_3() {
-        let mut s: Springs = "??? 1".parse().unwrap();
+        let s: Springs = "??? 1".parse().unwrap();
         let result = s.check();
         assert_eq!(3, result);
     }
 
     #[test]
     fn test_simple_examples_4() {
-        let mut s: Springs = "?.? 1".parse().unwrap();
+        let s: Springs = "?.? 1".parse().unwrap();
         let result = s.check();
         assert_eq!(2, result);
     }
 
     #[test]
     fn test_recursion_p1_1() {
-        let mut s: Springs = "???.### 1,1,3".parse().unwrap();
+        let s: Springs = "???.### 1,1,3".parse().unwrap();
         let result = s.check();
         assert_eq!(1, result);
     }
 
     #[test]
     fn test_recursion_p1_2() {
-        let mut s: Springs = ".??..??...?##. 1,1,3".parse().unwrap();
+        let s: Springs = ".??..??...?##. 1,1,3".parse().unwrap();
         let result = s.check();
         assert_eq!(4, result);
     }
 
     #[test]
     fn test_recursion_p1_3() {
-        let mut s: Springs = "?#?#?#?#?#?#?#? 1,3,1,6".parse().unwrap();
+        let s: Springs = "?#?#?#?#?#?#?#? 1,3,1,6".parse().unwrap();
         let result = s.check();
         assert_eq!(1, result);
     }
 
     #[test]
     fn test_recursion_p1_4() {
-        let mut s: Springs = "????.#...#... 4,1,1".parse().unwrap();
+        let s: Springs = "????.#...#... 4,1,1".parse().unwrap();
         let result = s.check();
         assert_eq!(1, result);
     }
 
     #[test]
     fn test_recursion_p1_5() {
-        let mut s: Springs = "????.######..#####. 1,6,5".parse().unwrap();
+        let s: Springs = "????.######..#####. 1,6,5".parse().unwrap();
         let result = s.check();
         assert_eq!(4, result);
     }
 
     #[test]
     fn test_recursion_p1_6() {
-        let mut s: Springs = "?###???????? 3,2,1".parse().unwrap();
+        let s: Springs = "?###???????? 3,2,1".parse().unwrap();
         let result = s.check();
         assert_eq!(10, result);
     }
 
     #[test]
     fn test_trailing_hash() {
-        let mut s: Springs = "?...# 1".parse().unwrap();
+        let s: Springs = "?...# 1".parse().unwrap();
         let result = s.check();
         assert_eq!(1, result);
     }
