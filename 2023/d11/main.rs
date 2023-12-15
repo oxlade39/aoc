@@ -1,8 +1,10 @@
-use std::{collections::HashSet, time::Instant, str::FromStr, i64};
+use std::{collections::HashSet, i64, str::FromStr, time::Instant};
 
-use aoclib::{cartesian::Point, distance::{ManhattenDistance, Distance}};
+use aoclib::{
+    cartesian::Point,
+    distance::{Distance, ManhattenDistance},
+};
 use itertools::Itertools;
-
 
 fn main() {
     let input = include_str!("input.txt");
@@ -26,10 +28,9 @@ fn calc(txt: &str, expansion: i64) -> i64 {
         m.expand(expansion);
         m
     };
-    let ManhattenDistance(d) = map.pairs()
-        .map(|pair| {
-            ManhattenDistance::from_vector(pair.into())
-        })
+    let ManhattenDistance(d) = map
+        .pairs()
+        .map(|pair| ManhattenDistance::from_vector(pair.into()))
         .sum();
     d
 }
@@ -43,18 +44,16 @@ struct Map {
 
 impl Map {
     fn pairs(self) -> impl Iterator<Item = (Point, Point)> {
-        self.galaxies.into_iter()
+        self.galaxies
+            .into_iter()
             .combinations(2)
-            .map(|mut comb| {
-                (comb.pop().expect("left"), comb.pop().expect("right"))
-            })
+            .map(|mut comb| (comb.pop().expect("left"), comb.pop().expect("right")))
     }
 
     fn expand(&mut self, increment: i64) {
         let mut fixed_galaxies = Vec::with_capacity(self.galaxies.len());
-        
-        while let Some(g) = self.galaxies.pop() {
 
+        while let Some(g) = self.galaxies.pop() {
             let mut x_increment = 0;
             for x in 0..g.x {
                 if self.empty_x.contains(&(x as usize)) {
@@ -69,9 +68,9 @@ impl Map {
                 }
             }
 
-            fixed_galaxies.push(Point { 
-                x: g.x + x_increment, 
-                y: g.y + y_increment, 
+            fixed_galaxies.push(Point {
+                x: g.x + x_increment,
+                y: g.y + y_increment,
             });
         }
         std::mem::swap(&mut self.galaxies, &mut fixed_galaxies);
@@ -82,9 +81,7 @@ impl FromStr for Map {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let chars = s.lines()
-            .map(|l| l.chars().collect_vec())
-            .collect_vec();
+        let chars = s.lines().map(|l| l.chars().collect_vec()).collect_vec();
 
         let height = chars.len();
         let width = chars[0].len();
@@ -102,9 +99,13 @@ impl FromStr for Map {
                     empty_y.remove(&y);
                     empty_x.remove(&x);
                 }
-            } 
+            }
         }
-        Ok(Self { empty_x, empty_y, galaxies })
+        Ok(Self {
+            empty_x,
+            empty_y,
+            galaxies,
+        })
     }
 }
 
@@ -112,12 +113,10 @@ impl FromStr for Map {
 mod tests {
     use crate::*;
 
-
     #[test]
     fn test_example_p1() {
         assert_eq!(374, part1(include_str!("input.test.txt")));
     }
-
 
     #[test]
     fn test_example_p2() {

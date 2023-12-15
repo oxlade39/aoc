@@ -2,7 +2,6 @@ use std::{collections::HashSet, str::FromStr};
 
 use itertools::Itertools;
 
-
 fn main() {
     let input = include_str!("input.txt");
     println!("part1: {}", part1(input));
@@ -17,7 +16,8 @@ fn part1(txt: &str) -> i64 {
 }
 
 fn part2(txt: &str) -> u32 {
-    let cards = txt.lines()
+    let cards = txt
+        .lines()
         .map(|l| l.parse::<Card>().unwrap())
         .collect_vec();
     let mut card_counts = vec![1; cards.len()];
@@ -29,7 +29,7 @@ fn part2(txt: &str) -> u32 {
             for j in (i + 1)..(i + 1 + points as usize) {
                 card_counts[j] += 1;
             }
-        }        
+        }
     }
     card_counts.iter().sum()
 }
@@ -37,7 +37,7 @@ fn part2(txt: &str) -> u32 {
 #[derive(Debug)]
 struct Card {
     numbers: HashSet<i64>,
-    winners: HashSet<i64>
+    winners: HashSet<i64>,
 }
 
 impl Card {
@@ -61,7 +61,7 @@ impl FromStr for Card {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts = s.split(" | ").collect_vec();
-        
+
         let winners = parts[0]
             .split(": ")
             .nth(1)
@@ -69,7 +69,7 @@ impl FromStr for Card {
             .split(" ")
             .filter_map(|n| n.parse::<i64>().ok())
             .collect();
-        
+
         let my_numbers: HashSet<i64> = parts[1]
             .split(" ")
             .filter_map(|n| n.parse::<i64>().ok())
@@ -82,11 +82,9 @@ impl FromStr for Card {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use crate::*;
-
 
     #[test]
     fn test_points() {
@@ -102,15 +100,12 @@ mod tests {
         };
         assert_eq!(1, p.points());
 
-        
         let p = Card {
             numbers: [1, 2].into_iter().collect(),
             winners: [1, 2].into_iter().collect(),
         };
         assert_eq!(2, p.points());
 
-        
-        
         let p = Card {
             numbers: [1, 2, 3, 4].into_iter().collect(),
             winners: [1, 2, 3, 4].into_iter().collect(),

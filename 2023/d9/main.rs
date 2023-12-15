@@ -1,6 +1,5 @@
-use std::{time::Instant, str::FromStr, i64};
 use itertools::Itertools;
-
+use std::{i64, str::FromStr, time::Instant};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -15,20 +14,19 @@ fn part1(txt: &str) -> i64 {
         .map(|l| l.parse::<ReportEntry>().unwrap())
         .map(|re| re.descend())
         .sum()
-} 
+}
 
 fn part2(txt: &str) -> i64 {
     txt.lines()
-    .map(|l| l.parse::<ReportEntry>().unwrap())
-    .map(|re: ReportEntry| re.descend_back())
-    .sum()
+        .map(|l| l.parse::<ReportEntry>().unwrap())
+        .map(|re: ReportEntry| re.descend_back())
+        .sum()
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct ReportEntry(Vec<i64>);
 
 impl ReportEntry {
-
     fn descend(self) -> i64 {
         let mut row = self.0;
         let mut down: Vec<i64> = Vec::new();
@@ -38,7 +36,8 @@ impl ReportEntry {
         loop {
             let row_itr = row.iter();
             let row_offset_itr = row.iter().skip(1);
-            row = row_itr.zip(row_offset_itr)
+            row = row_itr
+                .zip(row_offset_itr)
                 .map(|(&x, &y)| y - x)
                 .collect_vec();
 
@@ -61,7 +60,6 @@ impl ReportEntry {
         }
 
         increment
-        
     }
 
     fn descend_back(self) -> i64 {
@@ -73,7 +71,8 @@ impl ReportEntry {
         loop {
             let row_itr = row.iter();
             let row_offset_itr = row.iter().skip(1);
-            row = row_itr.zip(row_offset_itr)
+            row = row_itr
+                .zip(row_offset_itr)
                 .map(|(&x, &y)| y - x)
                 .collect_vec();
 
@@ -98,7 +97,6 @@ impl ReportEntry {
         }
 
         increment
-        
     }
 }
 
@@ -106,7 +104,11 @@ impl FromStr for ReportEntry {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self(s.split(" ").map(|i| i.parse::<i64>().unwrap()).collect_vec()))
+        Ok(Self(
+            s.split(" ")
+                .map(|i| i.parse::<i64>().unwrap())
+                .collect_vec(),
+        ))
     }
 }
 
@@ -114,12 +116,10 @@ impl FromStr for ReportEntry {
 mod tests {
     use crate::*;
 
-
     #[test]
     fn test_example_p1() {
         assert_eq!(114, part1(include_str!("input.test.txt")));
     }
-
 
     #[test]
     fn test_example_p2() {
@@ -149,5 +149,4 @@ mod tests {
         let result = entry.descend_back();
         assert_eq!(5, result);
     }
-    
 }

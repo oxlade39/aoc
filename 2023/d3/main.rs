@@ -1,8 +1,11 @@
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashMap, HashSet};
 
-use aoclib::{cartesian::{Point, Plane}, neighbour::TouchingNeighbours, neighbour::Neighbours};
+use aoclib::{
+    cartesian::{Plane, Point},
+    neighbour::Neighbours,
+    neighbour::TouchingNeighbours,
+};
 use itertools::Itertools;
-
 
 fn main() {
     let input = include_str!("input.txt");
@@ -14,15 +17,12 @@ fn is_symbol(c: char) -> bool {
     match c {
         '.' => false,
         other if other.is_numeric() => false,
-        _ => true
+        _ => true,
     }
 }
 
 fn part1(txt: &str) -> i32 {
-
-    let grid = txt.lines()
-        .map(|l| l.chars().collect_vec())
-        .collect_vec();
+    let grid = txt.lines().map(|l| l.chars().collect_vec()).collect_vec();
 
     let mut total = 0;
     for row in 0..grid.len() {
@@ -40,28 +40,26 @@ fn part1(txt: &str) -> i32 {
                     // below
                     counts = counts || (row < (grid.len() - 1) && is_symbol(grid[row + 1][col]));
 
-
                     if num_chars.len() == 1 {
                         // check points behind
                         if col > 0 {
                             counts = counts || (row > 0 && is_symbol(grid[row - 1][col - 1]));
                             counts = counts || is_symbol(grid[row][col - 1]);
-                            counts = counts || (row < (grid.len() - 1) && is_symbol(grid[row + 1][col - 1]));
+                            counts = counts
+                                || (row < (grid.len() - 1) && is_symbol(grid[row + 1][col - 1]));
                         }
                     }
-
-
-                },
+                }
                 other => {
                     if !num_chars.is_empty() {
-
                         // char itself could be a symbol
                         counts = counts || is_symbol(other);
 
                         // above
                         counts = counts || (row > 0 && is_symbol(grid[row - 1][col]));
                         // below
-                        counts = counts || (row < (grid.len() - 1) && is_symbol(grid[row + 1][col]));
+                        counts =
+                            counts || (row < (grid.len() - 1) && is_symbol(grid[row + 1][col]));
 
                         if counts {
                             let num = num_chars.parse::<i32>().expect("numeric");
@@ -70,7 +68,7 @@ fn part1(txt: &str) -> i32 {
                         num_chars.clear();
                         counts = false;
                     }
-                },
+                }
             }
         }
         if counts && !num_chars.is_empty() {
@@ -83,10 +81,8 @@ fn part1(txt: &str) -> i32 {
 }
 
 fn part2(txt: &str) -> i32 {
-    let grid = txt.lines()
-        .map(|l| l.chars().collect_vec())
-        .collect_vec();
-    
+    let grid = txt.lines().map(|l| l.chars().collect_vec()).collect_vec();
+
     let plane: Plane = (grid.len() as i64, grid[0].len() as i64).into();
 
     let mut markers: HashMap<Point, HashSet<Number>> = HashMap::new();
@@ -95,18 +91,17 @@ fn part2(txt: &str) -> i32 {
     for row in 0..grid.len() {
         let mut n = String::new();
         for col in 0..grid[0].len() {
-
             let c = grid[row][col];
 
             match c {
                 other if other.is_numeric() => {
                     n.push(other);
-                },
+                }
                 other => {
                     if other == '*' {
                         let p = Point {
                             x: col as i64,
-                            y: row as i64
+                            y: row as i64,
                         };
                         markers.insert(p, HashSet::new());
                     }
@@ -116,18 +111,23 @@ fn part2(txt: &str) -> i32 {
                         n.clear();
                         numbers.push(Number {
                             n: num,
-                            right: Point { x: (col - 1) as i64, y: row as i64 }
+                            right: Point {
+                                x: (col - 1) as i64,
+                                y: row as i64,
+                            },
                         });
                     }
                 }
             }
-
         }
         if !n.is_empty() {
             let num = n.parse::<i32>().expect("number");
             numbers.push(Number {
                 n: num,
-                right: Point { x: (grid[0].len() - 1) as i64, y: row as i64 }
+                right: Point {
+                    x: (grid[0].len() - 1) as i64,
+                    y: row as i64,
+                },
             });
         }
     }
@@ -140,12 +140,10 @@ fn part2(txt: &str) -> i32 {
         }
     }
 
-    markers.iter()
+    markers
+        .iter()
         .filter(|(_, v)| v.len() == 2)
-        .map(|(_, v)| {
-            v.iter().map(|n| n.n)
-            .product::<i32>()
-        })
+        .map(|(_, v)| v.iter().map(|n| n.n).product::<i32>())
         .sum()
 }
 
@@ -158,16 +156,19 @@ struct Number {
 impl Number {
     fn left(&self) -> Point {
         let width = format!("{}", self.n).len();
-        Point { x: self.right.x + 1 - (width as i64), y: self.right.y }
+        Point {
+            x: self.right.x + 1 - (width as i64),
+            y: self.right.y,
+        }
     }
 
     fn neighbours(&self, plane: &Plane) -> HashSet<Point> {
         let mut result = HashSet::new();
         let n = TouchingNeighbours(plane);
         for x in self.left().x..=self.right.x {
-            result.extend(n.neighbours(&Point { 
-                x: x, 
-                y: self.right.y 
+            result.extend(n.neighbours(&Point {
+                x: x,
+                y: self.right.y,
             }));
         }
 
@@ -183,7 +184,7 @@ mod tests {
     fn test_left_and_right() {
         let n = Number {
             n: 114,
-            right: Point { x: 7, y: 0 }
+            right: Point { x: 7, y: 0 },
         };
         let left: Point = (5, 0).into();
         assert_eq!(left, n.left());

@@ -1,8 +1,7 @@
-use std::{time::Instant, str::FromStr, fmt};
+use std::{str::FromStr, time::Instant};
 
 use aoclib::input;
 use itertools::Itertools;
-
 
 fn main() {
     let input = include_str!("input.txt");
@@ -50,14 +49,18 @@ impl FromStr for Grid {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let rows = s.lines()
-            .map(|l| l.chars()
-                .map(|c| match c {
-                    '#' => Tile::Rock,
-                    '.' => Tile::Ash,
-                    _ => panic!("bad char"),
-                }).collect_vec())
-                .collect_vec();
+        let rows = s
+            .lines()
+            .map(|l| {
+                l.chars()
+                    .map(|c| match c {
+                        '#' => Tile::Rock,
+                        '.' => Tile::Ash,
+                        _ => panic!("bad char"),
+                    })
+                    .collect_vec()
+            })
+            .collect_vec();
 
         let mut cols = vec![vec![Tile::Ash; rows.len()]; rows[0].len()];
 
@@ -72,7 +75,6 @@ impl FromStr for Grid {
 }
 
 impl Grid {
-
     fn transpose(&self) -> Grid {
         let rows = self.rows.clone();
         let mut cols = vec![vec![Tile::Ash; rows.len()]; rows[0].len()];
@@ -87,14 +89,12 @@ impl Grid {
     }
 
     fn score(&self, diffs: usize) -> usize {
-
         let row = symmetry_index(&self.rows, diffs).unwrap_or(0);
         let col = symmetry_index(&self.transpose().rows, diffs).unwrap_or(0);
 
         row * 100 + col
     }
 }
-
 
 fn symmetry_index(items: &Vec<Vec<Tile>>, allowed: usize) -> Option<usize> {
     for i in 0..(items.len() - 1) {
@@ -111,10 +111,12 @@ fn symmetry_index(items: &Vec<Vec<Tile>>, allowed: usize) -> Option<usize> {
             let left_items = &items[left_index as usize];
             let right_items = &items[right_index as usize];
 
-            diffs += left_items.iter().zip(right_items.iter())
+            diffs += left_items
+                .iter()
+                .zip(right_items.iter())
                 .filter(|(left, right)| left != right)
                 .count();
-            
+
             if diffs > allowed {
                 break;
             }
@@ -129,8 +131,6 @@ fn symmetry_index(items: &Vec<Vec<Tile>>, allowed: usize) -> Option<usize> {
     }
 
     None
-
-    
 }
 
 #[cfg(test)]
@@ -139,24 +139,21 @@ mod tests {
 
     use crate::*;
 
-
     #[test]
     fn test_example_p1() {
         assert_eq!(405, part1(include_str!("input.test.txt")));
     }
 
-
     #[test]
     fn test_example_p2() {
         assert_eq!(400, part2(include_str!("input.test.txt")));
-    }    
-
+    }
 
     #[test]
     fn test_parse_1() {
         let input = input::empty_line_chunks(include_str!("input.test.txt")).collect_vec();
         let g = input[0].parse::<Grid>().unwrap();
-        
+
         for row in g.rows.iter() {
             for col in row {
                 print!("{}", col);
@@ -174,7 +171,7 @@ mod tests {
     fn test_parse_2() {
         let input = input::empty_line_chunks(include_str!("input.test.txt")).collect_vec();
         let g = input[1].parse::<Grid>().unwrap();
-        
+
         let i = symmetry_index(&g.rows, 0);
         assert_eq!(Some(4), i);
         let i = symmetry_index(&g.transpose().rows, 0);
@@ -185,7 +182,7 @@ mod tests {
     fn test_score_pt2_1() {
         let input = input::empty_line_chunks(include_str!("input.test.txt")).collect_vec();
         let g = input[0].parse::<Grid>().unwrap();
-        
+
         let i = symmetry_index(&g.rows, 1);
         assert_eq!(Some(3), i);
         let i = symmetry_index(&g.transpose().rows, 1);

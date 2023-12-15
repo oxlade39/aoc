@@ -2,7 +2,8 @@ use std::str::FromStr;
 
 use aoclib::{
     astar::{self, Cost, StraightLine},
-    cartesian::{Plane, Point}, neighbour::DirectNeighbours,
+    cartesian::{Plane, Point},
+    neighbour::DirectNeighbours,
 };
 
 fn main() {

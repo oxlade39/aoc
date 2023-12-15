@@ -1,8 +1,12 @@
 use core::fmt;
-use std::{time::Instant, str::FromStr, collections::{HashSet, HashMap}, fmt::Debug};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Debug,
+    str::FromStr,
+    time::Instant,
+};
 
-use aoclib::cartesian::{Point, Plane, Transform};
-use itertools::Itertools;
+use aoclib::cartesian::{Plane, Point, Transform};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -17,12 +21,7 @@ fn part1(txt: &str) -> i64 {
     tilt(d, &Tilt::North).score()
 }
 
-const TILTS: [Tilt; 4] = [
-    Tilt::North,
-    Tilt::West,
-    Tilt::South,
-    Tilt::East,
-];
+const TILTS: [Tilt; 4] = [Tilt::North, Tilt::West, Tilt::South, Tilt::East];
 
 fn part2(txt: &str) -> i64 {
     find_result_n(txt, 1000000000)
@@ -66,14 +65,12 @@ struct Dish {
 
 impl Dish {
     fn score(&self) -> i64 {
-        self.round.iter()
-            .map(|rock| rock.y + 1)
-            .sum()
+        self.round.iter().map(|rock| rock.y + 1).sum()
     }
 
     fn cycle(self) -> Self {
         let mut d = self;
-        for t in TILTS.iter() {            
+        for t in TILTS.iter() {
             d = tilt(d, t);
         }
         d
@@ -85,10 +82,10 @@ enum Tilt {
     East,
     West,
     North,
-    South
+    South,
 }
 
-impl From<&Tilt> for Transform  {
+impl From<&Tilt> for Transform {
     fn from(value: &Tilt) -> Self {
         match *value {
             Tilt::East => (1, 0).into(),
@@ -123,32 +120,11 @@ impl fmt::Display for Dish {
     }
 }
 
-fn print(d: &Dish) {
-    let width = d.plane.width();
-    let height = d.plane.height();
-    for row in 0..height {
-        let y = height - row - 1;
-        for x in 0..width {
-            let p: Point = (x as i64, y as i64).into();
-            if d.round.contains(&p) {
-                print!("O");
-            } else if d.square.contains(&p) {
-                print!("#");
-            } else {
-                print!(".");
-            }
-        }
-        println!("");
-    }
-}
-
 impl FromStr for Dish {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let grid: Vec<Vec<_>> = s.lines()
-            .map(|l| l.chars().collect())
-            .collect();
+        let grid: Vec<Vec<_>> = s.lines().map(|l| l.chars().collect()).collect();
 
         let height = grid.len();
         let width = grid[0].len();
@@ -164,78 +140,80 @@ impl FromStr for Dish {
                 match c {
                     'O' => {
                         round.insert((x as i64, y as i64).into());
-                    },
+                    }
                     '#' => {
                         square.insert((x as i64, y as i64).into());
-                    },
-                    '.' => {},
-                    _ => panic!("bad char")
+                    }
+                    '.' => {}
+                    _ => panic!("bad char"),
                 }
-            } 
+            }
         }
 
-        Ok(Dish { round, square, plane })
+        Ok(Dish {
+            round,
+            square,
+            plane,
+        })
     }
-} 
+}
 
 fn tilt(d: Dish, tilt: &Tilt) -> Dish {
     let mut moved: HashSet<Point> = HashSet::new();
 
     match &tilt {
         Tilt::East => {
-            for col in 0..=d.plane.bottom_right.x {  
-                let x = d.plane.width() - col - 1;          
+            for col in 0..=d.plane.bottom_right.x {
+                let x = d.plane.width() - col - 1;
                 for row in 0..=d.plane.top_left.y {
                     let y = d.plane.height() - row - 1;
                     let p: Point = (x, y).into();
-                    apply_tilt(&d, &p, &tilt, &mut moved);            
+                    apply_tilt(&d, &p, &tilt, &mut moved);
                 }
             }
-        },
+        }
         Tilt::West => {
-            for x in 0..=d.plane.bottom_right.x {            
+            for x in 0..=d.plane.bottom_right.x {
                 for row in 0..=d.plane.top_left.y {
                     let y = d.plane.height() - row - 1;
                     let p: Point = (x, y).into();
-                    apply_tilt(&d, &p, &tilt, &mut moved);            
+                    apply_tilt(&d, &p, &tilt, &mut moved);
                 }
-            }            
-        },
+            }
+        }
         Tilt::North => {
             for row in 0..=d.plane.top_left.y {
                 let y = d.plane.height() - row - 1;
-                for x in 0..=d.plane.bottom_right.x {            
+                for x in 0..=d.plane.bottom_right.x {
                     let p: Point = (x, y).into();
-                    apply_tilt(&d, &p, &tilt, &mut moved);            
+                    apply_tilt(&d, &p, &tilt, &mut moved);
                 }
             }
-        },
+        }
         Tilt::South => {
             for row in 0..=d.plane.top_left.y {
                 let y = row;
-                for x in 0..=d.plane.bottom_right.x {            
+                for x in 0..=d.plane.bottom_right.x {
                     let p: Point = (x, y).into();
-                    apply_tilt(&d, &p, &tilt, &mut moved);            
+                    apply_tilt(&d, &p, &tilt, &mut moved);
                 }
             }
-        },
+        }
     }
 
     if moved.len() != d.round.len() {
         panic!("{} != {} after {:?}", moved.len(), d.round.len(), tilt);
     }
-    
-    Dish { plane: d.plane, round: moved, square: d.square }
+
+    Dish {
+        plane: d.plane,
+        round: moved,
+        square: d.square,
+    }
 }
 
-fn apply_tilt(
-    d: &Dish, 
-    p: &Point,
-    tilt: &Tilt,
-    moved: &mut HashSet<Point>,
-) {
+fn apply_tilt(d: &Dish, p: &Point, tilt: &Tilt, moved: &mut HashSet<Point>) {
     if d.round.contains(&p) {
-
         let mut previous = p.clone();
         loop {
             let moved_up = previous.transform(&tilt.into());
@@ -271,11 +249,10 @@ mod tests {
         assert_eq!(136, part1(include_str!("input.test.txt")));
     }
 
-
     #[test]
     fn test_example_p2() {
         assert_eq!(64, part2(include_str!("input.test.txt")));
-    }    
+    }
 
     #[test]
     fn test_parse() {
@@ -304,9 +281,11 @@ mod tests {
         let tilted_expected: Dish = txt.parse().unwrap();
         assert_eq!(tilted_expected, tilted);
 
-        let mut counts = tilted_expected.round.iter()
+        let mut counts: Vec<_> = tilted_expected
+            .round
+            .iter()
             .map(|rock| rock.y + 1)
-            .collect_vec();
+            .collect();
         counts.sort();
         println!("counts\n{:?}", counts);
         println!("{}", counts.iter().sum::<i64>());
@@ -338,12 +317,31 @@ mod tests {
         let tilted_expected: Dish = txt.parse().unwrap();
         print(&dish);
         assert_eq!(tilted_expected, dish);
-        
+
         let dish = dish.cycle();
 
         let txt = include_str!("output.test.3.txt");
         let tilted_expected: Dish = txt.parse().unwrap();
         print(&dish);
         assert_eq!(tilted_expected, dish);
+    }
+
+    fn print(d: &Dish) {
+        let width = d.plane.width();
+        let height = d.plane.height();
+        for row in 0..height {
+            let y = height - row - 1;
+            for x in 0..width {
+                let p: Point = (x as i64, y as i64).into();
+                if d.round.contains(&p) {
+                    print!("O");
+                } else if d.square.contains(&p) {
+                    print!("#");
+                } else {
+                    print!(".");
+                }
+            }
+            println!("");
+        }
     }
 }

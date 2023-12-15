@@ -1,7 +1,6 @@
-use std::{collections::{HashMap}, time::Instant, str::FromStr};
+use std::{collections::HashMap, str::FromStr, time::Instant};
 
 use itertools::Itertools;
-
 
 fn main() {
     let input = include_str!("input.txt");
@@ -19,8 +18,8 @@ fn part1(txt: &str) -> usize {
 
 fn part2(txt: &str) -> usize {
     txt.lines()
-    .map(|l| l.parse::<ExpandedSprings>().unwrap().check())
-    .sum()
+        .map(|l| l.parse::<ExpandedSprings>().unwrap().check())
+        .sum()
 }
 
 #[derive(Debug, Clone)]
@@ -44,12 +43,11 @@ impl Springs {
 fn check<'a>(
     str: String,
     n: &'a [usize],
-    memo: &mut HashMap<(String, &'a [usize]), usize>
+    memo: &mut HashMap<(String, &'a [usize]), usize>,
 ) -> usize {
-    
     if let Some(&result) = memo.get(&(str.clone(), n)) {
         return result;
-    } 
+    }
 
     if n.is_empty() {
         // println!("** here empty");
@@ -121,11 +119,7 @@ fn check<'a>(
         }
 
         // println!("here taken '{right:?}'");
-        let taken_count = check(
-            right[1..].to_owned(), 
-            &n[1..],
-            memo
-        );
+        let taken_count = check(right[1..].to_owned(), &n[1..], memo);
         // println!("here not");
         // let not_taken_count = check(str[1..].to_owned(), n);
         memo.insert((str, n), taken_count);
@@ -143,11 +137,19 @@ impl FromStr for Springs {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut parts = s.split(" ");
         let puzzle = parts.next().expect("left").to_owned();
-        let count = parts.next().expect("right")
+        let count = parts
+            .next()
+            .expect("right")
             .split(",")
-            .map(|n| n.parse::<usize>().expect(format!("bad num: '{}'", n).as_str()))
+            .map(|n| {
+                n.parse::<usize>()
+                    .expect(format!("bad num: '{}'", n).as_str())
+            })
             .collect();
-        Ok(Springs { puzzle, counts: count })
+        Ok(Springs {
+            puzzle,
+            counts: count,
+        })
     }
 }
 
@@ -157,19 +159,17 @@ impl FromStr for ExpandedSprings {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut parts = s.split(" ");
         let puzzle = parts.next().expect("left").to_owned();
-        let count = parts.next().expect("right")
+        let count = parts
+            .next()
+            .expect("right")
             .split(",")
-            .map(|n| n.parse::<usize>().expect(format!("bad num: '{}'", n).as_str()))
+            .map(|n| {
+                n.parse::<usize>()
+                    .expect(format!("bad num: '{}'", n).as_str())
+            })
             .collect_vec();
 
-        let puzzle = format!(
-            "{}?{}?{}?{}?{}",
-            puzzle,
-            puzzle,
-            puzzle,
-            puzzle,
-            puzzle,
-        );
+        let puzzle = format!("{}?{}?{}?{}?{}", puzzle, puzzle, puzzle, puzzle, puzzle,);
         let mut count_mod = vec![];
         count_mod.extend(count.clone());
         count_mod.extend(count.clone());
@@ -177,7 +177,10 @@ impl FromStr for ExpandedSprings {
         count_mod.extend(count.clone());
         count_mod.extend(count);
 
-        Ok(ExpandedSprings { puzzle, counts: count_mod })
+        Ok(ExpandedSprings {
+            puzzle,
+            counts: count_mod,
+        })
     }
 }
 
@@ -192,12 +195,10 @@ impl ExpandedSprings {
 mod tests {
     use crate::*;
 
-
     #[test]
     fn test_example_p1() {
         assert_eq!(21, part1(include_str!("input.test.txt")));
     }
-
 
     #[test]
     fn test_example_p2() {
@@ -206,10 +207,14 @@ mod tests {
 
     #[test]
     fn test_parse() {
-        let mut s = include_str!("input.test.txt").lines()
+        let mut s = include_str!("input.test.txt")
+            .lines()
             .map(|l| l.parse::<Springs>().unwrap())
             .collect_vec();
-        let Springs{ puzzle: _, counts: count,} = s.pop().unwrap();
+        let Springs {
+            puzzle: _,
+            counts: count,
+        } = s.pop().unwrap();
         assert_eq!(vec![3, 2, 1], count)
     }
 
@@ -221,7 +226,7 @@ mod tests {
     }
 
     #[test]
-    fn test_simple_examples_2() { 
+    fn test_simple_examples_2() {
         let s: Springs = "?? 1".parse().unwrap();
         let result = s.check();
         assert_eq!(2, result);

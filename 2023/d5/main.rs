@@ -1,8 +1,7 @@
-use std::{str::FromStr, collections::HashMap, i64};
+use std::{collections::HashMap, i64, str::FromStr};
 
 use aoclib::input;
 use itertools::Itertools;
-
 
 fn main() {
     let input = include_str!("input.txt");
@@ -13,26 +12,26 @@ fn main() {
 fn part1(txt: &str) -> i64 {
     let mut parts = input::empty_line_chunks(txt);
 
-    let seeds = parts.next()
+    let seeds = parts
+        .next()
         .expect("first row")
-        .parse::<Seeds>().expect("seeds");
+        .parse::<Seeds>()
+        .expect("seeds");
 
     let mut graph: HashMap<String, Mapping> = HashMap::new();
 
-    for m in parts
-        .map(|p| p.parse::<Mapping>().expect("mapping")) {
-            let clone = m.clone();
-            graph.insert(
-                clone.from.to_owned(), 
-                clone
-            );
+    for m in parts.map(|p| p.parse::<Mapping>().expect("mapping")) {
+        let clone = m.clone();
+        graph.insert(clone.from.to_owned(), clone);
     }
-        
-    let locations = seeds.0.iter()
+
+    let locations = seeds
+        .0
+        .iter()
         .map(|s| {
             let mut key = "seed";
             let mut n = *s;
-            while let Some(next) = graph.get(key){
+            while let Some(next) = graph.get(key) {
                 key = &next.to;
                 n = next.resolve(n);
             }
@@ -41,62 +40,52 @@ fn part1(txt: &str) -> i64 {
         .collect_vec();
 
     *locations.iter().min().unwrap()
-} 
+}
 
 fn part2(txt: &str) -> i64 {
     let mut parts = input::empty_line_chunks(txt);
 
-    let seeds = parts.next()
+    let seeds = parts
+        .next()
         .expect("first row")
-        .parse::<SeedRanges>().expect("seeds");
+        .parse::<SeedRanges>()
+        .expect("seeds");
 
     let mut graph: HashMap<String, Mapping> = HashMap::new();
 
-    for m in parts
-        .map(|p| p.parse::<Mapping>().expect("mapping")) {
-            let clone = m.clone();
-            graph.insert(
-                clone.to.to_owned(), 
-                clone
-            );
+    for m in parts.map(|p| p.parse::<Mapping>().expect("mapping")) {
+        let clone = m.clone();
+        graph.insert(clone.to.to_owned(), clone);
     }
 
     let mut location = 0;
-    let increment = if seeds.0[0].0 > 1000 {
-        1000
-    } else {
-        10
-    };
+    let increment = if seeds.0[0].0 > 1000 { 1000 } else { 10 };
 
     loop {
         match find(location, &graph, &seeds) {
             Some(_) => {
                 break;
-            },
+            }
             None => {
                 location += increment;
             }
         }
     }
-    
+
     loop {
         match find(location, &graph, &seeds) {
             Some(_) => {
                 location -= 1;
-            },
+            }
             None => {
                 break;
             }
         }
     }
-    location + 1    
+    location + 1
 }
 
-fn find(
-    location: i64, 
-    graph: &HashMap<String, Mapping>,
-    seeds: &SeedRanges,
-) -> Option<i64> {
+fn find(location: i64, graph: &HashMap<String, Mapping>, seeds: &SeedRanges) -> Option<i64> {
     let mut key = "location";
     let mut n = location;
     while let Some(next) = graph.get(key) {
@@ -118,7 +107,8 @@ impl FromStr for Seeds {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let outter = s.split(": ").collect_vec();
-        let inner: Vec<i64> = outter[1].split(" ")
+        let inner: Vec<i64> = outter[1]
+            .split(" ")
             .map(|n| n.parse::<i64>().expect("seed number"))
             .collect();
         Ok(Seeds(inner))
@@ -130,12 +120,11 @@ struct SeedRanges(Vec<(i64, i64)>);
 
 impl SeedRanges {
     fn within(&self, i: i64) -> bool {
-        self.0.iter()
-            .any(|(n, length)| {
-                let lower = *n;
-                let upper = *n + length;
-                i >= lower && i < upper
-            })
+        self.0.iter().any(|(n, length)| {
+            let lower = *n;
+            let upper = *n + length;
+            i >= lower && i < upper
+        })
     }
 }
 
@@ -144,7 +133,8 @@ impl FromStr for SeedRanges {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let outter = s.split(": ").collect_vec();
-        let inner = outter[1].split(" ")
+        let inner = outter[1]
+            .split(" ")
             .map(|n| n.parse::<i64>().expect("seed number"))
             .chunks(2)
             .into_iter()
@@ -153,7 +143,7 @@ impl FromStr for SeedRanges {
                 (parts[0], parts[1])
             })
             .collect_vec();
-        
+
         Ok(SeedRanges(inner))
     }
 }
@@ -208,19 +198,21 @@ struct Mapping {
 
 impl Mapping {
     fn resolve(&self, source: i64) -> i64 {
-        match self.ranges.iter()
-            .find_map(|range| range.resolve(source)) {
-                Some(x) => x,
-                _ => source
-            }
+        match self.ranges.iter().find_map(|range| range.resolve(source)) {
+            Some(x) => x,
+            _ => source,
+        }
     }
 
     fn reverse_resolve(&self, target: i64) -> i64 {
-        match self.ranges.iter()
-            .find_map(|range| range.reverse_resolve(target)) {
-                Some(x) => x,
-                _ => target
-            }
+        match self
+            .ranges
+            .iter()
+            .find_map(|range| range.reverse_resolve(target))
+        {
+            Some(x) => x,
+            _ => target,
+        }
     }
 }
 
@@ -229,12 +221,13 @@ impl FromStr for Mapping {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let heading = s.lines().next().unwrap();
-        let name_part =heading.split(" ").next().unwrap();
+        let name_part = heading.split(" ").next().unwrap();
         let key_part = name_part.split("-").collect_vec();
         let from = key_part[0].to_owned();
         let to = key_part[2].to_owned();
 
-        let ranges = s.lines()
+        let ranges = s
+            .lines()
             .skip(1)
             .map(|l| l.parse::<Range>().expect("range"))
             .collect_vec();
@@ -243,11 +236,9 @@ impl FromStr for Mapping {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use crate::*;
-
 
     #[test]
     fn test_example_p1() {
@@ -289,12 +280,16 @@ mod tests {
     fn test_mapping() {
         let soil: Mapping = "seed-to-soil map:\n\
         50 98 2\n\
-        52 50 48".parse().unwrap();
+        52 50 48"
+            .parse()
+            .unwrap();
 
         let fertilizer: Mapping = "soil-to-fertilizer map:\n\
         0 15 37\n\
         37 52 2\n\
-        39 0 15".parse().unwrap();
+        39 0 15"
+            .parse()
+            .unwrap();
 
         assert_eq!(81, soil.resolve(79));
         assert_eq!(81, fertilizer.resolve(81));
@@ -304,12 +299,16 @@ mod tests {
     fn test_mapping_reverse() {
         let soil: Mapping = "seed-to-soil map:\n\
         50 98 2\n\
-        52 50 48".parse().unwrap();
+        52 50 48"
+            .parse()
+            .unwrap();
 
         let fertilizer: Mapping = "soil-to-fertilizer map:\n\
         0 15 37\n\
         37 52 2\n\
-        39 0 15".parse().unwrap();
+        39 0 15"
+            .parse()
+            .unwrap();
 
         assert_eq!(79, soil.reverse_resolve(81));
         assert_eq!(81, fertilizer.reverse_resolve(81));
@@ -318,30 +317,23 @@ mod tests {
     #[test]
     fn test_full_example_pt2() {
         let input = include_str!("input.test.txt");
-        let mappings = input::empty_line_chunks(input).skip(1)
+        let mappings = input::empty_line_chunks(input)
+            .skip(1)
             .map(|chunk| chunk.parse::<Mapping>().unwrap())
             .collect_vec();
 
-        // In the above example, the lowest location number can be 
-        // obtained from seed number 
-        // 82, which corresponds to soil 
-        // 84, fertilizer 
-        // 84, water 
-        // 84, light 
-        // 77, temperature 
-        // 45, humidity 
-        // 46, and location 46. 
+        // In the above example, the lowest location number can be
+        // obtained from seed number
+        // 82, which corresponds to soil
+        // 84, fertilizer
+        // 84, water
+        // 84, light
+        // 77, temperature
+        // 45, humidity
+        // 46, and location 46.
         // So, the lowest location number is 46
 
-        let _expects: [i64; 7] = [
-            82,
-            84,
-            84,
-            84,
-            77,
-            45,
-            46
-        ];
+        let _expects: [i64; 7] = [82, 84, 84, 84, 77, 45, 46];
 
         let r: Range = "45 77 23".parse().unwrap();
         assert_eq!(Some(45), r.resolve(77));
@@ -351,7 +343,6 @@ mod tests {
             println!("{:?}", m);
         }
         println!("***************");
-        
 
         assert_eq!("light", mappings[4].from);
         assert_eq!("temperature", mappings[4].to);

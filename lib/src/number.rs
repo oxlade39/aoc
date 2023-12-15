@@ -16,8 +16,6 @@ fn gcd_of_two_numbers(a: u64, b: u64) -> u64 {
 
 #[test]
 fn test_lcm_examples() {
-    let n = [
-        1, 2, 3
-    ];
+    let n = [1, 2, 3];
     assert_eq!(6, lcm(&n));
 }

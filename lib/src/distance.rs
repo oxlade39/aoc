@@ -56,7 +56,11 @@ mod tests {
 
     #[test]
     fn test_sum_for_manhatten_distance() {
-        let v = vec![ManhattenDistance(1), ManhattenDistance(2), ManhattenDistance(3)];
+        let v = vec![
+            ManhattenDistance(1),
+            ManhattenDistance(2),
+            ManhattenDistance(3),
+        ];
         assert_eq!(ManhattenDistance(6), v.into_iter().sum())
     }
 

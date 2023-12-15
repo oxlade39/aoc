@@ -16,7 +16,7 @@ fn part1(txt: &str) -> i32 {
         cubes.insert("blue".to_owned(), 14);
         Bag { cubes }
     };
-    
+
     txt.lines()
         .map(|l| l.parse::<Game>().expect(l))
         .enumerate()
@@ -34,17 +34,17 @@ fn part2(txt: &str) -> i32 {
 
 #[derive(Debug, Clone)]
 struct Game {
-    draws: Vec<Draw>
+    draws: Vec<Draw>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Draw {
-    cubes: HashMap<String, i32>
+    cubes: HashMap<String, i32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Bag {
-    cubes: HashMap<String, i32>
+    cubes: HashMap<String, i32>,
 }
 
 impl FromStr for Game {
@@ -52,9 +52,11 @@ impl FromStr for Game {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let outter = s.split(": ").nth(1).expect("': '");
-        let inner = outter.split("; ")
+        let inner = outter
+            .split("; ")
             .map(|draw| {
-                let cube_counts: HashMap<String, i32> = draw.split(", ")
+                let cube_counts: HashMap<String, i32> = draw
+                    .split(", ")
                     .map(|cc| {
                         let parts = cc.split(" ").collect_vec();
                         (parts[1].to_owned(), parts[0].parse::<i32>().expect("count"))

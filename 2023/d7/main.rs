@@ -1,7 +1,6 @@
-use std::{str::FromStr, collections::HashMap, marker::PhantomData};
+use std::{collections::HashMap, marker::PhantomData, str::FromStr};
 
 use itertools::Itertools;
-
 
 fn main() {
     let input = include_str!("input.txt");
@@ -16,15 +15,15 @@ fn part1(txt: &str) -> i64 {
         .enumerate()
         .map(|(i, h)| (i as i64 + 1) * h.bid())
         .sum()
-} 
+}
 
 fn part2(txt: &str) -> i64 {
     txt.lines()
-    .map(|l| l.parse::<Hand<JokerOrdering>>().unwrap())
-    .sorted()
-    .enumerate()
-    .map(|(i, h)| (i as i64 + 1) * h.bid())
-    .sum()
+        .map(|l| l.parse::<Hand<JokerOrdering>>().unwrap())
+        .sorted()
+        .enumerate()
+        .map(|(i, h)| (i as i64 + 1) * h.bid())
+        .sum()
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
@@ -51,19 +50,18 @@ impl CardOrdering for StandardOrdering {
             'Q' => 12,
             'K' => 13,
             'A' => 14,
-            other => panic!("unexpected card: {}", other)
+            other => panic!("unexpected card: {}", other),
         }
     }
 
     fn card_mapping(cards: Vec<Card>) -> HashMap<Card, i64> {
-        cards.into_iter()
-            .fold(HashMap::new(), |mut accum, c| {
-                if let Some(existing) = accum.remove(&c) {
-                    accum.insert(c, existing + 1);
-                } else {
-                    accum.insert(c, 1);
-                }
-                accum
+        cards.into_iter().fold(HashMap::new(), |mut accum, c| {
+            if let Some(existing) = accum.remove(&c) {
+                accum.insert(c, existing + 1);
+            } else {
+                accum.insert(c, 1);
+            }
+            accum
         })
     }
 }
@@ -77,32 +75,31 @@ impl CardOrdering for JokerOrdering {
             'Q' => 12,
             'K' => 13,
             'A' => 14,
-            other => panic!("unexpected card: {}", other)
+            other => panic!("unexpected card: {}", other),
         }
     }
 
     fn card_mapping(cards: Vec<Card>) -> HashMap<Card, i64> {
-
-        let mut card_counts = cards.into_iter()
-            .fold(HashMap::new(), |mut accum, c| {
-                if let Some(existing) = accum.remove(&c) {
-                    accum.insert(c, existing + 1);
-                } else {
-                    accum.insert(c, 1);
-                }
-                accum
+        let mut card_counts = cards.into_iter().fold(HashMap::new(), |mut accum, c| {
+            if let Some(existing) = accum.remove(&c) {
+                accum.insert(c, existing + 1);
+            } else {
+                accum.insert(c, 1);
+            }
+            accum
         });
-        
 
         // swap the highest counted card for Jokers
         if let Some(joker_count) = card_counts.remove(&Card('J')) {
-            if let Some((_, count)) = card_counts.iter_mut()
+            if let Some((_, count)) = card_counts
+                .iter_mut()
                 .sorted_by(|(_, v1), (_, v2)| Ord::cmp(v2, v1))
-                .next() {
+                .next()
+            {
                 *count += joker_count;
             } else {
                 card_counts.insert(Card('J'), 5);
-            }            
+            }
         }
 
         card_counts
@@ -110,46 +107,26 @@ impl CardOrdering for JokerOrdering {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-enum Hand<T> where T: CardOrdering {
-
+enum Hand<T>
+where
+    T: CardOrdering,
+{
     // Five of a kind, where all five cards have the same label: AAAAA
-    FiveOfAKind(
-        Vec<Card>,
-        i64,
-        PhantomData<T>,
-    ),
+    FiveOfAKind(Vec<Card>, i64, PhantomData<T>),
 
     // Four of a kind, where four cards have the same label and one card has a different label: AA8AA
-    FourOfAKind(
-        Vec<Card>,
-        i64,
-    ),
+    FourOfAKind(Vec<Card>, i64),
 
     // Full house, where three cards have the same label, and the remaining two cards share a different label: 23332
-    FullHouse(
-        Vec<Card>,
-        i64,
-    ),
+    FullHouse(Vec<Card>, i64),
     // Three of a kind, where three cards have the same label, and the remaining two cards are each different from any other card in the hand: TTT98
-    ThreeOfAKind(
-        Vec<Card>,
-        i64,
-    ),
+    ThreeOfAKind(Vec<Card>, i64),
     // Two pair, where two cards share one label, two other cards share a second label, and the remaining card has a third label: 23432
-    TwoPair(
-        Vec<Card>,
-        i64,
-    ),
+    TwoPair(Vec<Card>, i64),
     // One pair, where two cards share one label, and the other three cards have a different label from the pair and each other: A23A4
-    OnePair(
-        Vec<Card>,
-        i64,
-    ),
+    OnePair(Vec<Card>, i64),
     // High card, where all cards' labels are distinct: 23456
-    HighCard(
-        Vec<Card>,
-        i64,
-    ),
+    HighCard(Vec<Card>, i64),
 }
 
 impl<T: CardOrdering> Hand<T> {
@@ -196,7 +173,8 @@ impl<T: CardOrdering + std::cmp::PartialEq> PartialOrd for Hand<T> {
             std::cmp::Ordering::Equal => {
                 let self_cards = self.cards();
                 let other_cards = other.cards();
-                (0..5).into_iter()
+                (0..5)
+                    .into_iter()
                     .map(|i| {
                         let self_order = T::order(&self_cards[i]);
                         let other_order = T::order(&other_cards[i]);
@@ -204,30 +182,35 @@ impl<T: CardOrdering + std::cmp::PartialEq> PartialOrd for Hand<T> {
                     })
                     .filter(|order| !order.is_eq())
                     .next()
-            },
+            }
             other => Some(other),
         }
     }
 }
 
-impl<T> Ord for Hand<T> 
-    where T: CardOrdering,
-        T: Eq
+impl<T> Ord for Hand<T>
+where
+    T: CardOrdering,
+    T: Eq,
 {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.partial_cmp(other).unwrap()
     }
 }
 
-
 impl<T: CardOrdering> FromStr for Hand<T> {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut parts = s.split(" ");
-        let cards: Vec<_> = parts.next().expect("cards").chars().map(|c| Card(c)).collect();
+        let cards: Vec<_> = parts
+            .next()
+            .expect("cards")
+            .chars()
+            .map(|c| Card(c))
+            .collect();
         let bid = parts.next().expect("bid").parse::<i64>().expect("number");
-        
+
         let card_set: HashMap<Card, i64> = T::card_mapping(cards.clone());
 
         match card_set.len() {
@@ -241,31 +224,28 @@ impl<T: CardOrdering> FromStr for Hand<T> {
                     4 => Ok(Hand::FourOfAKind(cards, bid)),
                     _ => unreachable!("impossible hand"),
                 }
-            },
+            }
             3 => {
-                // one of 
+                // one of
                 // Three of a Kind
                 // Two Pair
                 let first_count = *card_set.values().next().unwrap();
                 match first_count {
                     3 => Ok(Hand::ThreeOfAKind(cards, bid)),
                     2 => Ok(Hand::TwoPair(cards, bid)),
-                    1 if card_set.values().any(|v| *v == 2) => Ok(Hand::TwoPair(cards, bid, )),
+                    1 if card_set.values().any(|v| *v == 2) => Ok(Hand::TwoPair(cards, bid)),
                     _ => Ok(Hand::ThreeOfAKind(cards, bid)),
                 }
-            },
+            }
             5 => Ok(Hand::HighCard(cards, bid)),
             _ => Ok(Hand::OnePair(cards, bid)),
         }
-
-        
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::*;
-
 
     #[test]
     fn test_example_p1() {
@@ -294,10 +274,10 @@ mod tests {
             Card('Q'),
             Card('K'),
             Card('A'),
-        ];        
+        ];
         let original = sorted.clone();
 
-        sorted.sort_by(|a,b| {
+        sorted.sort_by(|a, b| {
             let left = StandardOrdering::order(&a);
             let right = StandardOrdering::order(&b);
             left.cmp(&right)
@@ -308,33 +288,40 @@ mod tests {
 
     #[test]
     fn test_order_example() {
-        let mut parsed: Vec<_> = include_str!("input.test.txt").lines()
+        let mut parsed: Vec<_> = include_str!("input.test.txt")
+            .lines()
             .map(|l| l.parse::<Hand<StandardOrdering>>().unwrap())
             .collect();
 
         parsed.sort();
 
-        assert_eq!(vec![
-            "32T3K 765".parse::<Hand<StandardOrdering>>().unwrap(),
-            "KTJJT 220".parse::<Hand<StandardOrdering>>().unwrap(),
-            "KK677 28".parse::<Hand<StandardOrdering>>().unwrap(),
-            "T55J5 684".parse::<Hand<StandardOrdering>>().unwrap(),
-            "QQQJA 483".parse::<Hand<StandardOrdering>>().unwrap(),
-        ], parsed);
+        assert_eq!(
+            vec![
+                "32T3K 765".parse::<Hand<StandardOrdering>>().unwrap(),
+                "KTJJT 220".parse::<Hand<StandardOrdering>>().unwrap(),
+                "KK677 28".parse::<Hand<StandardOrdering>>().unwrap(),
+                "T55J5 684".parse::<Hand<StandardOrdering>>().unwrap(),
+                "QQQJA 483".parse::<Hand<StandardOrdering>>().unwrap(),
+            ],
+            parsed
+        );
     }
 
     #[test]
     fn test_joker_ordering_hands() {
         assert_eq!(
-            Hand::FourOfAKind(vec![Card('T'), Card('5'), Card('5'), Card('J'), Card('5')], 684), 
+            Hand::FourOfAKind(
+                vec![Card('T'), Card('5'), Card('5'), Card('J'), Card('5')],
+                684
+            ),
             "T55J5 684".parse::<Hand<JokerOrdering>>().unwrap()
         );
     }
 
-    
     #[test]
     fn test_joker_order_example() {
-        let mut parsed: Vec<_> = include_str!("input.test.txt").lines()
+        let mut parsed: Vec<_> = include_str!("input.test.txt")
+            .lines()
             .map(|l| l.parse::<Hand<JokerOrdering>>().unwrap())
             .collect();
 
@@ -345,18 +332,20 @@ mod tests {
             println!("{:?}", c);
         }
 
-        assert_eq!(vec![
-            "32T3K 765".parse::<Hand<JokerOrdering>>().unwrap(),
-            "KK677 28".parse::<Hand<JokerOrdering>>().unwrap(),
-            "T55J5 684".parse::<Hand<JokerOrdering>>().unwrap(),
-            "QQQJA 483".parse::<Hand<JokerOrdering>>().unwrap(),
-            "KTJJT 220".parse::<Hand<JokerOrdering>>().unwrap(),                                    
-        ], parsed);
+        assert_eq!(
+            vec![
+                "32T3K 765".parse::<Hand<JokerOrdering>>().unwrap(),
+                "KK677 28".parse::<Hand<JokerOrdering>>().unwrap(),
+                "T55J5 684".parse::<Hand<JokerOrdering>>().unwrap(),
+                "QQQJA 483".parse::<Hand<JokerOrdering>>().unwrap(),
+                "KTJJT 220".parse::<Hand<JokerOrdering>>().unwrap(),
+            ],
+            parsed
+        );
     }
 
     #[test]
     fn test_regression() {
         assert_eq!(250120186, part1(include_str!("input.txt")));
     }
-
 }

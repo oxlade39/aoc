@@ -2,7 +2,6 @@ use std::{collections::HashMap, time::Instant};
 
 use aoclib::{input, number};
 
-
 fn main() {
     let input = include_str!("input.txt");
     let now = Instant::now();
@@ -14,16 +13,15 @@ fn main() {
 fn part1(txt: &str) -> usize {
     let parts: Vec<_> = input::empty_line_chunks(txt).collect();
     let directions: Vec<_> = parts[0].chars().collect();
-    
-    let map: HashMap<_, _> = parts[1].lines()
+
+    let map: HashMap<_, _> = parts[1]
+        .lines()
         .map(|l| {
             let parts: Vec<_> = l.split(" = ").collect();
             let key = parts[0];
             let replaced = parts[1].replace("(", "");
             let replaced = replaced.replace(")", "");
-            let parts: Vec<_> = replaced
-                .split(", ")
-                .collect();
+            let parts: Vec<_> = replaced.split(", ").collect();
             (key.to_owned(), (parts[0].to_owned(), parts[1].to_owned()))
         })
         .collect();
@@ -37,7 +35,7 @@ fn part1(txt: &str) -> usize {
         current_location = match current_direction {
             'L' => left,
             'R' => right,
-            _ => unreachable!("bad direction")
+            _ => unreachable!("bad direction"),
         };
         steps += 1;
 
@@ -47,7 +45,7 @@ fn part1(txt: &str) -> usize {
     }
 
     steps
-} 
+}
 
 fn part2(txt: &str) -> u64 {
     let parts: Vec<_> = input::empty_line_chunks(txt).collect();
@@ -58,12 +56,10 @@ fn part2(txt: &str) -> u64 {
 
     for l in parts[1].lines() {
         let parts: Vec<_> = l.split(" = ").collect();
-            let key = parts[0];
-            let replaced = parts[1].replace("(", "");
-            let replaced = replaced.replace(")", "");
-            let parts: Vec<_> = replaced
-                .split(", ")
-                .collect();
+        let key = parts[0];
+        let replaced = parts[1].replace("(", "");
+        let replaced = replaced.replace(")", "");
+        let parts: Vec<_> = replaced.split(", ").collect();
         map.insert(key.to_owned(), (parts[0].to_owned(), parts[1].to_owned()));
         if key.chars().last().unwrap() == 'A' {
             start_nodes.push(key);
@@ -82,10 +78,10 @@ fn part2(txt: &str) -> u64 {
             current_location = match current_direction {
                 'L' => left,
                 'R' => right,
-                _ => unreachable!("bad direction")
+                _ => unreachable!("bad direction"),
             };
             my_steps += 1;
-    
+
             if current_location.chars().last().unwrap() == 'Z' {
                 steps.push(my_steps);
                 break;
@@ -93,7 +89,7 @@ fn part2(txt: &str) -> u64 {
         }
     }
     println!("solved {:?}", steps);
-    
+
     number::lcm(&steps[0..])
 }
 
@@ -101,12 +97,10 @@ fn part2(txt: &str) -> u64 {
 mod tests {
     use crate::*;
 
-
     #[test]
     fn test_example_p1() {
         assert_eq!(2, part1(include_str!("input.test.txt")));
     }
-
 
     #[test]
     fn test_example_p1_2() {
@@ -117,6 +111,4 @@ mod tests {
     fn test_example_p2() {
         assert_eq!(6, part2(include_str!("input.test3.txt")));
     }
-
-    
 }

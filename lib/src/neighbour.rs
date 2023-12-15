@@ -1,4 +1,4 @@
-use crate::cartesian::{Point, Transform, Plane, Vector};
+use crate::cartesian::{Plane, Point, Transform, Vector};
 
 pub trait Neighbours<T> {
     fn neighbours(&self, p: &T) -> Vec<Point>;
@@ -7,8 +7,7 @@ pub trait Neighbours<T> {
 pub struct DirectNeighbours<'a>(pub &'a Plane);
 pub struct TouchingNeighbours<'a>(pub &'a Plane);
 
-impl Neighbours<Point> for DirectNeighbours<'_> {    
-    
+impl Neighbours<Point> for DirectNeighbours<'_> {
     fn neighbours(&self, p: &Point) -> Vec<Point> {
         [(-1, 0), (1, 0), (0, 1), (0, -1)]
             .map(|t| {
@@ -28,9 +27,7 @@ impl Neighbours<Point> for DirectNeighbours<'_> {
     }
 }
 
-
 impl Neighbours<Vector> for TouchingNeighbours<'_> {
-
     fn neighbours(&self, v: &Vector) -> Vec<Point> {
         if v.start.x != v.end.x && v.start.y != v.end.y {
             panic!("non deterministic neighbours, vector must share an axis");
@@ -58,7 +55,7 @@ impl Neighbours<Vector> for TouchingNeighbours<'_> {
                         }
                     }
                 }
-                
+
                 if x == max_x {
                     let prospective_points = [
                         Point { x: x + 1, y: y + 1 },
@@ -73,11 +70,8 @@ impl Neighbours<Vector> for TouchingNeighbours<'_> {
                         }
                     }
                 }
-                
-                let prospective_points = [
-                        Point { x, y: y + 1 },
-                        Point { x, y: y - 1 },
-                ];
+
+                let prospective_points = [Point { x, y: y + 1 }, Point { x, y: y - 1 }];
                 for p in prospective_points {
                     if p.within(self.0) {
                         n.push(p);
@@ -87,7 +81,6 @@ impl Neighbours<Vector> for TouchingNeighbours<'_> {
                 }
             }
         } else {
-
             let min_y = v.start.y.min(v.end.y);
             let max_y = v.start.y.max(v.end.y);
             let x = v.start.x;
@@ -104,7 +97,7 @@ impl Neighbours<Vector> for TouchingNeighbours<'_> {
                         }
                     }
                 }
-                
+
                 if y == max_y {
                     let prospective_points = [
                         Point { x: x - 1, y: y + 1 },
@@ -117,11 +110,8 @@ impl Neighbours<Vector> for TouchingNeighbours<'_> {
                         }
                     }
                 }
-                
-                let prospective_points = [
-                        Point { x: x - 1, y },
-                        Point { x: x + 1, y },
-                ];
+
+                let prospective_points = [Point { x: x - 1, y }, Point { x: x + 1, y }];
                 for p in prospective_points {
                     if p.within(self.0) {
                         n.push(p);
@@ -131,12 +121,10 @@ impl Neighbours<Vector> for TouchingNeighbours<'_> {
         }
         n
     }
-    
 }
 
 impl Neighbours<Point> for TouchingNeighbours<'_> {
-
-    fn neighbours<>(&self, p: &Point) -> Vec<Point> {
+    fn neighbours(&self, p: &Point) -> Vec<Point> {
         [
             (-1, 0),
             (1, 0),
@@ -164,13 +152,14 @@ impl Neighbours<Point> for TouchingNeighbours<'_> {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use std::collections::HashSet;
 
-    use crate::{cartesian::{Point, Plane, Vector}, neighbour::{DirectNeighbours, Neighbours, TouchingNeighbours}};
-
+    use crate::{
+        cartesian::{Plane, Point, Vector},
+        neighbour::{DirectNeighbours, Neighbours, TouchingNeighbours},
+    };
 
     #[test]
     fn test_direct_neighbours_at_edge() {
@@ -217,15 +206,19 @@ mod test {
         // *..
         // *..
         // *..
-        let plane = Plane { top_left: (0, 2).into(), bottom_right: (2, 0).into() };
-        let vector = Vector { start: (0, 0).into(), end: (0, 2).into() };
+        let plane = Plane {
+            top_left: (0, 2).into(),
+            bottom_right: (2, 0).into(),
+        };
+        let vector = Vector {
+            start: (0, 0).into(),
+            end: (0, 2).into(),
+        };
         let neighbours = TouchingNeighbours(&plane);
-        
-        let expected: HashSet<Point> = [
-            (1, 0).into(),
-            (1, 1).into(),
-            (1, 2).into(),
-        ].into_iter().collect();
+
+        let expected: HashSet<Point> = [(1, 0).into(), (1, 1).into(), (1, 2).into()]
+            .into_iter()
+            .collect();
         let actual: HashSet<Point> = neighbours.neighbours(&vector).into_iter().collect();
 
         assert_eq!(expected, actual);
@@ -236,10 +229,16 @@ mod test {
         // .*.
         // .*.
         // .*.
-        let plane = Plane { top_left: (0, 2).into(), bottom_right: (2, 0).into() };
-        let vector = Vector { start: (1, 0).into(), end: (1, 2).into() };
+        let plane = Plane {
+            top_left: (0, 2).into(),
+            bottom_right: (2, 0).into(),
+        };
+        let vector = Vector {
+            start: (1, 0).into(),
+            end: (1, 2).into(),
+        };
         let neighbours = TouchingNeighbours(&plane);
-        
+
         let expected: HashSet<Point> = [
             (0, 0).into(),
             (0, 1).into(),
@@ -247,7 +246,9 @@ mod test {
             (2, 0).into(),
             (2, 1).into(),
             (2, 2).into(),
-        ].into_iter().collect();
+        ]
+        .into_iter()
+        .collect();
         let actual: HashSet<Point> = neighbours.neighbours(&vector).into_iter().collect();
 
         assert_eq!(expected, actual);
@@ -258,10 +259,16 @@ mod test {
         // .*.
         // .*.
         // ...
-        let plane = Plane { top_left: (0, 2).into(), bottom_right: (2, 0).into() };
-        let vector = Vector { start: (1, 1).into(), end: (1, 2).into() };
+        let plane = Plane {
+            top_left: (0, 2).into(),
+            bottom_right: (2, 0).into(),
+        };
+        let vector = Vector {
+            start: (1, 1).into(),
+            end: (1, 2).into(),
+        };
         let neighbours = TouchingNeighbours(&plane);
-        
+
         let expected: HashSet<Point> = [
             (0, 0).into(),
             (0, 1).into(),
@@ -270,36 +277,42 @@ mod test {
             (2, 1).into(),
             (2, 2).into(),
             (1, 0).into(),
-
-        ].into_iter().collect();
+        ]
+        .into_iter()
+        .collect();
         let actual: HashSet<Point> = neighbours.neighbours(&vector).into_iter().collect();
 
         assert_eq!(expected, actual);
     }
-
 
     #[test]
     fn test_vector_touching_neighbours_diagonal_above_along_y() {
         // ...
         // .*.
         // .*.
-        let plane = Plane { top_left: (0, 2).into(), bottom_right: (2, 0).into() };
-        let vector = Vector { start: (1, 0).into(), end: (1, 1).into() };
+        let plane = Plane {
+            top_left: (0, 2).into(),
+            bottom_right: (2, 0).into(),
+        };
+        let vector = Vector {
+            start: (1, 0).into(),
+            end: (1, 1).into(),
+        };
         let neighbours = TouchingNeighbours(&plane);
-        
+
         let expected: HashSet<Point> = [
             (0, 0).into(),
             (0, 1).into(),
             (0, 2).into(),
             (2, 0).into(),
             (2, 1).into(),
-            (2, 2).into(),            
+            (2, 2).into(),
             (1, 2).into(),
-
-        ].into_iter().collect();
+        ]
+        .into_iter()
+        .collect();
         let actual: HashSet<Point> = neighbours.neighbours(&vector).into_iter().collect();
 
         assert_eq!(expected, actual);
     }
-    
 }

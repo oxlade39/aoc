@@ -3,7 +3,6 @@ use std::str::FromStr;
 use itertools::Itertools;
 use std::iter::zip;
 
-
 fn main() {
     let input = include_str!("input.txt");
     println!("part1: {}", part1(input));
@@ -12,10 +11,12 @@ fn main() {
 
 fn part1(txt: &str) -> i64 {
     let input: Part1Input = txt.parse().expect("input");
-    input.0.iter()
-            .map(|race| race.improvements().count() as i64)
-            .product()
-} 
+    input
+        .0
+        .iter()
+        .map(|race| race.improvements().count() as i64)
+        .product()
+}
 
 fn part2(txt: &str) -> i64 {
     let input: Part2Input = txt.parse().expect("input");
@@ -31,7 +32,7 @@ struct RecordDistance(i64);
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 struct Race {
     time: Time,
-    distance: RecordDistance
+    distance: RecordDistance,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -43,7 +44,7 @@ impl Race {
     }
 
     fn improvements(&self) -> impl Iterator<Item = Improvement> + '_ {
-        (0..self.time.0)            
+        (0..self.time.0)
             .map(|i| {
                 let d = (self.time.0 - i) * i;
                 Improvement(Race::new(Time(i), RecordDistance(d)))
@@ -68,15 +69,17 @@ impl FromStr for Part1Input {
         let distance_part = parts[1].split(":").skip(1).next().unwrap();
 
         let re = regex::Regex::new(r"\d+").unwrap();
-        
-        let times = re.find_iter(time_part)
+
+        let times = re
+            .find_iter(time_part)
             .map(|mat| Time(mat.as_str().parse().expect("time")));
 
-        let distances = re.find_iter(distance_part)
+        let distances = re
+            .find_iter(distance_part)
             .map(|mat| RecordDistance(mat.as_str().parse().expect("distance")));
 
         let it: Vec<_> = zip(times, distances)
-            .map(|(time, distance)| Race{ time, distance })            
+            .map(|(time, distance)| Race { time, distance })
             .collect();
 
         Ok(Part1Input(it))
@@ -102,7 +105,6 @@ impl FromStr for Part2Input {
 #[cfg(test)]
 mod tests {
     use crate::*;
-
 
     #[test]
     fn test_example_p1() {
@@ -140,13 +142,15 @@ mod tests {
     fn test_distances() {
         let r = Race::new(Time(7), RecordDistance(9));
         let d: Vec<_> = r.improvements().collect();
-        
-        assert_eq!(vec![
-            Improvement(Race::new(Time(2), RecordDistance(10))), 
-            Improvement(Race::new(Time(3), RecordDistance(12))), 
-            Improvement(Race::new(Time(4), RecordDistance(12))), 
-            Improvement(Race::new(Time(5), RecordDistance(10))), 
-        ], d);
-    }
 
+        assert_eq!(
+            vec![
+                Improvement(Race::new(Time(2), RecordDistance(10))),
+                Improvement(Race::new(Time(3), RecordDistance(12))),
+                Improvement(Race::new(Time(4), RecordDistance(12))),
+                Improvement(Race::new(Time(5), RecordDistance(10))),
+            ],
+            d
+        );
+    }
 }

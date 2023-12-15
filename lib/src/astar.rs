@@ -5,7 +5,8 @@ use std::{
 
 use crate::{
     cartesian::{Point, Vector},
-    distance::StraightLineDistance, neighbour::{Neighbours},
+    distance::StraightLineDistance,
+    neighbour::Neighbours,
 };
 
 /// Use sufficiently high number that a real hueristic wouldn't be above
@@ -90,8 +91,6 @@ impl Cost for Vec<Vec<i64>> {
     }
 }
 
-
-
 #[derive(Debug, PartialEq)]
 pub struct ShortestPath {
     pub path: Vec<(Point, i64)>,
@@ -134,7 +133,7 @@ where
             while let Some(p) = path_node {
                 let next = came_from.remove(&p);
                 if let Some(ref p1) = next {
-                    let node_cost = cost.measure(&p1, &p);                    
+                    let node_cost = cost.measure(&p1, &p);
                     path.push((p, node_cost));
                     total_cost += node_cost;
                 }
@@ -170,7 +169,10 @@ where
 #[cfg(test)]
 mod tests {
 
-    use crate::{neighbour::{DirectNeighbours, TouchingNeighbours}, cartesian::Plane};
+    use crate::{
+        cartesian::Plane,
+        neighbour::{DirectNeighbours, TouchingNeighbours},
+    };
 
     use super::*;
 
@@ -187,7 +189,6 @@ mod tests {
             (from.x - to.x).abs() + (from.y - to.y).abs()
         }
     }
-
 
     #[test]
     fn test_example() {

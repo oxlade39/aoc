@@ -133,7 +133,6 @@ mod tests {
         assert_eq!(p.top_left, Point { x: 0, y: 9 });
     }
 
-
     #[test]
     fn test_point_on_vector() {
         // #....

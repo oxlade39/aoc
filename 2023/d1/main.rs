@@ -1,4 +1,4 @@
-use std::{collections::{BTreeMap}};
+use std::collections::BTreeMap;
 
 use itertools::Itertools;
 
@@ -12,13 +12,14 @@ fn part1(txt: &str) -> i32 {
     const RADIX: u32 = 10;
 
     txt.lines()
-        .map(|l| l.chars()
-            .filter(|c| c.to_digit(RADIX).is_some())
-            .collect_vec()
-        )
+        .map(|l| {
+            l.chars()
+                .filter(|c| c.to_digit(RADIX).is_some())
+                .collect_vec()
+        })
         .map(|l| {
             // if (l.len() < 2) {
-                // println!("bad: {:?}", l);
+            // println!("bad: {:?}", l);
             // }
             format!("{}{}", l.first().unwrap(), l.last().unwrap())
         })
@@ -45,7 +46,7 @@ fn part2(txt: &str) -> i32 {
         let mut forward = BTreeMap::new();
         let mut back = BTreeMap::new();
 
-        for (n ,[word, num]) in n.iter().enumerate() {
+        for (n, [word, num]) in n.iter().enumerate() {
             if let Some(i) = line.find(word) {
                 forward.insert(i, n + 1);
             }
@@ -69,7 +70,6 @@ fn part2(txt: &str) -> i32 {
 #[cfg(test)]
 mod tests {
     use crate::*;
-
 
     #[test]
     fn sample_input_pt1() {
