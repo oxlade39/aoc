@@ -77,7 +77,7 @@ impl From<(Point, Point)> for Vector {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Plane {
     pub top_left: Point,
     pub bottom_right: Point,
@@ -100,11 +100,11 @@ impl From<(i64, i64)> for Plane {
 
 impl Plane {
     pub fn width(&self) -> i64 {
-        (self.top_left.x - self.bottom_right.x).abs()
+        (self.top_left.x - self.bottom_right.x).abs() + 1
     }
 
     pub fn height(&self) -> i64 {
-        (self.top_left.y - self.bottom_right.y).abs()
+        (self.top_left.y - self.bottom_right.y).abs() + 1
     }
 }
 
@@ -116,13 +116,13 @@ mod tests {
     #[test]
     fn test_plane_width() {
         let p: Plane = (5, 11).into();
-        assert_eq!(4, p.width())
+        assert_eq!(5, p.width());
     }
 
     #[test]
     fn test_plane_height() {
         let p: Plane = (5, 11).into();
-        assert_eq!(10, p.height())
+        assert_eq!(11, p.height())
     }
 
     #[test]
