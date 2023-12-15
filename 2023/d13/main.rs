@@ -1,4 +1,4 @@
-use std::{time::Instant, str::FromStr};
+use std::{time::Instant, str::FromStr, fmt};
 
 use aoclib::input;
 use itertools::Itertools;
@@ -14,177 +14,35 @@ fn main() {
 
 fn part1(txt: &str) -> usize {
     input::empty_line_chunks(txt)
-        .map(|item| item.parse::<Grid>().unwrap())
-        .map(|g| {
-            let col = g.symmetric_col();
-            let row = g.symmetric_row();
-
-            col + 100 * row
-        })
+        .map(|c| c.parse::<Grid>().unwrap())
+        .map(|g| g.score(0))
         .sum()
 }
 
 fn part2(txt: &str) -> usize {
     input::empty_line_chunks(txt)
-        .map(|item| item.parse::<Grid>().unwrap())
-        .map(|g| g.calc())
+        .map(|c| c.parse::<Grid>().unwrap())
+        .map(|g| g.score(1))
         .sum()
 }
 
 #[derive(Debug, Clone)]
-struct Grid(Vec<Vec<char>>);
+struct Grid {
+    rows: Vec<Vec<Tile>>,
+}
 
-impl Grid {
-    fn at(&self, row: usize, col: usize) -> char {
-        self.0[row][col]
-    }
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Tile {
+    Ash,
+    Rock,
+}
 
-    fn width(&self) -> usize {
-        self.0[0].len()
-    }
-
-    fn height(&self) -> usize {
-        self.0.len()
-    }
-
-    fn calc(mut self) -> usize {
-        let row_bits = self.row_as_bits();
-        if let Some((row, fix)) = symmetric(row_bits, self.width(), None) {
-            let row_score = 100 * row;
-
-            if let Some((fix_row, fix_col)) = fix {
-                if self.0[fix_row][fix_col] == '#' {
-                    println!("flipping # to .\n");
-                    self.0[fix_row][fix_col] = '.';
-                } else {
-                    println!("flipping . to #\n");
-                    self.0[fix_row][fix_col] = '#';
-                }
-            }
-
-            println!("fixed....");
-            for i in 0..self.height() {
-                for j in 0..self.width() {
-                    print!("{}", self.0[i][j]);
-                }
-                println!("")
-            }
-
-            let col_bits = self.col_as_bits();
-            let col_score = symmetric(col_bits, self.height(), fix)
-                .map(|(col_num, _)| col_num)
-                .unwrap_or(0);
-
-            row_score + col_score
-        } else {
-            let col_bits = self.col_as_bits();
-            symmetric(col_bits, self.height(), None)
-                .map(|(col_num, _)| col_num)
-                .unwrap_or(0)
+impl std::fmt::Display for Tile {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Tile::Ash => f.write_str("."),
+            Tile::Rock => f.write_str("#"),
         }
-    }
-
-    fn symmetric_col(&self) -> usize {
-        for col in 0..(self.width() - 1) {
-            let mut symmetric = true;
-
-            for offset in 0..self.width() {
-                if !symmetric {
-                    continue;
-                }
-
-                let forward_col_index = col + offset + 1;
-                let back_col_index = col as i32 - offset as i32;
-
-                if back_col_index < 0 || forward_col_index >= self.width() {
-                    break;
-                }
-
-                for row in 0..self.height() {
-                    let forward = self.at(row, forward_col_index);
-                    let backward = self.at(row, back_col_index as usize);
-    
-                    if forward != backward {
-                        symmetric = false;
-                        break;
-                    }
-                }                
-            }
-            if symmetric {
-                return col + 1;
-            }
-        }
-        return 0;
-    }
-
-    fn symmetric_row(&self) -> usize {
-        for row in 0..(self.height() - 1) {
-            let mut symmetric = true;
-
-            for offset in 0..self.height() {
-                let forward_row_index = row + offset + 1;
-                let back_row_index = row as i32 - offset as i32;
-
-                if back_row_index < 0 || forward_row_index >= self.height() {
-                    break;
-                }
-
-                if !symmetric {
-                    break;
-                }
-
-                for col in 0..self.width() {
-                    let forward = self.at(forward_row_index, col);
-                    let backward = self.at(back_row_index as usize, col);
-
-                    if forward != backward {
-                        symmetric = false;
-                        break;
-                    }
-                }                
-            }
-
-            if symmetric {
-                return row + 1;
-            }
-        }
-        return 0;
-    }
-
-    fn row_as_bits(&self) -> Vec<i32> {
-        let grid = self;
-        (0..grid.height())
-                .map(|row_num| {
-                    (0..grid.width())
-                        .fold(0_i32, |accum, col_num| {
-                            let c = grid.at(row_num, col_num);
-                            let bit_num = grid.0[0].len() - col_num - 1;
-                            if c == '#' {                     
-                                accum | 1 << bit_num
-                            } else {
-                                accum
-                            }                            
-                        })
-                })
-                .collect()
-    }
-
-    fn col_as_bits(&self) -> Vec<i32> {
-        let grid = self;
-        (0..grid.width())
-            .map(|col_num| {
-                (0..grid.height())
-                    .fold(0_i32, |accum, row_num| {
-                        let c = grid.at(row_num, col_num);
-                        let bit_num = grid.0.len() - row_num - 1;
-                        if c == '#' {                     
-                            accum | 1 << bit_num
-                        } else {
-                            accum
-                        }
-                    })
-            })
-            .collect()
     }
 }
 
@@ -192,91 +50,93 @@ impl FromStr for Grid {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Grid(s.lines().map(|l| l.chars().collect_vec()).collect_vec()))
+        let rows = s.lines()
+            .map(|l| l.chars()
+                .map(|c| match c {
+                    '#' => Tile::Rock,
+                    '.' => Tile::Ash,
+                    _ => panic!("bad char"),
+                }).collect_vec())
+                .collect_vec();
+
+        let mut cols = vec![vec![Tile::Ash; rows.len()]; rows[0].len()];
+
+        for col in 0..rows[0].len() {
+            for row in 0..rows.len() {
+                cols[col][row] = rows[row][col].clone();
+            }
+        }
+
+        Ok(Grid { rows })
     }
 }
 
-fn symmetric(items: Vec<i32>, width: usize, fix: Option<(usize, usize)>) -> Option<(usize, Option<(usize, usize)>)> {    
-    let len: i32 = items.len() as i32;
+impl Grid {
 
-    items.windows(2)
-        .enumerate()
-        .filter_map(|(i, window)| {
-            let left = window[0];
-            let right = window[1];
+    fn transpose(&self) -> Grid {
+        let rows = self.rows.clone();
+        let mut cols = vec![vec![Tile::Ash; rows.len()]; rows[0].len()];
 
-            if left == right {
-                println!("symmetry at {i}");
-                return Some((i, fix));
+        for col in 0..rows[0].len() {
+            for row in 0..rows.len() {
+                cols[col][row] = rows[row][col].clone();
+            }
+        }
+
+        Grid { rows: cols }
+    }
+
+    fn score(&self, diffs: usize) -> usize {
+
+        let row = symmetry_index(&self.rows, diffs).unwrap_or(0);
+        let col = symmetry_index(&self.transpose().rows, diffs).unwrap_or(0);
+
+        row * 100 + col
+    }
+}
+
+
+fn symmetry_index(items: &Vec<Vec<Tile>>, allowed: usize) -> Option<usize> {
+    for i in 0..(items.len() - 1) {
+        let mut left_index = i as i32;
+        let mut right_index = i as i32 + 1;
+
+        let mut diffs = 0;
+        loop {
+            if left_index < 0 || right_index >= items.len() as i32 {
+                // out of bounds
+                break;
             }
 
-            if fix.is_none() {
-                // or try flipping a bit
-                let xor = left ^ right;
-                let left_xor_or = left | xor;
-                let right_xor_or = right | xor;
+            let left_items = &items[left_index as usize];
+            let right_items = &items[right_index as usize];
 
-                if left_xor_or == left || right_xor_or == right {
-
-                    if left != left_xor_or {
-                        println!("fixed symmetry at {i} with {xor:b} and {}", (xor as f32).log2());
-                        let fix = width - 1 - (xor as f32).log2().round() as usize;                    
-                        return Some((i, Some((i, fix))))
-                    } else {
-                        println!("fixed symmetry at {i} with {xor:b} and {}", (xor as f32).log2());
-                        let fix = width - 1 - (xor as f32).log2().round() as usize;                    
-                        return Some((i, Some((i + 1, fix))))
-                    }
-                    
-                }
-            }            
-
-            None
-        })
-        .find_map(|(i, fixed)| {
-
-            let mut offset = 1;
-
-            let mut fix: Option<(usize, usize)> = fixed;
-
-            let mut left_pos: i32 = i as i32 - offset;
-            let mut right_pos: i32 = i as i32 + offset + 1;
-            while left_pos >= 0 && right_pos < len {
-                let left = items[left_pos as usize];
-                let right = items[right_pos as usize];                
-                if left != right {
-                    println!("{left:b} vs {right:b} at {left_pos} vs {right_pos}");
-
-                    if fixed.is_none() {
-                        // or try flipping a bit
-                        let xor = left ^ right;
-                        let left_xor_or = left | xor;
-                        let right_xor_or = right | xor;
-
-                        if left_xor_or == left {
-                            println!("fixed left at {left_pos} with {xor:b} {} - {}", width, (xor as f32).log2());
-                            fix = Some((left_pos as usize, width - 1 - (xor as f32).log2().round() as usize));
-                        } else if right_xor_or == right {
-                            println!("fixed right at {right_pos} with {xor:b} {}", (xor as f32).log2());
-                            fix = Some((right_pos as usize, width - 1 - (xor as f32).log2().round() as usize));
-                        } else {
-                            return None;
-                        }
-                    } else {
-                        return None;
-                    }                    
-                }
-                offset += 1;
-                left_pos = i as i32 - offset;
-                right_pos = i as i32 + offset + 1;
+            diffs += left_items.iter().zip(right_items.iter())
+                .filter(|(left, right)| left != right)
+                .count();
+            
+            if diffs > allowed {
+                break;
             }
 
-            Some((i + 1, fix))
-        })
+            left_index -= 1;
+            right_index += 1;
+        }
+
+        if diffs == allowed {
+            return Some(i + 1);
+        }
+    }
+
+    None
+
+    
 }
 
 #[cfg(test)]
 mod tests {
+    use aoclib::input;
+
     use crate::*;
 
 
@@ -286,103 +146,49 @@ mod tests {
     }
 
 
-    // #[test]
-    // fn test_example_p2() {
-    //     assert_eq!(400, part2(include_str!("input.test.txt")));
-    // }    
+    #[test]
+    fn test_example_p2() {
+        assert_eq!(400, part2(include_str!("input.test.txt")));
+    }    
+
 
     #[test]
-    fn test_symmetric_col() {
-        let grids = input::empty_line_chunks(include_str!("input.test.txt"))
-            .map(|chunk| chunk.parse::<Grid>().unwrap())
-            .collect_vec();        
-        assert_eq!(5, grids[0].symmetric_col());
-        assert_eq!(0, grids[0].symmetric_row());
-    }
-    
-    #[test]
-    fn test_symmetric_row() {
-        let grids = input::empty_line_chunks(include_str!("input.test.txt"))
-            .map(|chunk| chunk.parse::<Grid>().unwrap())
-            .collect_vec();        
-        assert_eq!(4, grids[1].symmetric_row());
-        assert_eq!(0, grids[1].symmetric_col());
-
-    }
-
-    #[test]
-    fn test_row_as_bits() {
-        let grids = input::empty_line_chunks(include_str!("input.test.txt"))
-            .map(|chunk| chunk.parse::<Grid>().unwrap())
-            .collect_vec();
-
-        let bits: Vec<String> = grids[0].row_as_bits().iter()
-            .map(|&row| format!("{row:b}"))
-            .collect();
-
-        assert_eq!("101100110", bits[0]);
-
-        let bits: Vec<String> = grids[1].row_as_bits().iter()
-            .map(|&row| format!("{row:b}"))
-            .collect();
-
-        assert_eq!("100011001", bits[0]);
-    }
-
-    #[test]
-    fn test_col_as_bits() {
-        let grids = input::empty_line_chunks(include_str!("input.test.txt"))
-            .map(|chunk| chunk.parse::<Grid>().unwrap())
-            .collect_vec();
-
-        let bits: Vec<String> = grids[0].col_as_bits().iter()
-            .map(|&row| format!("{row:b}"))
-            .collect();
-
-        assert_eq!("1011001", bits[0]);
-
-        let bits: Vec<String> = grids[1].col_as_bits().iter()
-            .map(|&row| format!("{row:b}"))
-            .collect();
-
-        assert_eq!("1101101", bits[0]);
-    }
-
-    #[test]
-    fn test_vec_symmetric() {
-        let grids: Vec<_> = input::empty_line_chunks(include_str!("input.test.txt"))
-            .map(|chunk| chunk.parse::<Grid>().unwrap())
-            .collect();
+    fn test_parse_1() {
+        let input = input::empty_line_chunks(include_str!("input.test.txt")).collect_vec();
+        let g = input[0].parse::<Grid>().unwrap();
         
-        let grid = grids[0].clone();
-        let result = symmetric(grid.row_as_bits(), grid.0[0].len(), None);
-        assert_eq!(Some((3, Some((0, 0)))), result);
+        for row in g.rows.iter() {
+            for col in row {
+                print!("{}", col);
+            }
+            println!("");
+        }
 
-        let grid = grids[1].clone();
-        let result = symmetric(grid.row_as_bits(), grid.0[0].len(), None);
-        assert_eq!(Some((1, Some((1, 4)))), result);
-
-        // let grids: Vec<_> = input::empty_line_chunks(include_str!("input.test.txt"))
-        //     .map(|chunk| chunk.parse::<Grid>().unwrap())
-        //     .map(|g| g.col_as_bits())
-        //     .collect();
-
-        // let result = symmetric(grids[0].clone());
-        // assert_eq!(None, result);
-
-        // let result = symmetric(grids[1].clone());
-        // assert_eq!(None, result);
+        let i = symmetry_index(&g.rows, 0);
+        assert_eq!(None, i);
+        let i = symmetry_index(&g.transpose().rows, 0);
+        assert_eq!(Some(5), i);
     }
 
-    // #[test]
-    // fn test_part2() {
-    //     // let result = part2(include_str!("input.test.txt"));
-    //     // assert_eq!(400, result);
-    //     let grid = input::empty_line_chunks(include_str!("input.test.txt"))
-    //         .map(|l| l.parse::<Grid>().unwrap())
-    //         .collect_vec();
+    #[test]
+    fn test_parse_2() {
+        let input = input::empty_line_chunks(include_str!("input.test.txt")).collect_vec();
+        let g = input[1].parse::<Grid>().unwrap();
         
-    //     assert_eq!(300, grid[0].clone().calc());
-    //     // assert_eq!(100, grid[1]);
-    // }
+        let i = symmetry_index(&g.rows, 0);
+        assert_eq!(Some(4), i);
+        let i = symmetry_index(&g.transpose().rows, 0);
+        assert_eq!(None, i);
+    }
+
+    #[test]
+    fn test_score_pt2_1() {
+        let input = input::empty_line_chunks(include_str!("input.test.txt")).collect_vec();
+        let g = input[0].parse::<Grid>().unwrap();
+        
+        let i = symmetry_index(&g.rows, 1);
+        assert_eq!(Some(3), i);
+        let i = symmetry_index(&g.transpose().rows, 1);
+        assert_eq!(None, i);
+    }
 }
