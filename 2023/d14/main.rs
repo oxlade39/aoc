@@ -6,7 +6,7 @@ use std::{
     time::Instant,
 };
 
-use aoclib::cartesian::{Plane, Point, Transform};
+use aoclib::{cartesian::{Plane, Point, Transform}, input::Grid};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -124,19 +124,19 @@ impl FromStr for Dish {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let grid: Vec<Vec<_>> = s.lines().map(|l| l.chars().collect()).collect();
+        let grid: Grid<char> = s.parse().unwrap();
 
-        let height = grid.len();
-        let width = grid[0].len();
+        let height = grid.height();
+        let width = grid.width();
 
         let mut round: HashSet<Point> = HashSet::new();
         let mut square: HashSet<Point> = HashSet::new();
-        let plane: Plane = (width as i64, height as i64).into();
+        let plane: Plane = (&grid).into();
 
         for row in 0..height {
             let y = height - row - 1;
             for x in 0..width {
-                let c = grid[row][x];
+                let c = grid.rows[row][x];
                 match c {
                     'O' => {
                         round.insert((x as i64, y as i64).into());

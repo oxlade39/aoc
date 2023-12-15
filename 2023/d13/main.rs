@@ -1,7 +1,6 @@
-use std::{str::FromStr, time::Instant};
+use std::time::Instant;
 
-use aoclib::input;
-use itertools::Itertools;
+use aoclib::input::{self, FromChar, Grid};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -13,21 +12,16 @@ fn main() {
 
 fn part1(txt: &str) -> usize {
     input::empty_line_chunks(txt)
-        .map(|c| c.parse::<Grid>().unwrap())
-        .map(|g| g.score(0))
+        .map(|c| c.parse::<Grid<Tile>>().unwrap())
+        .map(|g| score(&g, 0))
         .sum()
 }
 
 fn part2(txt: &str) -> usize {
     input::empty_line_chunks(txt)
-        .map(|c| c.parse::<Grid>().unwrap())
-        .map(|g| g.score(1))
+        .map(|c| c.parse::<Grid<Tile>>().unwrap())
+        .map(|g| score(&g, 1))
         .sum()
-}
-
-#[derive(Debug, Clone)]
-struct Grid {
-    rows: Vec<Vec<Tile>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -45,55 +39,29 @@ impl std::fmt::Display for Tile {
     }
 }
 
-impl FromStr for Grid {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let rows = s
-            .lines()
-            .map(|l| {
-                l.chars()
-                    .map(|c| match c {
-                        '#' => Tile::Rock,
-                        '.' => Tile::Ash,
-                        _ => panic!("bad char"),
-                    })
-                    .collect_vec()
-            })
-            .collect_vec();
-
-        let mut cols = vec![vec![Tile::Ash; rows.len()]; rows[0].len()];
-
-        for col in 0..rows[0].len() {
-            for row in 0..rows.len() {
-                cols[col][row] = rows[row][col].clone();
-            }
-        }
-
-        Ok(Grid { rows })
+impl Default for Tile {
+    fn default() -> Self {
+        Tile::Ash
     }
 }
 
-impl Grid {
-    fn transpose(&self) -> Grid {
-        let rows = self.rows.clone();
-        let mut cols = vec![vec![Tile::Ash; rows.len()]; rows[0].len()];
+impl FromChar for Tile {
+    type Err = String;
 
-        for col in 0..rows[0].len() {
-            for row in 0..rows.len() {
-                cols[col][row] = rows[row][col].clone();
-            }
+    fn from_char(c: char) -> Result<Self, Self::Err> {
+        match c {
+            '#' => Ok(Tile::Rock),
+            '.' => Ok(Tile::Ash),
+            _ => Err(format!("bad char [{}]", c)),
         }
-
-        Grid { rows: cols }
     }
+}
 
-    fn score(&self, diffs: usize) -> usize {
-        let row = symmetry_index(&self.rows, diffs).unwrap_or(0);
-        let col = symmetry_index(&self.transpose().rows, diffs).unwrap_or(0);
+fn score(g: &Grid<Tile>, diffs: usize) -> usize {
+    let row = symmetry_index(&g.rows, diffs).unwrap_or(0);
+    let col = symmetry_index(&g.transpose().rows, diffs).unwrap_or(0);
 
-        row * 100 + col
-    }
+    row * 100 + col
 }
 
 fn symmetry_index(items: &Vec<Vec<Tile>>, allowed: usize) -> Option<usize> {
@@ -151,8 +119,8 @@ mod tests {
 
     #[test]
     fn test_parse_1() {
-        let input = input::empty_line_chunks(include_str!("input.test.txt")).collect_vec();
-        let g = input[0].parse::<Grid>().unwrap();
+        let input: Vec<_> = input::empty_line_chunks(include_str!("input.test.txt")).collect();
+        let g = input[0].parse::<Grid<Tile>>().unwrap();
 
         for row in g.rows.iter() {
             for col in row {
@@ -169,8 +137,8 @@ mod tests {
 
     #[test]
     fn test_parse_2() {
-        let input = input::empty_line_chunks(include_str!("input.test.txt")).collect_vec();
-        let g = input[1].parse::<Grid>().unwrap();
+        let input: Vec<_> = input::empty_line_chunks(include_str!("input.test.txt")).collect();
+        let g = input[1].parse::<Grid<Tile>>().unwrap();
 
         let i = symmetry_index(&g.rows, 0);
         assert_eq!(Some(4), i);
@@ -180,8 +148,8 @@ mod tests {
 
     #[test]
     fn test_score_pt2_1() {
-        let input = input::empty_line_chunks(include_str!("input.test.txt")).collect_vec();
-        let g = input[0].parse::<Grid>().unwrap();
+        let input: Vec<_> = input::empty_line_chunks(include_str!("input.test.txt")).collect();
+        let g = input[0].parse::<Grid<Tile>>().unwrap();
 
         let i = symmetry_index(&g.rows, 1);
         assert_eq!(Some(3), i);
