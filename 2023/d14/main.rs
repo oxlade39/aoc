@@ -1,6 +1,7 @@
-use std::{time::Instant, str::FromStr, collections::{HashSet, HashMap}, fmt::Debug, iter::Enumerate, clone};
+use core::fmt;
+use std::{time::Instant, str::FromStr, collections::{HashSet, HashMap}, fmt::Debug};
 
-use aoclib::{input, cartesian::{Point, Plane, Transform}};
+use aoclib::cartesian::{Point, Plane, Transform};
 use itertools::Itertools;
 
 fn main() {
@@ -24,19 +25,36 @@ const TILTS: [Tilt; 4] = [
 ];
 
 fn part2(txt: &str) -> i64 {
-    
+    find_result_n(txt, 1000000000)
+}
 
-    let mut d: Dish = txt.parse().unwrap();
-    let mut memo = HashMap::new();
+fn find_result_n(txt: &str, n: i32) -> i64 {
+    let mut dish: Dish = txt.parse().unwrap();
 
-    for i in 0..1000000000 {
-        d = d.cycle(&mut memo);
-        if i % 10000 == 0{            
-            print(&d);
-            println!("{} - {} to go", d.score(), 1000000000 - i);
+    let mut store: HashMap<String, i32> = HashMap::new();
+    let mut items: Vec<i64> = Vec::new();
+    let mut cycle = (0, 0);
+
+    for i in 1.. {
+        dish = dish.cycle();
+        items.push(dish.score());
+        if let Some(old) = store.insert(format!("{dish}"), i) {
+            cycle = (old, i);
+            break;
         }
     }
-    d.score()
+
+    let target = n;
+    let (cycle_start, cycle_end) = cycle;
+    let cycle_start = cycle_start - 1;
+    let cycle_end = cycle_end - 1;
+    let cycle_length = cycle_end - cycle_start;
+    // 1000000000 = cycle_start + cycle_length * X
+
+    let offset = (target - cycle_start) % cycle_length;
+
+    let result = items[((cycle_start - 1) as usize) + offset as usize];
+    result
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -46,14 +64,6 @@ struct Dish {
     plane: Plane,
 }
 
-impl std::hash::Hash for Dish {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.round.iter().collect_vec().hash(state);
-        self.square.iter().collect_vec().hash(state);
-        self.plane.hash(state);
-    }
-}
-
 impl Dish {
     fn score(&self) -> i64 {
         self.round.iter()
@@ -61,10 +71,10 @@ impl Dish {
             .sum()
     }
 
-    fn cycle(self, mut memo: &mut HashMap<(Dish, &Tilt), Dish>) -> Self {
+    fn cycle(self) -> Self {
         let mut d = self;
         for t in TILTS.iter() {            
-            d = memo_tilt(d, t, memo);
+            d = tilt(d, t);
         }
         d
     }
@@ -86,6 +96,30 @@ impl From<&Tilt> for Transform  {
             Tilt::North => (0, 1).into(),
             Tilt::South => (0, -1).into(),
         }
+    }
+}
+
+impl fmt::Display for Dish {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut result = fmt::Result::Ok(());
+        let width = self.plane.width();
+        let height = self.plane.height();
+        for row in 0..height {
+            let y = height - row - 1;
+            for x in 0..width {
+                let p: Point = (x as i64, y as i64).into();
+                if self.round.contains(&p) {
+                    result = result.and_then(|_| f.write_str("O"));
+                } else if self.square.contains(&p) {
+                    result = result.and_then(|_| f.write_str("#"));
+                } else {
+                    result = result.and_then(|_| f.write_str("."));
+                }
+            }
+            result = result.and_then(|_| f.write_str("\r\n"));
+        }
+
+        result
     }
 }
 
@@ -142,19 +176,7 @@ impl FromStr for Dish {
 
         Ok(Dish { round, square, plane })
     }
-}
-
-fn memo_tilt<'a>(d: Dish, t: &'a Tilt, memo: &mut HashMap<(Dish, &'a Tilt), Dish>) -> Dish {
-    let dc = d.clone();
-    if let Some(result) = memo.get(&(d.clone(), t)) {
-        return result.clone();
-    } else {
-        let result = tilt(dc.clone(), t);
-        memo.insert((d.clone(), &t), result.clone());
-        return result;
-    }
 } 
-
 
 fn tilt(d: Dish, tilt: &Tilt) -> Dish {
     let mut moved: HashSet<Point> = HashSet::new();
@@ -250,11 +272,10 @@ mod tests {
     }
 
 
-    // too slow
-    // #[test]
-    // fn test_example_p2() {
-    //     assert_eq!(64, part2(include_str!("input.test.txt")));
-    // }    
+    #[test]
+    fn test_example_p2() {
+        assert_eq!(64, part2(include_str!("input.test.txt")));
+    }    
 
     #[test]
     fn test_parse() {
@@ -303,28 +324,26 @@ mod tests {
     fn test_cycles() {
         let txt = include_str!("input.test.txt");
         let dish: Dish = txt.parse().unwrap();
-        let mut memo = HashMap::new();
 
-        let dish = dish.cycle(&mut memo);
+        let dish = dish.cycle();
 
         let txt = include_str!("output.test.1.txt");
         let tilted_expected: Dish = txt.parse().unwrap();
         print(&dish);
         assert_eq!(tilted_expected, dish);
 
-        let dish = dish.cycle(&mut memo);
+        let dish = dish.cycle();
 
         let txt = include_str!("output.test.2.txt");
         let tilted_expected: Dish = txt.parse().unwrap();
         print(&dish);
         assert_eq!(tilted_expected, dish);
         
-        let dish = dish.cycle(&mut memo);
+        let dish = dish.cycle();
 
         let txt = include_str!("output.test.3.txt");
         let tilted_expected: Dish = txt.parse().unwrap();
         print(&dish);
         assert_eq!(tilted_expected, dish);
     }
-
 }
