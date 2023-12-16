@@ -19,16 +19,43 @@ pub fn empty_line_chunks<'a>(input: &'a str) -> std::str::Split<'a, &'a str> {
     input.split(EMPTY_LINE)
 }
 
+/// Utility for a grid of input. A common input type for aoc puzzles.
+/// Supports a number of common utilities on grids of input.
+/// 
+/// Input would like like:
+/// ```ignore
+/// #..
+/// .#.
+/// ..#
+/// ```
+/// 
+/// Parsing this input to a grid might look like:
+/// 
+/// ```
+/// use aoclib::input::Grid;
+/// 
+/// fn parse() {
+///     let input = "\
+///     #..\n\
+///     .#.\n\
+///     ..#
+///     ";
+///     let grid: Grid<char> = input.parse().unwrap();
+///     println!("{}", grid);
+/// }
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Grid<T> {
     pub rows: Vec<Vec<T>>,
 }
 
 impl<T> Grid<T> {
+    /// The number of columns within this `Grid`
     pub fn width(&self) -> usize {
         self.rows[0].len()
     }
 
+    /// The number of rows within this `Grid`
     pub fn height(&self) -> usize {
         self.rows.len()
     }
@@ -59,6 +86,29 @@ where
     }
 }
 
+/// If the type contained within your `Grid` behaves differently 
+/// if the grid is flipped, then you should implement this 
+/// to perform that flip.
+/// 
+/// For example, a grid of mirrors:
+/// ```ignore
+/// . . .
+/// . / .
+/// . . .
+/// ```
+/// 
+/// where light travelling from top to bottom, reflects
+/// the on the middle mirror to the left. 
+/// 
+/// When flipped:
+/// ```ignore
+/// . . .
+/// . \ .
+/// . . .
+/// ```
+/// 
+/// light now travelling bottom to top, should still
+/// reflect to the left. The flip behavour depends on the type.
 pub trait Flip {
     fn flip(&self) -> Self;
 }
@@ -75,6 +125,34 @@ where
     }
 }
 
+/// Required `trait` for a generic `Grid`
+/// 
+/// implement this to transform the individial grid characters to
+/// your desired type. Typically this would be an enum but can be
+/// whatever suits your use-case.
+/// 
+/// eg:
+/// ```
+/// use aoclib::input::FromChar;
+/// 
+/// enum Tile {
+///     Space,
+///     DiagonalRight,
+/// }
+/// 
+/// impl FromChar for Tile {
+///     type Err = String;
+///
+///     fn from_char(c: char) -> Result<Self, Self::Err> {
+///         match c {
+///             '.' => Ok(Tile::Space),
+///             '/' => Ok(Tile::DiagonalRight),
+///             _ => Err("no mapping".to_owned()),
+///          }
+///     }
+/// }
+/// ```
+/// 
 pub trait FromChar: Sized {
     type Err;
 
