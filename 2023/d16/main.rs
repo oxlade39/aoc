@@ -1,13 +1,13 @@
 use core::fmt;
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashSet,
     fmt::{Debug, Display},
     str::FromStr,
-    time::Instant, default,
+    time::Instant,
 };
 
-use aoclib::{input::{FromChar, Flip, Grid}, astar::Cost, cartesian::{Point, Transform}};
-use itertools::Itertools;
+use aoclib::{input::{FromChar, Flip, Grid}, cartesian::Point};
+
 
 fn main() {
     let input = include_str!("input.txt");
@@ -19,14 +19,46 @@ fn main() {
 
 fn part1(txt: &str) -> usize {
     let c: Contraption = txt.parse().unwrap();
-    let mut path = vec![];
     let start_point = (0, c.tiles.height() as i64 - 1).into();
-    step(&c, Direction::Right, start_point, &mut path, &mut HashSet::new());
-    collect_energised(&c, path).len()
+    let mut points = HashSet::new();
+    step(&c, Direction::Right, start_point, &mut points, &mut HashSet::new());
+    points.len()
 }
 
-fn part2(txt: &str) -> i64 {
-    0
+fn part2(txt: &str) -> usize {
+    let c: Contraption = txt.parse().unwrap();
+
+    let mut max = 0;
+    for x in 0..c.tiles.width() {
+        let start_point = (x as i64, c.tiles.height() as i64 - 1).into();
+        
+        let mut points = HashSet::new();
+        let mut path_cache =  HashSet::new();
+        step(&c, Direction::Down, start_point, &mut points, &mut path_cache);
+        max = max.max(points.len());
+
+        let start_point = (x as i64, 0).into();
+        let mut points = HashSet::new();
+        let mut path_cache =  HashSet::new();
+        step(&c, Direction::Up, start_point, &mut points, &mut path_cache);
+        max = max.max(points.len());
+    }
+
+    for y in 0..c.tiles.height() {
+        let start_point = (c.tiles.width() as i64 - 1, y as i64).into();
+        
+        let mut points = HashSet::new();
+        let mut path_cache =  HashSet::new();
+        step(&c, Direction::Left, start_point, &mut points, &mut path_cache);
+        max = max.max(points.len());
+
+        let start_point = (0, y as i64).into();
+        let mut points = HashSet::new();
+        let mut path_cache =  HashSet::new();
+        step(&c, Direction::Right, start_point, &mut points, &mut path_cache);
+        max = max.max(points.len());
+    }
+    max
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -122,7 +154,7 @@ fn step(
     contraption: &Contraption,
     direction: Direction, 
     current: Point, 
-    path: &mut Vec<Point>,    
+    points: &mut HashSet<Point>,
     seen: &mut HashSet<(Direction, Point)>
 ) {
 
@@ -133,16 +165,15 @@ fn step(
     let g = &contraption.tiles;
     if !current.within(&g.into()) {
         return;
-    }
+    }    
 
     let current_tile = &contraption.tiles.rows[current.y as usize][current.x as usize];
-    path.push(current.clone());
-    // print_path_and_dir(contraption, &current, &direction, path.clone());
+    points.insert(current.clone());
 
     match current_tile {
         Tile::Space => {            
             let next = direction.apply(&current);
-            let p = step(contraption, direction, next, path, seen);
+            let p = step(contraption, direction, next, points, seen);
             return p;
         },
         Tile::DiagonalRight => {
@@ -153,8 +184,8 @@ fn step(
                 Direction::Right => Direction::Up,
             };
             let next = next_dir.apply(&current);
-            let p = step(contraption, next_dir.clone(), next.clone(), path, seen);
-            return p;
+            step(contraption, next_dir.clone(), next.clone(), points, seen);
+            return;
         },
         Tile::DiagonalLeft => {
             let next_dir: Direction = match direction {
@@ -164,29 +195,29 @@ fn step(
                 Direction::Right => Direction::Down,
             };
             let next = next_dir.apply(&current);
-            step(contraption, next_dir.clone(), next.clone(), path, seen);
+            step(contraption, next_dir.clone(), next.clone(), points, seen);
             return;
         },
         Tile::UpDown => {
             match direction {
                 Direction::Up => {
                     let next = direction.apply(&current);
-                    step(contraption, direction.clone(), next.clone(), path, seen);
+                    step(contraption, direction.clone(), next.clone(), points, seen);
                     return;
                 },
                 Direction::Down => {
                     let next = direction.apply(&current);
-                    step(contraption, direction.clone(), next.clone(), path, seen);
+                    step(contraption, direction.clone(), next.clone(), points, seen);
                     return;
                 },
                 Direction::Left | Direction::Right => {
                     let next_dir = Direction::Up;
                     let next = next_dir.apply(&current);
-                    step(contraption, next_dir, next.clone(), path, seen);
+                    step(contraption, next_dir, next.clone(), points, seen);
 
                     let next_dir = Direction::Down;
                     let next = next_dir.apply(&current);
-                    step(contraption, next_dir, next.clone(), path, seen);                    
+                    step(contraption, next_dir, next.clone(), points, seen);
                     return;
                 },
             }
@@ -196,17 +227,17 @@ fn step(
                 Direction::Up | Direction::Down => {
                     let next_dir = Direction::Left;
                     let next = next_dir.apply(&current);
-                    step(contraption, next_dir.clone(), next.clone(), path, seen);
+                    step(contraption, next_dir.clone(), next.clone(), points, seen);
 
                     let next_dir = Direction::Right;
                     let next = next_dir.apply(&current);
-                    step(contraption, next_dir.clone(), next.clone(), path, seen);
+                    step(contraption, next_dir.clone(), next.clone(), points, seen);                    
 
                     return;
                 },
                 Direction::Left | Direction::Right => {
                     let next = direction.apply(&current);
-                    step(contraption, direction.clone(), next.clone(), path, seen);
+                    step(contraption, direction.clone(), next.clone(), points, seen);
                     return;
                 },
             }
@@ -214,58 +245,8 @@ fn step(
     }
 }
 
-fn collect_energised(c: &Contraption, paths: Vec<Point>) -> HashSet<Point> {
-    let mut entergised: HashSet<Point> = HashSet::new();
-
-    for p in paths {
-        entergised.insert(p);
-    }
-    entergised
-}
-
-fn print_path(c: &Contraption, paths: Vec<Point>) {
-    let entergised = collect_energised(c, paths);
-
-    println!("Paths: ");
-    for row in 0..c.tiles.height() {
-        let y = c.tiles.height() - row - 1;
-        for x in 0..c.tiles.width() {
-            if entergised.contains(&(x as i64, y as i64).into()) {
-                print!("#");
-            } else {
-                print!(".");
-            }
-        }
-        println!("");
-    }
-}
-
-fn print_path_and_dir(c: &Contraption, p: &Point, d: &Direction, paths: Vec<Point>) {
-    let current_tile = &c.tiles.rows[p.y as usize][p.x as usize];
-    let entergised = collect_energised(c, paths);
-
-    println!("Paths: [{}] ({},{})", current_tile, p.x, p.y);
-    for row in 0..c.tiles.height() {
-        let y = (c.tiles.height() as i64 - row as i64) - 1;
-        for x in 0..c.tiles.width() {
-            let print_point = (x as i64, y as i64).into();            
-            if p == &print_point {
-                print!("{}", d);
-            } else if entergised.contains(&print_point) {
-                print!("#");
-            } else {
-                print!(".");
-            }
-        }
-        println!("");
-    }
-}
-
-
 #[cfg(test)]
 mod tests {
-    use std::collections::HashSet;
-
     use crate::*;
 
     #[test]
@@ -275,7 +256,7 @@ mod tests {
 
     #[test]
     fn test_example_p2() {
-        assert_eq!(0, part2(include_str!("input.test.txt")));
+        assert_eq!(51, part2(include_str!("input.test.txt")));
     }
 
     #[test]
@@ -303,10 +284,10 @@ mod tests {
 
         println!("Contraption:\n{}", c.tiles.flip());
 
-        let mut path = vec![];
         let start_point = (0, c.tiles.height() as i64 - 1).into();
-        step(&c, Direction::Right, start_point, &mut path, &mut HashSet::new());
-        print_path(&c, path);        
+        let mut points = HashSet::new();
+        step(&c, Direction::Right, start_point, &mut points, &mut HashSet::new());
+        assert!(points.len() > 0);
     }
 
     #[test]
@@ -317,5 +298,49 @@ mod tests {
 
         assert_eq!(expected, up);
     }
+
+    #[test]
+    fn test_simple_examples() {
+        let c: Contraption = "...".parse().unwrap();
+        let start_point = (0, c.tiles.height() as i64 - 1).into();
+        let mut points = HashSet::new();
+        step(&c, Direction::Right, start_point, &mut points, &mut HashSet::new());
+        assert_eq!(3, points.len());
+
+        let c: Contraption = 
+        "\
+        .|.\n\
+        .\\.\n\
+        ".parse().unwrap();
+        let start_point = (0, c.tiles.height() as i64 - 1).into();
+        let mut points = HashSet::new();
+        step(&c, Direction::Right, start_point, &mut points, &mut HashSet::new());
+        assert_eq!(4, points.len());
+
+        let c: Contraption = 
+        "\
+        .|.\n\
+        .\\|\n\
+        ...\n\
+        ".parse().unwrap();
+        let start_point = (0, c.tiles.height() as i64 - 1).into();
+        let mut points = HashSet::new();
+        step(&c, Direction::Right, start_point, &mut points, &mut HashSet::new());
+        assert_eq!(6, points.len());
+    }
+
+    #[test]
+    fn test_repeating_example() {
+        let c: Contraption = 
+        "\
+        .|.\n\
+        .\\|\n\
+        .\\/\n\
+        ".parse().unwrap();
+        let start_point = (0, c.tiles.height() as i64 - 1).into();
+        let mut points = HashSet::new();
+        step(&c, Direction::Right, start_point, &mut points, &mut HashSet::new());
+        assert_eq!(8, points.len());
+    }    
 
 }
