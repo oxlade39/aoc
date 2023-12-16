@@ -21,8 +21,8 @@ fn part1(txt: &str) -> usize {
     let c: Contraption = txt.parse().unwrap();
     let mut path = vec![];
     let start_point = (0, c.tiles.height() as i64 - 1).into();
-    let paths = step(&c, Direction::Right, start_point, &mut path, &mut HashSet::new());
-    collect_energised(&c, paths).len()
+    step(&c, Direction::Right, start_point, &mut path, &mut HashSet::new());
+    collect_energised(&c, path).len()
 }
 
 fn part2(txt: &str) -> i64 {
@@ -124,15 +124,15 @@ fn step(
     current: Point, 
     path: &mut Vec<Point>,    
     seen: &mut HashSet<(Direction, Point)>
-) -> Vec<Point> {
+) {
 
     if !seen.insert((direction.clone(), current.clone())) {
-        return path.clone();
+        return;
     }
 
     let g = &contraption.tiles;
     if !current.within(&g.into()) {
-        return path.clone();
+        return;
     }
 
     let current_tile = &contraption.tiles.rows[current.y as usize][current.x as usize];
@@ -164,33 +164,30 @@ fn step(
                 Direction::Right => Direction::Down,
             };
             let next = next_dir.apply(&current);
-            let p = step(contraption, next_dir.clone(), next.clone(), path, seen);
-            return p;
+            step(contraption, next_dir.clone(), next.clone(), path, seen);
+            return;
         },
         Tile::UpDown => {
             match direction {
                 Direction::Up => {
                     let next = direction.apply(&current);
-                    let p = step(contraption, direction.clone(), next.clone(), path, seen);
-                    return p;
+                    step(contraption, direction.clone(), next.clone(), path, seen);
+                    return;
                 },
                 Direction::Down => {
                     let next = direction.apply(&current);
-                    let p = step(contraption, direction.clone(), next.clone(), path, seen);
-                    return p;
+                    step(contraption, direction.clone(), next.clone(), path, seen);
+                    return;
                 },
                 Direction::Left | Direction::Right => {
                     let next_dir = Direction::Up;
                     let next = next_dir.apply(&current);
-                    let mut ups = step(contraption, next_dir, next.clone(), &mut path.clone(), seen);
+                    step(contraption, next_dir, next.clone(), path, seen);
 
                     let next_dir = Direction::Down;
                     let next = next_dir.apply(&current);
-                    let downs = step(contraption, next_dir, next.clone(), &mut path.clone(), seen);
-
-                    ups.extend(downs);
-                    
-                    return ups;
+                    step(contraption, next_dir, next.clone(), path, seen);                    
+                    return;
                 },
             }
         },
@@ -199,18 +196,18 @@ fn step(
                 Direction::Up | Direction::Down => {
                     let next_dir = Direction::Left;
                     let next = next_dir.apply(&current);
-                    let mut lefts = step(contraption, next_dir.clone(), next.clone(), &mut path.clone(), seen);
+                    step(contraption, next_dir.clone(), next.clone(), path, seen);
 
                     let next_dir = Direction::Right;
                     let next = next_dir.apply(&current);
-                    let combined = step(contraption, next_dir.clone(), next.clone(), &mut lefts, seen);
+                    step(contraption, next_dir.clone(), next.clone(), path, seen);
 
-                    return combined;
+                    return;
                 },
                 Direction::Left | Direction::Right => {
                     let next = direction.apply(&current);
-                    let p = step(contraption, direction.clone(), next.clone(), path, seen);
-                    return p;
+                    step(contraption, direction.clone(), next.clone(), path, seen);
+                    return;
                 },
             }
         },
@@ -308,8 +305,8 @@ mod tests {
 
         let mut path = vec![];
         let start_point = (0, c.tiles.height() as i64 - 1).into();
-        let paths = step(&c, Direction::Right, start_point, &mut path, &mut HashSet::new());
-        print_path(&c, paths);        
+        step(&c, Direction::Right, start_point, &mut path, &mut HashSet::new());
+        print_path(&c, path);        
     }
 
     #[test]
