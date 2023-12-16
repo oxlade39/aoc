@@ -33,7 +33,6 @@ version = "0.1.0"
 dependencies = [
  "aoclib",
  "itertools",
- "rayon",
  "regex",
 ]
 
