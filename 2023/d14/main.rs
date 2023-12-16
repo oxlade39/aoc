@@ -6,7 +6,10 @@ use std::{
     time::Instant,
 };
 
-use aoclib::{cartesian::{Plane, Point, Transform}, input::Grid};
+use aoclib::{
+    cartesian::{Plane, Point, Transform},
+    input::Grid,
+};
 
 fn main() {
     let input = include_str!("input.txt");

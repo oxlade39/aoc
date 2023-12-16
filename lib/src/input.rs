@@ -32,7 +32,6 @@ impl<T> Grid<T> {
     pub fn height(&self) -> usize {
         self.rows.len()
     }
-
 }
 
 impl<T> From<&Grid<T>> for Plane {
@@ -65,10 +64,11 @@ pub trait Flip {
 }
 
 impl<T> Flip for Grid<T>
-    where T: Flip,
-        T: Clone
+where
+    T: Flip,
+    T: Clone,
 {
-    fn flip(&self) -> Self {    
+    fn flip(&self) -> Self {
         let mut rows = self.rows.clone();
         rows.reverse();
         Grid { rows }
@@ -98,19 +98,16 @@ where
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let rows = s
             .lines()
-            .map(|l| {
-                l.chars()
-                    .filter_map(|c| T::from_char(c).ok())
-                    .collect()
-            })
+            .map(|l| l.chars().filter_map(|c| T::from_char(c).ok()).collect())
             .collect();
 
         Ok(Grid { rows })
     }
 }
 
-impl<T> fmt::Display for Grid<T> 
-where T: fmt::Display
+impl<T> fmt::Display for Grid<T>
+where
+    T: fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut result = fmt::Result::Ok(());
@@ -136,28 +133,20 @@ mod tests {
     #[test]
     fn test_empty_line_chunks() {
         let text = &format!("first{}second{}third", EMPTY_LINE, EMPTY_LINE);
-    
+
         let chunks: Vec<_> = empty_line_chunks(text).collect();
         assert_eq!(vec!["first", "second", "third"], chunks);
     }
-    
+
     #[test]
     fn test_transpose() {
-        let g = Grid { 
-            rows: vec![
-                vec![1, 2, 3, 4],
-                vec![5, 6, 7, 8],
-            ]
+        let g = Grid {
+            rows: vec![vec![1, 2, 3, 4], vec![5, 6, 7, 8]],
         };
         let expected = Grid {
-            rows: vec![
-                vec![1, 5],
-                vec![2, 6],
-                vec![3, 7],
-                vec![4, 8],
-            ]
+            rows: vec![vec![1, 5], vec![2, 6], vec![3, 7], vec![4, 8]],
         };
-    
+
         assert_eq!(expected, g.transpose());
     }
 
@@ -166,24 +155,18 @@ mod tests {
             self.clone()
         }
     }
-    
+
     #[test]
     fn test_flip() {
-        let g = Grid { 
-            rows: vec![
-                vec![1, 2, 3, 4],
-                vec![5, 6, 7, 8],
-            ]
+        let g = Grid {
+            rows: vec![vec![1, 2, 3, 4], vec![5, 6, 7, 8]],
         };
         let expected = Grid {
-            rows: vec![
-                vec![5, 6, 7, 8],
-                vec![1, 2, 3, 4],            
-            ]
+            rows: vec![vec![5, 6, 7, 8], vec![1, 2, 3, 4]],
         };
-    
+
         println!("{}", expected);
-    
+
         assert_eq!(expected, g.flip());
-    }   
+    }
 }

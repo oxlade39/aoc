@@ -6,8 +6,10 @@ use std::{
     time::Instant,
 };
 
-use aoclib::{input::{FromChar, Flip, Grid}, cartesian::Point};
-
+use aoclib::{
+    cartesian::Point,
+    input::{Flip, FromChar, Grid},
+};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -21,7 +23,13 @@ fn part1(txt: &str) -> usize {
     let c: Contraption = txt.parse().unwrap();
     let start_point = (0, c.tiles.height() as i64 - 1).into();
     let mut points = HashSet::new();
-    step(&c, Direction::Right, start_point, &mut points, &mut HashSet::new());
+    step(
+        &c,
+        Direction::Right,
+        start_point,
+        &mut points,
+        &mut HashSet::new(),
+    );
     points.len()
 }
 
@@ -31,31 +39,49 @@ fn part2(txt: &str) -> usize {
     let mut max = 0;
     for x in 0..c.tiles.width() {
         let start_point = (x as i64, c.tiles.height() as i64 - 1).into();
-        
+
         let mut points = HashSet::new();
-        let mut path_cache =  HashSet::new();
-        step(&c, Direction::Down, start_point, &mut points, &mut path_cache);
+        let mut path_cache = HashSet::new();
+        step(
+            &c,
+            Direction::Down,
+            start_point,
+            &mut points,
+            &mut path_cache,
+        );
         max = max.max(points.len());
 
         let start_point = (x as i64, 0).into();
         let mut points = HashSet::new();
-        let mut path_cache =  HashSet::new();
+        let mut path_cache = HashSet::new();
         step(&c, Direction::Up, start_point, &mut points, &mut path_cache);
         max = max.max(points.len());
     }
 
     for y in 0..c.tiles.height() {
         let start_point = (c.tiles.width() as i64 - 1, y as i64).into();
-        
+
         let mut points = HashSet::new();
-        let mut path_cache =  HashSet::new();
-        step(&c, Direction::Left, start_point, &mut points, &mut path_cache);
+        let mut path_cache = HashSet::new();
+        step(
+            &c,
+            Direction::Left,
+            start_point,
+            &mut points,
+            &mut path_cache,
+        );
         max = max.max(points.len());
 
         let start_point = (0, y as i64).into();
         let mut points = HashSet::new();
-        let mut path_cache =  HashSet::new();
-        step(&c, Direction::Right, start_point, &mut points, &mut path_cache);
+        let mut path_cache = HashSet::new();
+        step(
+            &c,
+            Direction::Right,
+            start_point,
+            &mut points,
+            &mut path_cache,
+        );
         max = max.max(points.len());
     }
     max
@@ -81,7 +107,7 @@ impl FromChar for Tile {
             '\\' => Ok(Tile::DiagonalLeft),
             '|' => Ok(Tile::UpDown),
             '-' => Ok(Tile::LeftRight),
-            _ => Err("no mapping".to_owned())
+            _ => Err("no mapping".to_owned()),
         }
     }
 }
@@ -109,14 +135,15 @@ impl Flip for Tile {
 }
 
 struct Contraption {
-    tiles: Grid<Tile>
+    tiles: Grid<Tile>,
 }
 
 impl FromStr for Contraption {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse::<Grid<Tile>>().map(|g| Contraption { tiles: g.flip() })
+        s.parse::<Grid<Tile>>()
+            .map(|g| Contraption { tiles: g.flip() })
     }
 }
 
@@ -125,7 +152,7 @@ enum Direction {
     Up,
     Down,
     Left,
-    Right
+    Right,
 }
 
 impl Direction {
@@ -152,12 +179,11 @@ impl Display for Direction {
 
 fn step(
     contraption: &Contraption,
-    direction: Direction, 
-    current: Point, 
+    direction: Direction,
+    current: Point,
     points: &mut HashSet<Point>,
-    seen: &mut HashSet<(Direction, Point)>
+    seen: &mut HashSet<(Direction, Point)>,
 ) {
-
     if !seen.insert((direction.clone(), current.clone())) {
         return;
     }
@@ -165,17 +191,17 @@ fn step(
     let g = &contraption.tiles;
     if !current.within(&g.into()) {
         return;
-    }    
+    }
 
     let current_tile = &contraption.tiles.rows[current.y as usize][current.x as usize];
     points.insert(current.clone());
 
     match current_tile {
-        Tile::Space => {            
+        Tile::Space => {
             let next = direction.apply(&current);
             let p = step(contraption, direction, next, points, seen);
             return p;
-        },
+        }
         Tile::DiagonalRight => {
             let next_dir: Direction = match direction {
                 Direction::Up => Direction::Right,
@@ -186,7 +212,7 @@ fn step(
             let next = next_dir.apply(&current);
             step(contraption, next_dir.clone(), next.clone(), points, seen);
             return;
-        },
+        }
         Tile::DiagonalLeft => {
             let next_dir: Direction = match direction {
                 Direction::Up => Direction::Left,
@@ -197,49 +223,45 @@ fn step(
             let next = next_dir.apply(&current);
             step(contraption, next_dir.clone(), next.clone(), points, seen);
             return;
-        },
-        Tile::UpDown => {
-            match direction {
-                Direction::Up => {
-                    let next = direction.apply(&current);
-                    step(contraption, direction.clone(), next.clone(), points, seen);
-                    return;
-                },
-                Direction::Down => {
-                    let next = direction.apply(&current);
-                    step(contraption, direction.clone(), next.clone(), points, seen);
-                    return;
-                },
-                Direction::Left | Direction::Right => {
-                    let next_dir = Direction::Up;
-                    let next = next_dir.apply(&current);
-                    step(contraption, next_dir, next.clone(), points, seen);
+        }
+        Tile::UpDown => match direction {
+            Direction::Up => {
+                let next = direction.apply(&current);
+                step(contraption, direction.clone(), next.clone(), points, seen);
+                return;
+            }
+            Direction::Down => {
+                let next = direction.apply(&current);
+                step(contraption, direction.clone(), next.clone(), points, seen);
+                return;
+            }
+            Direction::Left | Direction::Right => {
+                let next_dir = Direction::Up;
+                let next = next_dir.apply(&current);
+                step(contraption, next_dir, next.clone(), points, seen);
 
-                    let next_dir = Direction::Down;
-                    let next = next_dir.apply(&current);
-                    step(contraption, next_dir, next.clone(), points, seen);
-                    return;
-                },
+                let next_dir = Direction::Down;
+                let next = next_dir.apply(&current);
+                step(contraption, next_dir, next.clone(), points, seen);
+                return;
             }
         },
-        Tile::LeftRight => {
-            match direction {
-                Direction::Up | Direction::Down => {
-                    let next_dir = Direction::Left;
-                    let next = next_dir.apply(&current);
-                    step(contraption, next_dir.clone(), next.clone(), points, seen);
+        Tile::LeftRight => match direction {
+            Direction::Up | Direction::Down => {
+                let next_dir = Direction::Left;
+                let next = next_dir.apply(&current);
+                step(contraption, next_dir.clone(), next.clone(), points, seen);
 
-                    let next_dir = Direction::Right;
-                    let next = next_dir.apply(&current);
-                    step(contraption, next_dir.clone(), next.clone(), points, seen);                    
+                let next_dir = Direction::Right;
+                let next = next_dir.apply(&current);
+                step(contraption, next_dir.clone(), next.clone(), points, seen);
 
-                    return;
-                },
-                Direction::Left | Direction::Right => {
-                    let next = direction.apply(&current);
-                    step(contraption, direction.clone(), next.clone(), points, seen);
-                    return;
-                },
+                return;
+            }
+            Direction::Left | Direction::Right => {
+                let next = direction.apply(&current);
+                step(contraption, direction.clone(), next.clone(), points, seen);
+                return;
             }
         },
     }
@@ -269,7 +291,6 @@ mod tests {
         println!("");
         println!("{}", c.tiles);
 
-
         println!("{:?}", c.tiles.rows[9]);
 
         assert_eq!(Tile::Space, c.tiles.rows[9][0]);
@@ -286,7 +307,13 @@ mod tests {
 
         let start_point = (0, c.tiles.height() as i64 - 1).into();
         let mut points = HashSet::new();
-        step(&c, Direction::Right, start_point, &mut points, &mut HashSet::new());
+        step(
+            &c,
+            Direction::Right,
+            start_point,
+            &mut points,
+            &mut HashSet::new(),
+        );
         assert!(points.len() > 0);
     }
 
@@ -304,43 +331,69 @@ mod tests {
         let c: Contraption = "...".parse().unwrap();
         let start_point = (0, c.tiles.height() as i64 - 1).into();
         let mut points = HashSet::new();
-        step(&c, Direction::Right, start_point, &mut points, &mut HashSet::new());
+        step(
+            &c,
+            Direction::Right,
+            start_point,
+            &mut points,
+            &mut HashSet::new(),
+        );
         assert_eq!(3, points.len());
 
-        let c: Contraption = 
-        "\
+        let c: Contraption = "\
         .|.\n\
         .\\.\n\
-        ".parse().unwrap();
+        "
+        .parse()
+        .unwrap();
         let start_point = (0, c.tiles.height() as i64 - 1).into();
         let mut points = HashSet::new();
-        step(&c, Direction::Right, start_point, &mut points, &mut HashSet::new());
+        step(
+            &c,
+            Direction::Right,
+            start_point,
+            &mut points,
+            &mut HashSet::new(),
+        );
         assert_eq!(4, points.len());
 
-        let c: Contraption = 
-        "\
+        let c: Contraption = "\
         .|.\n\
         .\\|\n\
         ...\n\
-        ".parse().unwrap();
+        "
+        .parse()
+        .unwrap();
         let start_point = (0, c.tiles.height() as i64 - 1).into();
         let mut points = HashSet::new();
-        step(&c, Direction::Right, start_point, &mut points, &mut HashSet::new());
+        step(
+            &c,
+            Direction::Right,
+            start_point,
+            &mut points,
+            &mut HashSet::new(),
+        );
         assert_eq!(6, points.len());
     }
 
     #[test]
     fn test_repeating_example() {
-        let c: Contraption = 
-        "\
+        let c: Contraption = "\
         .|.\n\
         .\\|\n\
         .\\/\n\
-        ".parse().unwrap();
+        "
+        .parse()
+        .unwrap();
         let start_point = (0, c.tiles.height() as i64 - 1).into();
         let mut points = HashSet::new();
-        step(&c, Direction::Right, start_point, &mut points, &mut HashSet::new());
+        step(
+            &c,
+            Direction::Right,
+            start_point,
+            &mut points,
+            &mut HashSet::new(),
+        );
         assert_eq!(8, points.len());
-    }    
-
+    }
 }
