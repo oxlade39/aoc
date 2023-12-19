@@ -1,15 +1,9 @@
-use core::fmt;
-use std::{
-    collections::{HashSet, HashMap},
-    fmt::{Debug, Display},
-    str::FromStr,
-    time::Instant, iter,
-};
+use std::{collections::HashSet, str::FromStr, time::Instant};
 
 use aoclib::{
-    astar::{Cost, StraightLine, Multiplier, NeighbourState},
+    astar::{Cost, Multiplier, NeighbourState, StraightLine},
     cartesian::{Plane, Point},
-    input::{Flip, FromChar, Grid},
+    input::{Flip, Grid},
     neighbour::{DirectNeighbours, Neighbours},
 };
 
@@ -30,16 +24,13 @@ fn part1(txt: &str) -> usize {
     let heuristic = Multiplier(StraightLine, 2);
     let dn = DirectNeighbours(&plane);
     let neighbours = No3InARow(&dn);
-    let path =
-        aoclib::astar::astar(start.clone(), end, &heuristic, &lf, &neighbours).unwrap();
+    let path = aoclib::astar::astar(start.clone(), end, &heuristic, &lf, &neighbours).unwrap();
 
     for row in 0..lf.map.height() {
         let y = lf.map.height() - row - 1;
         for x in 0..lf.map.width() {
             let current: Point = (x as i64, y as i64).into();
-            if current == start || path.path.iter().any(|(p, _)| {                
-                &current == p
-            }) {
+            if current == start || path.path.iter().any(|(p, _)| &current == p) {
                 print!("#")
             } else {
                 print!(".")
@@ -55,7 +46,7 @@ fn part1(txt: &str) -> usize {
     path.total_cost as usize
 }
 
-fn part2(txt: &str) -> usize {
+fn part2(_txt: &str) -> usize {
     0
 }
 
@@ -70,14 +61,12 @@ impl<'ns, 'n, 'b> Neighbours<NeighbourState<'ns>> for No3InARow<'n, 'b> {
         let _delegate = self.0;
         let p = ns.current_point;
         if let Some(prev) = ns.came_from.get(p) {
-
             let mut lookback: HashSet<(i64, i64)> = HashSet::new();
             let mut count = 0;
             let mut current = p;
             while let Some(n) = ns.came_from.get(current) {
-
                 let x_diff = (current.x - n.x).signum();
-                let y_diff = (current.y - n.y).signum();  
+                let y_diff = (current.y - n.y).signum();
 
                 lookback.insert((x_diff, y_diff));
                 count += 1;
@@ -90,31 +79,19 @@ impl<'ns, 'n, 'b> Neighbours<NeighbourState<'ns>> for No3InARow<'n, 'b> {
 
             let x_diff = (p.x - prev.x).signum();
             let y_diff = (p.y - prev.y).signum();
-            
+
             let results = if lookback.len() == 1 && count == 4 {
                 // all same direction for last 3
                 // so remove same dir next
                 match (x_diff, y_diff) {
                     // going up
-                    (0, 1) => vec![
-                        p.transform(&(-1, 0).into()),
-                        p.transform(&(1, 0).into()),
-                    ],
+                    (0, 1) => vec![p.transform(&(-1, 0).into()), p.transform(&(1, 0).into())],
                     // going down
-                    (0, -1) => vec![
-                        p.transform(&(-1, 0).into()),
-                        p.transform(&(1, 0).into()),
-                    ],
+                    (0, -1) => vec![p.transform(&(-1, 0).into()), p.transform(&(1, 0).into())],
                     // going left
-                    (-1, 0) => vec![
-                        p.transform(&(0, 1).into()),
-                        p.transform(&(0, -1).into()),
-                    ],
+                    (-1, 0) => vec![p.transform(&(0, 1).into()), p.transform(&(0, -1).into())],
                     // going right
-                    (1, 0) => vec![
-                        p.transform(&(0, 1).into()),
-                        p.transform(&(0, -1).into()),
-                    ],
+                    (1, 0) => vec![p.transform(&(0, 1).into()), p.transform(&(0, -1).into())],
                     _ => panic!("bad point"),
                 }
             } else {
@@ -147,8 +124,10 @@ impl<'ns, 'n, 'b> Neighbours<NeighbourState<'ns>> for No3InARow<'n, 'b> {
                 }
             };
 
-            return results.into_iter().filter(|p| p.within(self.0.0)).collect();
-
+            return results
+                .into_iter()
+                .filter(|p| p.within(self.0 .0))
+                .collect();
         }
 
         vec![p.transform(&(1, 0).into())]
@@ -157,7 +136,6 @@ impl<'ns, 'n, 'b> Neighbours<NeighbourState<'ns>> for No3InARow<'n, 'b> {
         //     .into_iter()
         //     .filter(|p| !ns.came_from.contains_key(p))
         //     .collect()
-
     }
 }
 
@@ -172,22 +150,14 @@ impl FromStr for LavaFall {
     }
 }
 
-const IMPOSSIBLE: i64 = 10000000000;
-
 impl Cost for LavaFall {
-    fn measure(
-        &self,
-        from: &Point,
-        to: &Point,
-    ) -> i64 {        
+    fn measure(&self, _from: &Point, to: &Point) -> i64 {
         self.map.rows[to.y as usize][to.x as usize].into()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-
     use crate::*;
 
     #[test]
@@ -234,7 +204,7 @@ mod tests {
         0110\n\
         9229";
         let lf: LavaFall = txt.parse().unwrap();
-        
+
         let plane: Plane = (&lf.map).into();
 
         let start: Point = (0, 1).into();
@@ -242,16 +212,13 @@ mod tests {
         let heuristic = Multiplier(StraightLine, 2);
         let dn = DirectNeighbours(&plane);
         let neighbours = No3InARow(&dn);
-        let path =
-            aoclib::astar::astar(start.clone(), end, &heuristic, &lf, &neighbours).unwrap();
+        let path = aoclib::astar::astar(start.clone(), end, &heuristic, &lf, &neighbours).unwrap();
 
         for row in 0..lf.map.height() {
             let y = lf.map.height() - row - 1;
             for x in 0..lf.map.width() {
                 let current: Point = (x as i64, y as i64).into();
-                if current == start || path.path.iter().any(|(p, _)| {                
-                    &current == p
-                }) {
+                if current == start || path.path.iter().any(|(p, _)| &current == p) {
                     print!("#")
                 } else {
                     print!(".")

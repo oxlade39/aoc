@@ -157,7 +157,10 @@ where
         }
 
         let cf: &HashMap<Point, Point> = &came_from;
-        let ns = NeighbourState{ came_from: cf, current_point: &curr_node };
+        let ns = NeighbourState {
+            came_from: cf,
+            current_point: &curr_node,
+        };
         let n = neighbours.neighbours(&ns);
         for neighbour in n {
             let neighbour_cost = cost.measure(&curr_node, &neighbour);

@@ -1,4 +1,4 @@
-use std::{str::FromStr, collections::HashMap};
+use std::str::FromStr;
 
 use aoclib::{
     astar::{self, Cost, StraightLine},
@@ -125,7 +125,7 @@ impl HeightMap {
 struct OnlyUpOneCost<'a, T: Cost>(&'a HeightMap, T);
 
 impl<T: Cost> Cost for OnlyUpOneCost<'_, T> {
-    fn measure(&self,from: &Point, to: &Point) -> i64 {
+    fn measure(&self, from: &Point, to: &Point) -> i64 {
         let from_height = self.0.height_at(from);
         let to_height = self.0.height_at(to);
         if (to_height - from_height) > 1 {

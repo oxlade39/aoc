@@ -186,7 +186,6 @@ where
     None
 }
 
-
 struct ManhattenDistanceTo(GridPosition);
 
 impl Heuristic<GridPosition, usize> for ManhattenDistanceTo {
@@ -221,7 +220,7 @@ impl<'a, T> Neighbours<GridPosition> for NonDiagonalNeighbours<'a, T> {
 }
 
 impl<T> Cost<GridPosition, T> for Grid<T>
-where 
+where
     T: Impossible + Ord + Copy,
 {
     fn measure(&self, to: &GridPosition) -> T {
@@ -279,13 +278,18 @@ mod tests {
         .unwrap();
 
         let Grid { rows } = grid;
-        let grid = Grid { 
-            rows: rows.into_iter()
-                .map(|i| i.into_iter().map(|c| match c {
-                    '#' => 10000000,
-                    other => other.to_digit(10).unwrap() as usize
-                }).collect::<Vec<_>>())
-                .collect()
+        let grid = Grid {
+            rows: rows
+                .into_iter()
+                .map(|i| {
+                    i.into_iter()
+                        .map(|c| match c {
+                            '#' => 10000000,
+                            other => other.to_digit(10).unwrap() as usize,
+                        })
+                        .collect::<Vec<_>>()
+                })
+                .collect(),
         };
 
         let neighbours = NonDiagonalNeighbours(&grid);

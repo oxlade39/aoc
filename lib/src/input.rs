@@ -21,19 +21,19 @@ pub fn empty_line_chunks<'a>(input: &'a str) -> std::str::Split<'a, &'a str> {
 
 /// Utility for a grid of input. A common input type for aoc puzzles.
 /// Supports a number of common utilities on grids of input.
-/// 
+///
 /// Input would like like:
 /// ```ignore
 /// #..
 /// .#.
 /// ..#
 /// ```
-/// 
+///
 /// Parsing this input to a grid might look like:
-/// 
+///
 /// ```
 /// use aoclib::input::Grid;
-/// 
+///
 /// fn parse() {
 ///     let input = "\
 ///     #..\n\
@@ -130,27 +130,27 @@ where
     }
 }
 
-/// If the type contained within your `Grid` behaves differently 
-/// if the grid is flipped, then you should implement this 
+/// If the type contained within your `Grid` behaves differently
+/// if the grid is flipped, then you should implement this
 /// to perform that flip.
-/// 
+///
 /// For example, a grid of mirrors:
 /// ```ignore
 /// . . .
 /// . / .
 /// . . .
 /// ```
-/// 
+///
 /// where light travelling from top to bottom, reflects
-/// the on the middle mirror to the left. 
-/// 
+/// the on the middle mirror to the left.
+///
 /// When flipped:
 /// ```ignore
 /// . . .
 /// . \ .
 /// . . .
 /// ```
-/// 
+///
 /// light now travelling bottom to top, should still
 /// reflect to the left. The flip behavour depends on the type.
 pub trait Flip {
@@ -170,20 +170,20 @@ where
 }
 
 /// Required `trait` for a generic `Grid`
-/// 
+///
 /// implement this to transform the individial grid characters to
 /// your desired type. Typically this would be an enum but can be
 /// whatever suits your use-case.
-/// 
+///
 /// eg:
 /// ```
 /// use aoclib::input::FromChar;
-/// 
+///
 /// enum Tile {
 ///     Space,
 ///     DiagonalRight,
 /// }
-/// 
+///
 /// impl FromChar for Tile {
 ///     type Err = String;
 ///
@@ -196,7 +196,7 @@ where
 ///     }
 /// }
 /// ```
-/// 
+///
 pub trait FromChar: Sized {
     type Err;
 
