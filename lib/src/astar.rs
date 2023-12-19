@@ -77,6 +77,14 @@ impl Hueristic for StraightLine {
     }
 }
 
+pub struct Multiplier<T: Hueristic>(pub T, pub i64);
+
+impl<T: Hueristic> Hueristic for Multiplier<T> {
+    fn measure(&self, from: &Point, to: &Point) -> i64 {
+        self.1 * self.0.measure(from, to)
+    }
+}
+
 impl Cost for StraightLine {
     fn measure(&self, from: &Point, to: &Point) -> i64 {
         let v: Vector = (from.clone(), to.clone()).into();
@@ -97,6 +105,11 @@ pub struct ShortestPath {
     pub total_cost: i64,
 }
 
+pub struct NeighbourState<'a> {
+    pub current_point: &'a Point,
+    pub came_from: &'a HashMap<Point, Point>,
+}
+
 /// Extendable implementation of
 /// <a href="https://en.wikipedia.org/wiki/A*_search_algorithm">astar</a> shortest path.
 pub fn astar<H, C, N>(
@@ -109,7 +122,7 @@ pub fn astar<H, C, N>(
 where
     H: Hueristic,
     C: Cost,
-    N: Neighbours<Point>,
+    N: for<'a> Neighbours<NeighbourState<'a>>,
 {
     let mut open_set: BinaryHeap<Candidate> = BinaryHeap::new();
     let mut came_from: HashMap<Point, Point> = HashMap::new();
@@ -143,7 +156,9 @@ where
             return Some(ShortestPath { path, total_cost });
         }
 
-        let n = neighbours.neighbours(&curr_node);
+        let cf: &HashMap<Point, Point> = &came_from;
+        let ns = NeighbourState{ came_from: cf, current_point: &curr_node };
+        let n = neighbours.neighbours(&ns);
         for neighbour in n {
             let neighbour_cost = cost.measure(&curr_node, &neighbour);
             let neighbour_g_score = g_scores.get(&neighbour).unwrap_or(&INFINITY);
@@ -269,7 +284,7 @@ mod tests {
         // construct back to front so indices line up
         let cost = vec![
             vec![1, 1, 1, 1, 1],
-            vec![1, INFINITY, INFINITY, INFINITY, INFINITY],
+            vec![1, 1, INFINITY, INFINITY, INFINITY],
             vec![1, 1, 1, 1, 1],
             vec![INFINITY, INFINITY, INFINITY, INFINITY, 1],
             vec![1, 1, 1, 1, 1],

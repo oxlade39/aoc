@@ -1,4 +1,4 @@
-use crate::cartesian::{Plane, Point, Transform, Vector};
+use crate::{cartesian::{Plane, Point, Transform, Vector}, astar::NeighbourState};
 
 pub trait Neighbours<T> {
     fn neighbours(&self, p: &T) -> Vec<Point>;
@@ -7,8 +7,9 @@ pub trait Neighbours<T> {
 pub struct DirectNeighbours<'a>(pub &'a Plane);
 pub struct TouchingNeighbours<'a>(pub &'a Plane);
 
-impl Neighbours<Point> for DirectNeighbours<'_> {
-    fn neighbours(&self, p: &Point) -> Vec<Point> {
+impl<'a> Neighbours<NeighbourState<'a>> for DirectNeighbours<'_> {
+    fn neighbours(&self, ns: &NeighbourState) -> Vec<Point> {
+        let p = ns.current_point;
         [(-1, 0), (1, 0), (0, 1), (0, -1)]
             .map(|t| {
                 let into: Transform = t.into();
@@ -123,8 +124,9 @@ impl Neighbours<Vector> for TouchingNeighbours<'_> {
     }
 }
 
-impl Neighbours<Point> for TouchingNeighbours<'_> {
-    fn neighbours(&self, p: &Point) -> Vec<Point> {
+impl<'a> Neighbours<NeighbourState<'a>> for TouchingNeighbours<'_> {
+    fn neighbours(&self, ns: &NeighbourState) -> Vec<Point> {
+        let p = ns.current_point;
         [
             (-1, 0),
             (1, 0),
@@ -154,11 +156,11 @@ impl Neighbours<Point> for TouchingNeighbours<'_> {
 
 #[cfg(test)]
 mod test {
-    use std::collections::HashSet;
+    use std::collections::{HashSet, HashMap};
 
     use crate::{
         cartesian::{Plane, Point, Vector},
-        neighbour::{DirectNeighbours, Neighbours, TouchingNeighbours},
+        neighbour::{DirectNeighbours, Neighbours, TouchingNeighbours}, astar::NeighbourState,
     };
 
     #[test]
@@ -166,7 +168,7 @@ mod test {
         let p: Point = (0, 0).into();
         let plane: Plane = (10, 10).into();
         let neighbours = DirectNeighbours(&plane);
-        let n = neighbours.neighbours(&p);
+        let n = neighbours.neighbours(&NeighbourState{ current_point: &p, came_from: &HashMap::new() });
 
         let expected: Vec<Point> = vec![(1, 0).into(), (0, 1).into()];
         assert_eq!(n, expected);
@@ -196,7 +198,8 @@ mod test {
         );
 
         let neighbours = TouchingNeighbours(&plane);
-        let n: HashSet<Point> = HashSet::from_iter(neighbours.neighbours(&p));
+        let ns = NeighbourState { current_point: &p, came_from: &HashMap::new() };
+        let n: HashSet<Point> = HashSet::from_iter(neighbours.neighbours(&ns));
 
         assert_eq!(n, expected);
     }

@@ -4,3 +4,4 @@ pub mod distance;
 pub mod input;
 pub mod neighbour;
 pub mod number;
+pub mod shortest_path;

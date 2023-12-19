@@ -59,6 +59,50 @@ impl<T> Grid<T> {
     pub fn height(&self) -> usize {
         self.rows.len()
     }
+
+    pub fn at(&self, pos: &GridPosition) -> &T {
+        &self.rows[pos.row][pos.col]
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct GridPosition {
+    pub row: usize,
+    pub col: usize,
+}
+
+impl GridPosition {
+    pub fn new(col: usize, row: usize) -> Self {
+        Self { row, col }
+    }
+
+    pub fn up(&self) -> Self {
+        Self {
+            row: self.row + 1,
+            col: self.col,
+        }
+    }
+
+    pub fn down(&self) -> Self {
+        Self {
+            row: self.row - 1,
+            col: self.col,
+        }
+    }
+
+    pub fn left(&self) -> Self {
+        Self {
+            row: self.row,
+            col: self.col - 1,
+        }
+    }
+
+    pub fn right(&self) -> Self {
+        Self {
+            row: self.row,
+            col: self.col + 1,
+        }
+    }
 }
 
 impl<T> From<&Grid<T>> for Plane {
@@ -167,6 +211,28 @@ impl FromChar for char {
     }
 }
 
+impl FromChar for u32 {
+    type Err = String;
+
+    fn from_char(c: char) -> Result<Self, Self::Err> {
+        match c.to_digit(10) {
+            Some(d) => Ok(d),
+            None => Err(format!("bad digit {c}")),
+        }
+    }
+}
+
+impl FromChar for usize {
+    type Err = String;
+
+    fn from_char(c: char) -> Result<Self, Self::Err> {
+        match c.to_digit(10) {
+            Some(d) => Ok(d as usize),
+            None => Err(format!("bad digit {c}")),
+        }
+    }
+}
+
 impl<T> FromStr for Grid<T>
 where
     T: FromChar,
@@ -200,6 +266,12 @@ where
             result = result.and_then(|_| f.write_str(NEW_LINE));
         }
         result
+    }
+}
+
+impl Flip for u32 {
+    fn flip(&self) -> Self {
+        *self
     }
 }
 

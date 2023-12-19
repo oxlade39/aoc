@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use aoclib::{
     cartesian::{Plane, Point},
     neighbour::Neighbours,
-    neighbour::TouchingNeighbours,
+    neighbour::TouchingNeighbours, astar::NeighbourState,
 };
 use itertools::Itertools;
 
@@ -166,10 +166,11 @@ impl Number {
         let mut result = HashSet::new();
         let n = TouchingNeighbours(plane);
         for x in self.left().x..=self.right.x {
-            result.extend(n.neighbours(&Point {
+            let ns = NeighbourState { came_from: &HashMap::new(), current_point: &Point {
                 x: x,
                 y: self.right.y,
-            }));
+            }};
+            result.extend(n.neighbours(&ns));
         }
 
         result
