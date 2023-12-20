@@ -14,11 +14,19 @@ fn main() {
 }
 
 fn part1(txt: &str) -> usize {
+    solve(txt, 1, 3)
+}
+
+fn part2(txt: &str) -> usize {
+    solve(txt, 4, 10)
+}
+
+fn solve(txt: &str, min: usize, max: usize) -> usize {
     let g: Grid<usize> = txt.parse().unwrap();
     let lf: LavaFall = LavaFall {
         map: g,
-        min: 1,
-        max: 3,
+        min,
+        max,
     };
     let initial_state = State {
         grid_pos: GridPosition::new(0, 0),
@@ -54,12 +62,8 @@ fn part1(txt: &str) -> usize {
         println!("{:?} = {}", p.grid_pos, c);
     }
 
-    // result.total_cost
-    result.path.into_iter().map(|(_, cost)| cost).sum()
-}
-
-fn part2(_txt: &str) -> usize {
-    0
+    result.total_cost
+    // result.path.into_iter().map(|(_, cost)| cost).sum()
 }
 
 struct LavaFall {
@@ -177,18 +181,18 @@ impl aoclib::shortest_path::Neighbours<State> for LavaFall {
                     if current_row > 0 {
                         next.push(state.apply(Direction::Up));
                     }
-                    if current_col > 0 {
+                    if state.direction_count >= self.min && current_col > 0 {
                         next.push(state.apply(Direction::Left));
                     }
-                    if current_col < width - 1 {
+                    if state.direction_count >= self.min && current_col < width - 1 {
                         next.push(state.apply(Direction::Right));
                     }
                 }
                 Direction::Down => {
-                    if current_col > 0 {
+                    if state.direction_count >= self.min && current_col > 0 {
                         next.push(state.apply(Direction::Left));
                     }
-                    if current_col < width - 1 {
+                    if state.direction_count >= self.min && current_col < width - 1 {
                         next.push(state.apply(Direction::Right));
                     }
                     if current_row < height - 1 {
@@ -199,18 +203,18 @@ impl aoclib::shortest_path::Neighbours<State> for LavaFall {
                     if current_col > 0 {
                         next.push(state.apply(Direction::Left));
                     }
-                    if current_row < height - 1 {
+                    if state.direction_count >= self.min && current_row < height - 1 {
                         next.push(state.apply(Direction::Down));
                     }
-                    if current_row > 0 {
+                    if state.direction_count >= self.min && current_row > 0 {
                         next.push(state.apply(Direction::Up));
                     }
                 }
                 Direction::Right => {
-                    if current_row < height - 1 {
+                    if state.direction_count >= self.min && current_row < height - 1 {
                         next.push(state.apply(Direction::Down));
                     }
-                    if current_row > 0 {
+                    if state.direction_count >= self.min && current_row > 0 {
                         next.push(state.apply(Direction::Up));
                     }
                     if current_col < width - 1 {
@@ -247,14 +251,16 @@ mod tests {
     }
 
     #[test]
-    fn test_regression_p1() {
+    fn test_regression() {
         // fails :( -> should be 1023
         assert_eq!(1024, part1(include_str!("input.txt")));
+        // but pt2 works
+        assert_eq!(1165, part2(include_str!("input.txt")));
     }
 
     #[test]
     fn test_example_p2() {
-        assert_eq!(0, part2(include_str!("input.test.txt")));
+        assert_eq!(94, part2(include_str!("input.test.txt")));
     }
 
     #[test]
