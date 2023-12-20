@@ -9,11 +9,11 @@ use std::{
 
 use crate::input::{Grid, GridPosition};
 
-trait Neighbours<S> {
+pub trait Neighbours<S> {
     fn neighbours(&self, state: &S) -> Vec<S>;
 }
 
-trait Cost<S, C>
+pub trait Cost<S, C>
 where
     C: PartialOrd,
     C: Ord,
@@ -44,7 +44,7 @@ impl Impossible for usize {
     }
 }
 
-trait Heuristic<S, H>
+pub trait Heuristic<S, H>
 where
     H: PartialOrd,
     H: Ord,
@@ -52,9 +52,9 @@ where
     fn predict(&self, from: &S) -> H;
 }
 
-struct Path<S, C> {
-    path: Vec<(S, C)>,
-    total_cost: C,
+pub struct Path<S, C> {
+    pub path: Vec<(S, C)>,
+    pub total_cost: C,
 }
 
 #[derive(Clone, Debug)]
@@ -115,7 +115,7 @@ where
     }
 }
 
-fn astar<N, C, C1, H, S, F>(
+pub fn astar<N, C, C1, H, S, F>(
     neighbours: &N,
     cost: &C,
     heuristic: &H,
@@ -149,8 +149,8 @@ where
 
             while let Some(p) = path_node {
                 let next = came_from.remove(&p);
-                if let Some(ref p1) = next {
-                    let node_cost = cost.measure(p1);
+                if let Some(ref _p1) = next {
+                    let node_cost = cost.measure(&p);
                     path.push((p, node_cost));
                     total_cost += node_cost;
                 }
@@ -186,7 +186,7 @@ where
     None
 }
 
-struct ManhattenDistanceTo(GridPosition);
+pub struct ManhattenDistanceTo(pub GridPosition);
 
 impl Heuristic<GridPosition, usize> for ManhattenDistanceTo {
     fn predict(&self, from: &GridPosition) -> usize {
@@ -194,7 +194,7 @@ impl Heuristic<GridPosition, usize> for ManhattenDistanceTo {
     }
 }
 
-struct NonDiagonalNeighbours<'a, T>(&'a Grid<T>);
+pub struct NonDiagonalNeighbours<'a, T>(pub &'a Grid<T>);
 
 impl<'a, T> Neighbours<GridPosition> for NonDiagonalNeighbours<'a, T> {
     fn neighbours(&self, state: &GridPosition) -> Vec<GridPosition> {
@@ -204,7 +204,7 @@ impl<'a, T> Neighbours<GridPosition> for NonDiagonalNeighbours<'a, T> {
             result.push(state.right());
         }
 
-        if state.up().row < self.0.height() {
+        if state.row as i32 - 1 > 0 {
             result.push(state.up());
         }
 
@@ -212,7 +212,7 @@ impl<'a, T> Neighbours<GridPosition> for NonDiagonalNeighbours<'a, T> {
             result.push(state.left());
         }
 
-        if state.row as i32 - 1 > 0 {
+        if state.row + 1 < self.0.height() {
             result.push(state.down());
         }
         result

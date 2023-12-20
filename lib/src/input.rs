@@ -78,14 +78,14 @@ impl GridPosition {
 
     pub fn up(&self) -> Self {
         Self {
-            row: self.row + 1,
+            row: self.row - 1,
             col: self.col,
         }
     }
 
     pub fn down(&self) -> Self {
         Self {
-            row: self.row - 1,
+            row: self.row + 1,
             col: self.col,
         }
     }
