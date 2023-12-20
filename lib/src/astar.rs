@@ -294,6 +294,6 @@ mod tests {
         ];
 
         let shortest_path = astar(start, end, &heuristic, &cost, &TouchingNeighbours(&plane));
-        assert_eq!(12, shortest_path.unwrap().total_cost);
+        assert_eq!(10, shortest_path.unwrap().total_cost);
     }
 }

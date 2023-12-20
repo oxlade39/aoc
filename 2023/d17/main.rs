@@ -1,6 +1,9 @@
-use std::{str::FromStr, time::Instant};
+use std::time::Instant;
 
-use aoclib::{input::{Grid, GridPosition}, shortest_path::{self, Heuristic, ManhattenDistanceTo}};
+use aoclib::{
+    input::{Grid, GridPosition},
+    shortest_path::{self, Heuristic, ManhattenDistanceTo},
+};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -12,35 +15,33 @@ fn main() {
 
 fn part1(txt: &str) -> usize {
     let g: Grid<usize> = txt.parse().unwrap();
-    let lf: LavaFall = LavaFall { map: g, min: 1, max: 3 };
-    let initial_state = State { 
+    let lf: LavaFall = LavaFall {
+        map: g,
+        min: 1,
+        max: 3,
+    };
+    let initial_state = State {
         grid_pos: GridPosition::new(0, 0),
         direction: Direction::Right,
-        direction_count: 1 
+        direction_count: 1,
     };
     let end_pos = GridPosition::new(lf.map.width() - 1, lf.map.height() - 1);
-    let end_state = |es: &State| {
-        es.grid_pos == end_pos
-    };
-    let result = shortest_path::astar(
-        &lf, 
-        &lf, 
-        &end_pos, 
-        initial_state, 
-        end_state
-    ).unwrap();
-
+    let end_state = |es: &State| es.grid_pos == end_pos;
+    let result = shortest_path::astar(&lf, &lf, &end_pos, initial_state, end_state).unwrap();
 
     for row in 0..lf.map.height() {
         for col in 0..lf.map.width() {
-            match result.path.iter().find(|(s, _)| s.grid_pos == GridPosition::new(col, row)) {
-                Some((s, _)) =>
-                    match s.direction {
-                        Direction::Up => print!("^"),
-                        Direction::Down => print!("v"),
-                        Direction::Left => print!("<"),
-                        Direction::Right => print!(">"),
-                    }
+            match result
+                .path
+                .iter()
+                .find(|(s, _)| s.grid_pos == GridPosition::new(col, row))
+            {
+                Some((s, _)) => match s.direction {
+                    Direction::Up => print!("^"),
+                    Direction::Down => print!("v"),
+                    Direction::Left => print!("<"),
+                    Direction::Right => print!(">"),
+                },
                 None => {
                     print!(".")
                 }
@@ -72,7 +73,7 @@ enum Direction {
     Up,
     Down,
     Left,
-    Right
+    Right,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -85,41 +86,41 @@ struct State {
 impl State {
     fn apply(&self, dir: Direction) -> Self {
         match dir {
-            Direction::Up => Self { 
-                grid_pos: self.grid_pos.up(), 
-                direction: Direction::Up, 
+            Direction::Up => Self {
+                grid_pos: self.grid_pos.up(),
+                direction: Direction::Up,
                 direction_count: if self.direction == Direction::Up {
                     self.direction_count + 1
                 } else {
                     1
-                }
+                },
             },
-            Direction::Down => Self { 
-                grid_pos: self.grid_pos.down(), 
-                direction: Direction::Down, 
+            Direction::Down => Self {
+                grid_pos: self.grid_pos.down(),
+                direction: Direction::Down,
                 direction_count: if self.direction == Direction::Down {
                     self.direction_count + 1
                 } else {
                     1
-                }
+                },
             },
-            Direction::Left => Self { 
-                grid_pos: self.grid_pos.left(), 
-                direction: Direction::Left, 
+            Direction::Left => Self {
+                grid_pos: self.grid_pos.left(),
+                direction: Direction::Left,
                 direction_count: if self.direction == Direction::Left {
                     self.direction_count + 1
                 } else {
                     1
-                }
+                },
             },
-            Direction::Right => Self { 
-                grid_pos: self.grid_pos.right(), 
-                direction: Direction::Right, 
+            Direction::Right => Self {
+                grid_pos: self.grid_pos.right(),
+                direction: Direction::Right,
                 direction_count: if self.direction == Direction::Right {
                     self.direction_count + 1
                 } else {
                     1
-                }
+                },
             },
         }
     }
@@ -127,7 +128,6 @@ impl State {
 
 impl aoclib::shortest_path::Neighbours<State> for LavaFall {
     fn neighbours(&self, state: &State) -> Vec<State> {
-
         let width = self.map.width();
         let height = self.map.height();
 
@@ -145,7 +145,7 @@ impl aoclib::shortest_path::Neighbours<State> for LavaFall {
                     if current_col < width - 1 {
                         next.push(state.apply(Direction::Right));
                     }
-                },
+                }
                 Direction::Down => {
                     if current_col > 0 {
                         next.push(state.apply(Direction::Left));
@@ -153,7 +153,7 @@ impl aoclib::shortest_path::Neighbours<State> for LavaFall {
                     if current_col < width - 1 {
                         next.push(state.apply(Direction::Right));
                     }
-                },
+                }
                 Direction::Left => {
                     if current_row < height - 1 {
                         next.push(state.apply(Direction::Down));
@@ -161,7 +161,7 @@ impl aoclib::shortest_path::Neighbours<State> for LavaFall {
                     if current_row > 0 {
                         next.push(state.apply(Direction::Up));
                     }
-                },
+                }
                 Direction::Right => {
                     if current_row < height - 1 {
                         next.push(state.apply(Direction::Down));
@@ -169,7 +169,7 @@ impl aoclib::shortest_path::Neighbours<State> for LavaFall {
                     if current_row > 0 {
                         next.push(state.apply(Direction::Up));
                     }
-                },
+                }
             }
         } else {
             match state.direction {
@@ -183,7 +183,7 @@ impl aoclib::shortest_path::Neighbours<State> for LavaFall {
                     if current_col < width - 1 {
                         next.push(state.apply(Direction::Right));
                     }
-                },
+                }
                 Direction::Down => {
                     if current_col > 0 {
                         next.push(state.apply(Direction::Left));
@@ -194,7 +194,7 @@ impl aoclib::shortest_path::Neighbours<State> for LavaFall {
                     if current_row < height - 1 {
                         next.push(state.apply(Direction::Down));
                     }
-                },
+                }
                 Direction::Left => {
                     if current_col > 0 {
                         next.push(state.apply(Direction::Left));
@@ -205,7 +205,7 @@ impl aoclib::shortest_path::Neighbours<State> for LavaFall {
                     if current_row > 0 {
                         next.push(state.apply(Direction::Up));
                     }
-                },
+                }
                 Direction::Right => {
                     if current_row < height - 1 {
                         next.push(state.apply(Direction::Down));
@@ -216,7 +216,7 @@ impl aoclib::shortest_path::Neighbours<State> for LavaFall {
                     if current_col < width - 1 {
                         next.push(state.apply(Direction::Right));
                     }
-                },
+                }
             }
         }
         next
@@ -234,7 +234,6 @@ impl shortest_path::Cost<State, usize> for LavaFall {
         *self.map.at(&to.grid_pos)
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -262,11 +261,15 @@ mod tests {
     fn test_cost() {
         let txt = include_str!("input.test.txt");
         let g: Grid<usize> = txt.parse().unwrap();
-        let lf = LavaFall { map: g, min: 1, max: 3 };
-        let cost = lf.measure(&State { 
-            grid_pos: GridPosition::new(0, 0), 
-            direction: Direction::Right, 
-            direction_count: 1 
+        let lf = LavaFall {
+            map: g,
+            min: 1,
+            max: 3,
+        };
+        let cost = lf.measure(&State {
+            grid_pos: GridPosition::new(0, 0),
+            direction: Direction::Right,
+            direction_count: 1,
         });
         assert_eq!(2, cost);
     }
