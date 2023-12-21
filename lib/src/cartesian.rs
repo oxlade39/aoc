@@ -68,6 +68,12 @@ pub struct Vector {
     pub end: Point,
 }
 
+impl Vector {
+    pub fn length(&self) -> u64 {
+        self.start.x.abs_diff(self.end.x) + self.start.y.abs_diff(self.end.y)
+    }
+}
+
 impl From<(Point, Point)> for Vector {
     fn from(value: (Point, Point)) -> Self {
         Self {
@@ -163,5 +169,14 @@ mod tests {
 
         let p: Point = (497, 6).into();
         assert_eq!(true, p.on(&v));
+    }
+
+    #[test]
+    fn test_vector_length() {
+        let p1: Point = (0, 0).into();
+        let p2 = p1.transform(&(6, 0).into());
+        let vector: Vector = (p1, p2).into();
+
+        assert_eq!(6, vector.length());
     }
 }
