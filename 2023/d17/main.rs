@@ -23,11 +23,7 @@ fn part2(txt: &str) -> usize {
 
 fn solve(txt: &str, min: usize, max: usize) -> usize {
     let g: Grid<usize> = txt.parse().unwrap();
-    let lf: LavaFall = LavaFall {
-        map: g,
-        min,
-        max,
-    };
+    let lf: LavaFall = LavaFall { map: g, min, max };
     let initial_state = State {
         grid_pos: GridPosition::new(0, 0),
         direction: Direction::Right,
