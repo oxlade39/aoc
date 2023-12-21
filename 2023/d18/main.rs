@@ -1,6 +1,6 @@
 use std::{str::FromStr, time::Instant};
 
-use aoclib::cartesian::Point;
+use aoclib::cartesian::{Point, Transform};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -24,20 +24,7 @@ fn solve(instructions: Vec<Instruction>) -> i64 {
     let mut last_point: Point = (0, 0).into();
     let mut points: Vec<Point> = vec![last_point.clone()];
     for i in instructions {
-        match i.direction {
-            Direction::Left => {
-                last_point = last_point.transform(&(i.count as i64 * -1, 0 as i64).into());
-            }
-            Direction::Right => {
-                last_point = last_point.transform(&(i.count as i64, 0 as i64).into());
-            }
-            Direction::Up => {
-                last_point = last_point.transform(&(0 as i64, i.count as i64).into());
-            }
-            Direction::Down => {
-                last_point = last_point.transform(&(0 as i64, i.count as i64 * -1).into());
-            }
-        }
+        last_point = last_point.transform(&i.into());
         points.push(last_point.clone());
     }
     Polygon(points).area()
@@ -59,12 +46,30 @@ struct Instruction {
     count: usize,
 }
 
+impl From<Instruction> for Transform {
+    fn from(value: Instruction) -> Self {
+        let dir: Transform = value.direction.into();
+        (dir * value.count as i64).into()
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 enum Direction {
     Left,
     Right,
     Up,
     Down,
+}
+
+impl From<Direction> for Transform {
+    fn from(value: Direction) -> Self {
+        match value {
+            Direction::Left => (-1, 0).into(),
+            Direction::Right => (1, 0).into(),
+            Direction::Up => (0, 1).into(),
+            Direction::Down => (0, -1).into(),
+        }
+    }
 }
 
 impl FromStr for Pt1DigPlan {

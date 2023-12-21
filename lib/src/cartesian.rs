@@ -10,6 +10,17 @@ pub struct Transform {
     pub y: i64,
 }
 
+impl std::ops::Mul<i64> for Transform {
+    type Output = Transform;
+
+    fn mul(self, rhs: i64) -> Self::Output {
+        Transform {
+            x: self.x * rhs,
+            y: self.y * rhs,
+        }
+    }
+}
+
 impl From<(i64, i64)> for Point {
     fn from(value: (i64, i64)) -> Self {
         Self {
