@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Point {
     pub x: i64,
@@ -17,6 +19,36 @@ impl std::ops::Mul<i64> for Transform {
         Transform {
             x: self.x * rhs,
             y: self.y * rhs,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Direction {
+    Left,
+    Right,
+    Up,
+    Down,
+}
+
+impl Display for Direction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Direction::Left => f.write_str("<"),
+            Direction::Right => f.write_str(">"),
+            Direction::Up => f.write_str("^"),
+            Direction::Down => f.write_str("v"),
+        }
+    }
+}
+
+impl From<Direction> for Transform {
+    fn from(value: Direction) -> Self {
+        match value {
+            Direction::Left => (-1, 0).into(),
+            Direction::Right => (1, 0).into(),
+            Direction::Up => (0, 1).into(),
+            Direction::Down => (0, -1).into(),
         }
     }
 }

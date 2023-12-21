@@ -1,6 +1,6 @@
 use std::{str::FromStr, time::Instant};
 
-use aoclib::cartesian::{Point, Transform};
+use aoclib::cartesian::{Direction, Point, Transform};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -50,25 +50,6 @@ impl From<Instruction> for Transform {
     fn from(value: Instruction) -> Self {
         let dir: Transform = value.direction.into();
         (dir * value.count as i64).into()
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-enum Direction {
-    Left,
-    Right,
-    Up,
-    Down,
-}
-
-impl From<Direction> for Transform {
-    fn from(value: Direction) -> Self {
-        match value {
-            Direction::Left => (-1, 0).into(),
-            Direction::Right => (1, 0).into(),
-            Direction::Up => (0, 1).into(),
-            Direction::Down => (0, -1).into(),
-        }
     }
 }
 
