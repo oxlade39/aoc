@@ -19,7 +19,7 @@ where
     C: Ord,
     C: Impossible,
 {
-    fn measure(&self, to: &S) -> C;
+    fn measure(&self, from: &S, to: &S) -> C;
 }
 
 pub trait Impossible {
@@ -46,8 +46,7 @@ impl Impossible for usize {
 
 pub trait Heuristic<S, H>
 where
-    H: PartialOrd,
-    H: Ord,
+    H: PartialOrd + Ord + Debug,
 {
     fn predict(&self, from: &S) -> H;
 }
@@ -127,7 +126,15 @@ where
     C: Cost<S, C1>,
     H: Heuristic<S, C1>,
     F: Fn(&S) -> bool,
-    C1: Ord + Add<Output = C1> + AddAssign + Default + Copy + Impossible + PartialOrd + Display,
+    C1: Ord
+        + Add<Output = C1>
+        + AddAssign
+        + Default
+        + Copy
+        + Impossible
+        + PartialOrd
+        + Display
+        + Debug,
     S: Ord + Hash + Clone + Debug,
 {
     let mut open_set: BinaryHeap<Candidate<S, C1>> = BinaryHeap::new();
@@ -149,8 +156,8 @@ where
 
             while let Some(p) = path_node {
                 let next = came_from.remove(&p);
-                if let Some(ref _p1) = next {
-                    let node_cost = cost.measure(&p);
+                if let Some(ref p1) = next {
+                    let node_cost = cost.measure(&p1, &p);
                     path.push((p, node_cost));
                     total_cost += node_cost;
                 }
@@ -161,7 +168,8 @@ where
 
         let n = neighbours.neighbours(&curr_candid.state);
         for neighbour in n {
-            let neighbour_cost = cost.measure(&neighbour);
+            let neighbour_cost = cost.measure(&curr_candid.state, &neighbour);
+
             let neighbour_g_score = *g_scores.get(&neighbour).unwrap_or(&C1::impossible());
             let tentative_g_score = *g_scores
                 .get(&curr_candid.state)
@@ -173,12 +181,9 @@ where
                 g_scores.insert(neighbour.clone(), tentative_g_score);
 
                 // distance to target
-                let hueristic = heuristic.predict(&neighbour);
-                f_scores.insert(neighbour.clone(), tentative_g_score + hueristic);
-                open_set.push(Candidate::new(
-                    neighbour.clone(),
-                    tentative_g_score + hueristic,
-                ));
+                let h = heuristic.predict(&neighbour);
+                f_scores.insert(neighbour.clone(), tentative_g_score + h);
+                open_set.push(Candidate::new(neighbour.clone(), tentative_g_score + h));
             }
         }
     }
@@ -194,6 +199,12 @@ impl Heuristic<GridPosition, usize> for ManhattenDistanceTo {
     }
 }
 
+impl Heuristic<GridPosition, i64> for ManhattenDistanceTo {
+    fn predict(&self, from: &GridPosition) -> i64 {
+        (from.col.abs_diff(self.0.col) + from.row.abs_diff(self.0.row)) as i64
+    }
+}
+
 pub struct NonDiagonalNeighbours<'a, T>(pub &'a Grid<T>);
 
 impl<'a, T> Neighbours<GridPosition> for NonDiagonalNeighbours<'a, T> {
@@ -204,7 +215,7 @@ impl<'a, T> Neighbours<GridPosition> for NonDiagonalNeighbours<'a, T> {
             result.push(state.right());
         }
 
-        if state.row as i32 - 1 > 0 {
+        if state.row as i32 - 1 >= 0 {
             result.push(state.up());
         }
 
@@ -223,18 +234,28 @@ impl<T> Cost<GridPosition, T> for Grid<T>
 where
     T: Impossible + Ord + Copy,
 {
-    fn measure(&self, to: &GridPosition) -> T {
+    fn measure(&self, _from: &GridPosition, to: &GridPosition) -> T {
         *self.at(to)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
     use crate::{
         grid::Grid,
         shortest_path::{GridPosition, ManhattenDistanceTo, NonDiagonalNeighbours},
         *,
     };
+
+    use super::Neighbours;
+
+    #[test]
+    fn test_default_integers() {
+        assert_eq!(0, usize::default());
+        assert_eq!(0, i64::default());
+    }
 
     #[test]
     fn test_grid_weights() {
@@ -309,5 +330,27 @@ mod tests {
         .unwrap();
 
         assert_eq!(11, result.total_cost);
+    }
+
+    #[test]
+    fn test_non_diagonal_neighbours() {
+        let g: Grid<usize> = "\
+        123456789\n\
+        987654321\n\
+        123456789\
+        "
+        .parse()
+        .unwrap();
+
+        let neighbours = NonDiagonalNeighbours(&g);
+
+        let result: HashSet<_> = neighbours
+            .neighbours(&GridPosition::new(8, 1))
+            .into_iter()
+            .collect();
+        println!("{:?}", result);
+        assert!(result.contains(&GridPosition::new(8, 2)));
+        assert!(result.contains(&GridPosition::new(7, 1)));
+        assert!(result.contains(&GridPosition::new(8, 0)));
     }
 }

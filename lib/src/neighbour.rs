@@ -1,7 +1,4 @@
-use crate::{
-    astar::NeighbourState,
-    cartesian::{Plane, Point, Transform, Vector},
-};
+use crate::cartesian::{Plane, Point, Transform, Vector};
 
 pub trait Neighbours<T> {
     fn neighbours(&self, p: &T) -> Vec<Point>;
@@ -10,24 +7,32 @@ pub trait Neighbours<T> {
 pub struct DirectNeighbours<'a>(pub &'a Plane);
 pub struct TouchingNeighbours<'a>(pub &'a Plane);
 
-impl<'a> Neighbours<NeighbourState<'a>> for DirectNeighbours<'_> {
-    fn neighbours(&self, ns: &NeighbourState) -> Vec<Point> {
-        let p = ns.current_point;
-        [(-1, 0), (1, 0), (0, 1), (0, -1)]
-            .map(|t| {
-                let into: Transform = t.into();
-                into
-            })
-            .into_iter()
-            .filter_map(|t| {
-                let transformed = p.transform(&t);
-                if transformed.within(self.0) {
-                    Some(transformed)
-                } else {
-                    None
-                }
-            })
-            .collect()
+impl<'a> Neighbours<Point> for TouchingNeighbours<'_> {
+    fn neighbours(&self, p: &Point) -> Vec<Point> {
+        [
+            (-1, 0),
+            (1, 0),
+            (0, 1),
+            (0, -1),
+            (-1, -1),
+            (1, 1),
+            (-1, 1),
+            (1, -1),
+        ]
+        .map(|t| {
+            let into: Transform = t.into();
+            into
+        })
+        .into_iter()
+        .filter_map(|t| {
+            let transformed = p.transform(&t);
+            if transformed.within(self.0) {
+                Some(transformed)
+            } else {
+                None
+            }
+        })
+        .collect()
     }
 }
 
@@ -127,92 +132,14 @@ impl Neighbours<Vector> for TouchingNeighbours<'_> {
     }
 }
 
-impl<'a> Neighbours<NeighbourState<'a>> for TouchingNeighbours<'_> {
-    fn neighbours(&self, ns: &NeighbourState) -> Vec<Point> {
-        let p = ns.current_point;
-        [
-            (-1, 0),
-            (1, 0),
-            (0, 1),
-            (0, -1),
-            (-1, -1),
-            (1, 1),
-            (-1, 1),
-            (1, -1),
-        ]
-        .map(|t| {
-            let into: Transform = t.into();
-            into
-        })
-        .into_iter()
-        .filter_map(|t| {
-            let transformed = p.transform(&t);
-            if transformed.within(self.0) {
-                Some(transformed)
-            } else {
-                None
-            }
-        })
-        .collect()
-    }
-}
-
 #[cfg(test)]
 mod test {
-    use std::collections::{HashMap, HashSet};
+    use std::collections::HashSet;
 
     use crate::{
-        astar::NeighbourState,
         cartesian::{Plane, Point, Vector},
-        neighbour::{DirectNeighbours, Neighbours, TouchingNeighbours},
+        neighbour::{Neighbours, TouchingNeighbours},
     };
-
-    #[test]
-    fn test_direct_neighbours_at_edge() {
-        let p: Point = (0, 0).into();
-        let plane: Plane = (10, 10).into();
-        let neighbours = DirectNeighbours(&plane);
-        let n = neighbours.neighbours(&NeighbourState {
-            current_point: &p,
-            came_from: &HashMap::new(),
-        });
-
-        let expected: Vec<Point> = vec![(1, 0).into(), (0, 1).into()];
-        assert_eq!(n, expected);
-    }
-
-    #[test]
-    fn test_touching_neighbours_includes_diagonals() {
-        // ...
-        // .P.
-        // ...
-        let plane: Plane = (3, 3).into();
-        let p: Point = (1, 1).into();
-
-        let expected: HashSet<Point> = HashSet::from_iter(
-            vec![
-                (0, 2),
-                (1, 2),
-                (2, 2),
-                (0, 1),
-                (2, 1),
-                (0, 0),
-                (1, 0),
-                (2, 0),
-            ]
-            .into_iter()
-            .map(|p| p.into()),
-        );
-
-        let neighbours = TouchingNeighbours(&plane);
-        let ns = NeighbourState {
-            current_point: &p,
-            came_from: &HashMap::new(),
-        };
-        let n: HashSet<Point> = HashSet::from_iter(neighbours.neighbours(&ns));
-
-        assert_eq!(n, expected);
-    }
 
     #[test]
     fn test_vector_touching_neighbours_right_along_y() {

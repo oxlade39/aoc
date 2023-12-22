@@ -230,7 +230,7 @@ impl Heuristic<State, usize> for GridPosition {
 }
 
 impl shortest_path::Cost<State, usize> for LavaFall {
-    fn measure(&self, to: &State) -> usize {
+    fn measure(&self, _from: &State, to: &State) -> usize {
         *self.map.at(&to.grid_pos)
     }
 }
@@ -268,11 +268,19 @@ mod tests {
             min: 1,
             max: 3,
         };
-        let cost = lf.measure(&State {
+        let dummy = State {
             grid_pos: GridPosition::new(0, 0),
             direction: Direction::Right,
             direction_count: 1,
-        });
+        };
+        let cost = lf.measure(
+            &dummy,
+            &State {
+                grid_pos: GridPosition::new(0, 0),
+                direction: Direction::Right,
+                direction_count: 1,
+            },
+        );
         assert_eq!(2, cost);
     }
 }

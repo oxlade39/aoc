@@ -1,7 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
 use aoclib::{
-    astar::NeighbourState,
     cartesian::{Plane, Point},
     neighbour::Neighbours,
     neighbour::TouchingNeighbours,
@@ -167,14 +166,8 @@ impl Number {
         let mut result = HashSet::new();
         let n = TouchingNeighbours(plane);
         for x in self.left().x..=self.right.x {
-            let ns = NeighbourState {
-                came_from: &HashMap::new(),
-                current_point: &Point {
-                    x: x,
-                    y: self.right.y,
-                },
-            };
-            result.extend(n.neighbours(&ns));
+            let current_point = Point { x, y: self.right.y };
+            result.extend(n.neighbours(&current_point));
         }
 
         result

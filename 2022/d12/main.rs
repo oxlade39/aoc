@@ -1,9 +1,9 @@
 use std::str::FromStr;
 
 use aoclib::{
-    astar::{self, Cost, StraightLine},
-    cartesian::{Plane, Point},
-    neighbour::DirectNeighbours,
+    grid::{FromChar, Grid, GridPosition},
+    shortest_path::*,
+    shortest_path::{self, Cost, NonDiagonalNeighbours},
 };
 
 fn main() {
@@ -18,14 +18,14 @@ fn part1(input: &str) -> usize {
     let parsed: HeightMap = input.parse().unwrap();
     let start = &parsed.start;
     let end = &parsed.end;
-    let plane = &parsed.to_plane();
+    let heuristic = ManhattenDistanceTo(*end);
 
-    let shortest_path = astar::astar(
+    let shortest_path = shortest_path::astar(
+        &parsed,
+        &parsed,
+        &heuristic,
         start.clone(),
-        end.clone(),
-        &StraightLine,
-        &OnlyUpOneCost(&parsed, StraightLine),
-        &DirectNeighbours(plane),
+        |p: &GridPosition| p == end,
     )
     .unwrap();
     shortest_path.path.len()
@@ -34,30 +34,27 @@ fn part1(input: &str) -> usize {
 fn part2(input: &str) -> i64 {
     let parsed: HeightMap = input.parse().unwrap();
     let end = &parsed.end;
-    let plane = &parsed.to_plane();
+    let heuristic = ManhattenDistanceTo(*end);
 
     parsed
         .map
+        .rows
         .iter()
         .enumerate()
-        .flat_map(|(y, row)| {
-            row.iter().enumerate().filter_map(move |(x, h)| {
-                if *h == 0 {
-                    let start: Point = (x as i64, y as i64).into();
-                    Some(start)
+        .flat_map(|(row_num, row)| {
+            row.iter().enumerate().filter_map(move |(col_num, h)| {
+                if h.height() == 0 {
+                    Some(GridPosition::new(col_num, row_num))
                 } else {
                     None
                 }
             })
         })
         .filter_map(|start| {
-            let maybe_p = astar::astar(
-                start,
-                end.clone(),
-                &StraightLine,
-                &OnlyUpOneCost(&parsed, StraightLine),
-                &DirectNeighbours(plane),
-            );
+            let maybe_p =
+                shortest_path::astar(&parsed, &parsed, &heuristic, start, |p: &GridPosition| {
+                    p == end
+                });
             maybe_p.map(|p| p.path.len() as i64)
         })
         .min()
@@ -65,41 +62,60 @@ fn part2(input: &str) -> i64 {
 }
 
 #[derive(Debug)]
+enum MapPoint {
+    Start,
+    End,
+    Height(char),
+}
+
+impl FromChar for MapPoint {
+    type Err = String;
+
+    fn from_char(c: char) -> Result<Self, Self::Err> {
+        match c {
+            'S' => Ok(MapPoint::Start),
+            'E' => Ok(MapPoint::End),
+            other => Ok(MapPoint::Height(other)),
+        }
+    }
+}
+
+impl MapPoint {
+    fn height(&self) -> i64 {
+        match self {
+            MapPoint::Start => 0,
+            MapPoint::End => ('z' as i64) - ('a' as i64),
+            MapPoint::Height(c) => (*c as i64) - ('a' as i64),
+        }
+    }
+}
+
+#[derive(Debug)]
 struct HeightMap {
-    map: Vec<Vec<i64>>,
-    start: Point,
-    end: Point,
+    map: Grid<MapPoint>,
+    start: GridPosition,
+    end: GridPosition,
 }
 
 impl FromStr for HeightMap {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let char_grid: Vec<Vec<_>> = s.lines().map(|l| l.chars().collect()).collect();
-        let width = char_grid[0].len();
-        let height = char_grid.len();
-        let mut start: Option<Point> = None;
-        let mut end: Option<Point> = None;
-        let mut map: Vec<Vec<i64>> = vec![vec![0; width]; height];
+        let map: Grid<MapPoint> = s.parse().unwrap();
 
-        for y in 0..height {
-            for x in 0..width {
-                let p: Point = (x as i64, y as i64).into();
-                let char_x = x;
-                let char_y = height - (y + 1);
-                let c = char_grid[char_y][char_x];
-                match c {
-                    'S' => {
-                        start = Some(p);
-                        map[y][x] = 0;
+        let mut start: Option<GridPosition> = None;
+        let mut end: Option<GridPosition> = None;
+
+        for (row_num, row) in map.rows.iter().enumerate() {
+            for (col_num, col) in row.iter().enumerate() {
+                match col {
+                    MapPoint::Start => {
+                        start = Some(GridPosition::new(col_num, row_num));
                     }
-                    'E' => {
-                        end = Some(p);
-                        map[y][x] = ('z' as i64) - ('a' as i64);
+                    MapPoint::End => {
+                        end = Some(GridPosition::new(col_num, row_num));
                     }
-                    any_other => {
-                        map[y][x] = (any_other as i64) - ('a' as i64);
-                    }
+                    MapPoint::Height(_) => {}
                 }
             }
         }
@@ -112,35 +128,27 @@ impl FromStr for HeightMap {
     }
 }
 
-impl HeightMap {
-    fn height_at(&self, p: &Point) -> i64 {
-        self.map[p.y as usize][p.x as usize]
-    }
-
-    fn to_plane(&self) -> Plane {
-        (self.map[0].len() as i64, self.map.len() as i64).into()
-    }
-}
-
-struct OnlyUpOneCost<'a, T: Cost>(&'a HeightMap, T);
-
-impl<T: Cost> Cost for OnlyUpOneCost<'_, T> {
-    fn measure(&self, from: &Point, to: &Point) -> i64 {
-        let from_height = self.0.height_at(from);
-        let to_height = self.0.height_at(to);
+impl Cost<GridPosition, i64> for HeightMap {
+    fn measure(&self, from: &GridPosition, to: &GridPosition) -> i64 {
+        let to_height = self.map.at(&to).height();
+        let from_height = self.map.at(&from).height();
         if (to_height - from_height) > 1 {
-            1000000000000
-        } else if (to_height - from_height) == 1 {
-            1
+            i64::impossible()
         } else {
             1
         }
     }
 }
 
+impl Neighbours<GridPosition> for HeightMap {
+    fn neighbours(&self, state: &GridPosition) -> Vec<GridPosition> {
+        NonDiagonalNeighbours(&self.map).neighbours(&state)
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use aoclib::astar::{self, StraightLine};
+    use itertools::Itertools;
 
     use crate::*;
 
@@ -148,6 +156,17 @@ mod tests {
     fn test_parse_input() {
         let input = include_str!("input.example.txt");
         let parsed: HeightMap = input.parse().unwrap();
+        let expected_start = GridPosition::new(0, 0);
+        let expected_end = GridPosition::new(5, 2);
+        assert_eq!(expected_start, parsed.start);
+        assert_eq!(expected_end, parsed.end);
+        let heights = parsed
+            .map
+            .rows
+            .iter()
+            .rev()
+            .map(|row| row.iter().map(|col| col.height()).collect_vec())
+            .collect_vec();
         assert_eq!(
             vec![
                 vec![0, 1, 3, 4, 5, 6, 7, 8],
@@ -156,14 +175,18 @@ mod tests {
                 vec![0, 1, 2, 17, 24, 23, 23, 11],
                 vec![0, 0, 1, 16, 15, 14, 13, 12]
             ],
-            parsed.map
+            heights
         );
-        let expected_start: Point = (0, 4).into();
-        let expected_end: Point = (5, 2).into();
-        assert_eq!(expected_start, parsed.start);
-        assert_eq!(expected_end, parsed.end);
+    }
 
-        assert_eq!('z' as i64 - 'a' as i64, parsed.height_at(&expected_end))
+    #[test]
+    fn test_cost() {
+        let input = include_str!("input.example.txt");
+        let parsed: HeightMap = input.parse().unwrap();
+        let cost = parsed.measure(&GridPosition::new(0, 0), &GridPosition::new(1, 0));
+        assert_eq!(1, cost);
+        let cost = parsed.measure(&GridPosition::new(2, 0), &GridPosition::new(3, 0));
+        assert_eq!(i64::impossible(), cost);
     }
 
     #[test]
@@ -172,16 +195,15 @@ mod tests {
         let parsed: HeightMap = input.parse().unwrap();
         let start = &parsed.start.clone();
         let end = &parsed.end.clone();
-        let plane = parsed.to_plane();
+        let heuristic = ManhattenDistanceTo(*end);
 
-        let shortest_path = astar::astar(
-            start.clone(),
-            end.clone(),
-            &StraightLine,
-            &OnlyUpOneCost(&parsed, StraightLine),
-            &DirectNeighbours(&plane),
-        )
-        .unwrap();
+        let end_check = |p: &GridPosition| {
+            // println!("checking: {:?} to be {:?}", m.to, end);
+            p == end
+        };
+
+        let shortest_path =
+            shortest_path::astar(&parsed, &parsed, &heuristic, start.clone(), end_check).unwrap();
 
         assert_eq!(31, shortest_path.path.len());
     }

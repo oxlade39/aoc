@@ -51,8 +51,8 @@ impl<T> Grid<T> {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct GridPosition {
-    pub row: usize,
     pub col: usize,
+    pub row: usize,
 }
 
 impl GridPosition {
