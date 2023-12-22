@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use aoclib::{
-    input::{Grid, GridPosition},
+    grid::{Grid, GridPosition},
     shortest_path::{self, Heuristic, ManhattenDistanceTo},
 };
 

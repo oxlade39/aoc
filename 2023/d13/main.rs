@@ -1,6 +1,9 @@
 use std::time::Instant;
 
-use aoclib::input::{self, FromChar, Grid};
+use aoclib::{
+    grid::{FromChar, Grid},
+    input,
+};
 
 fn main() {
     let input = include_str!("input.txt");

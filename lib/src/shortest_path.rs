@@ -7,7 +7,7 @@ use std::{
     usize,
 };
 
-use crate::input::{Grid, GridPosition};
+use crate::grid::{Grid, GridPosition};
 
 pub trait Neighbours<S> {
     fn neighbours(&self, state: &S) -> Vec<S>;
@@ -231,7 +231,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::{
-        input::Grid,
+        grid::Grid,
         shortest_path::{GridPosition, ManhattenDistanceTo, NonDiagonalNeighbours},
         *,
     };

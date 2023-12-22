@@ -8,7 +8,7 @@ use std::{
 
 use aoclib::{
     cartesian::{Plane, Point, Transform},
-    input::Grid,
+    grid::Grid,
 };
 
 fn main() {

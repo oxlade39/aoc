@@ -8,7 +8,7 @@ use std::{
 
 use aoclib::{
     cartesian::Point,
-    input::{Flip, FromChar, Grid},
+    grid::{Flip, FromChar, Grid},
 };
 
 fn main() {
