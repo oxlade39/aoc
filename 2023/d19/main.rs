@@ -1,6 +1,7 @@
 use std::{collections::HashMap, str::FromStr, time::Instant};
 
 use aoclib::input;
+use aoclib::range::*;
 
 fn main() {
     let input = include_str!("input.txt");
@@ -44,21 +45,122 @@ fn part1(txt: &str) -> usize {
     sum
 }
 
-fn part2(txt: &str) -> i64 {
-    0
+fn part2(txt: &str) -> usize {
+    let sections: Vec<_> = input::empty_line_chunks(txt).collect();
+
+    let workflows: HashMap<String, Workflow> = sections[0]
+        .lines()
+        .map(|l| l.parse::<Workflow>().unwrap())
+        .map(|wf| (wf.name.clone(), wf))
+        .collect();
+
+    let t: Target = Target::Workflow("in".to_owned());
+    let mut state = State::new();
+    let result = t.step(&mut state, &workflows);
+    result
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 struct Workflow {
     name: String,
     rules: Vec<Rule>,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 enum Rule {
     LessThan(char, usize, Target),
     GreaterThan(char, usize, Target),
     Target(Target),
+}
+
+
+
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct State {
+    x: ExclusionRange,
+    m: ExclusionRange,
+    a: ExclusionRange,
+    s: ExclusionRange,
+}
+
+impl State {
+    fn new() -> Self {
+        let r = ExclusionRange::new(1, 4001);
+        Self { x: r.clone(), m: r.clone(), a: r.clone(), s: r.clone() }
+    }
+
+    fn length(&self) -> usize {
+        self.x.length() * self.m.length() * self.a.length() * self.s.length()
+    }
+
+    fn update_less_than(&mut self, c: char, less_than: usize) {
+        match c {
+            'x' => {
+                self.x.update_less_than(less_than);
+            },
+            'm' => {
+                self.m.update_less_than(less_than);
+            },
+            'a' => {
+                self.a.update_less_than(less_than);
+            },
+            's' => {
+                self.s.update_less_than(less_than);
+            },
+            _ => panic!("bad character"),
+        }
+    }
+
+    fn update_more_than(&mut self, c: char, less_than: usize) {
+        match c {
+            'x' => {
+                self.x.update_more_than(less_than);
+            },
+            'm' => {
+                self.m.update_more_than(less_than);
+            },
+            'a' => {
+                self.a.update_more_than(less_than);
+            },
+            's' => {
+                self.s.update_more_than(less_than);
+            },
+            _ => panic!("bad character"),
+        }
+    }
+}
+
+fn step(
+    state: &mut State,
+    workflow: &Workflow,
+    workflows: &HashMap<String, Workflow>,
+) -> usize {
+
+    let mut total = 0;
+    for r in &workflow.rules {
+        let contributes = match r {
+            Rule::LessThan(c, n, t) => {
+                let mut left = state.clone();
+
+                left.update_less_than(*c, *n);
+                state.update_more_than(*c, *n - 1);
+
+                t.step(&mut left, workflows)
+            },
+            Rule::GreaterThan(c, n, t) => {
+                let mut left = state.clone();
+
+                left.update_more_than(*c, *n);
+                state.update_less_than(*c, *n + 1);
+
+                t.step(&mut left, workflows)
+            },
+            Rule::Target(t) => t.step(state, workflows)
+        };
+        total += contributes;
+    }
+    total
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -66,6 +168,27 @@ enum Target {
     Workflow(String),
     Accept,
     Reject,
+}
+
+impl Target {
+    fn step(
+        &self, 
+        state: &mut State,
+        workflows: &HashMap<String, Workflow>,
+    ) -> usize {
+        match self {
+            Target::Workflow(wf) => {
+                let next = workflows.get(wf).unwrap();
+                step(state, next, workflows)
+            },
+            Target::Accept => {
+                state.length()
+            },
+            Target::Reject => {
+                0
+            },
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -190,6 +313,7 @@ impl FromStr for Rating {
     }
 }
 
+
 #[cfg(test)]
 mod tests {
 
@@ -202,7 +326,7 @@ mod tests {
 
     #[test]
     fn test_example_p2() {
-        assert_eq!(0, part2(include_str!("input.test.txt")));
+        assert_eq!(167409079868000, part2(include_str!("input.test.txt")));
     }
 
     #[test]
@@ -279,5 +403,47 @@ mod tests {
             }),
             parsed
         )
+    }
+
+    #[test]
+    fn test_initial_state_length() {
+        let s = State::new();
+        assert_eq!(4000 * 4000 * 4000 * 4000, s.length());
+    }
+
+    #[test]
+    fn test_start_point() {
+        let wf_in: Workflow = "in{A}".parse().unwrap();
+        let workflows: HashMap<_, _> = vec![
+            ("in".to_owned(), wf_in),
+        ].into_iter().collect();
+        let result = Target::Workflow("in".to_owned()).step(&mut State::new(), &workflows);
+
+        assert_eq!(4000 * 4000 * 4000 * 4000, result);
+    }
+
+
+    #[test]
+    fn test_updating_state_simple() {
+        let wf_in: Workflow = "in{s<21:A,R}".parse().unwrap();        
+        let workflows: HashMap<_, _> = vec![
+            ("in".to_owned(), wf_in),            
+        ].into_iter().collect();
+        let result = Target::Workflow("in".to_owned()).step(&mut State::new(), &workflows);
+
+        assert_eq!(20 * 4000 * 4000 * 4000, result);
+    }
+
+    #[test]
+    fn test_updating_state_simple_reject() {
+        let wf_in: Workflow = "in{s>20:R,A}".parse().unwrap();        
+        let workflows: HashMap<_, _> = vec![
+            ("in".to_owned(), wf_in),            
+        ].into_iter().collect();
+        let result = Target::Workflow("in".to_owned()).step(&mut State::new(), &workflows);
+
+        assert!(result < (4000 * 4000 * 4000 * 4000));
+        assert!(result > 0);
+        assert_eq!(20 * 4000 * 4000 * 4000, result);
     }
 }
