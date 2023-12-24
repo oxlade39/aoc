@@ -4,5 +4,5 @@ pub mod grid;
 pub mod input;
 pub mod neighbour;
 pub mod number;
-pub mod shortest_path;
 pub mod range;
+pub mod shortest_path;

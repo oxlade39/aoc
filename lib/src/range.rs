@@ -9,13 +9,17 @@ pub struct ExclusionRange {
 
 impl ExclusionRange {
     pub fn new(from: usize, to: usize) -> Self {
-        Self { initial: Range::new(from, to), inclusions: vec![Range::new(from, to)] }
+        Self {
+            initial: Range::new(from, to),
+            inclusions: vec![Range::new(from, to)],
+        }
     }
 
     pub fn update_more_than(&mut self, more_than: usize) {
         let last = self.inclusions.last().expect("must be a last");
         if more_than > last.1 {
-            self.inclusions.push(Range::new(more_than + 1, self.initial.to()));
+            self.inclusions
+                .push(Range::new(more_than + 1, self.initial.to()));
         } else {
             if let Some(r) = self.inclusions.iter_mut().find(|r| r.contains(more_than)) {
                 r.update_more_than(more_than);
@@ -26,7 +30,8 @@ impl ExclusionRange {
     pub fn update_less_than(&mut self, less_than: usize) {
         let first = self.inclusions.first().expect("must be a first");
         if less_than < first.0 {
-            self.inclusions.push(Range::new(self.initial.from(), less_than));
+            self.inclusions
+                .push(Range::new(self.initial.from(), less_than));
         } else {
             if let Some(r) = self.inclusions.iter_mut().find(|r| r.contains(less_than)) {
                 r.update_less_than(less_than);
@@ -64,9 +69,9 @@ impl Range {
     }
 }
 
-pub trait WithinRange<T> 
+pub trait WithinRange<T>
 where
-    T: RangeContains
+    T: RangeContains,
 {
     fn within(self, r: &T) -> bool;
 }
@@ -97,8 +102,8 @@ impl RangeContains for ExclusionRange {
     }
 }
 
-impl<T, R> WithinRange<R> for T 
-where 
+impl<T, R> WithinRange<R> for T
+where
     T: Into<usize>,
     R: RangeContains,
 {
@@ -111,7 +116,6 @@ where
 #[cfg(test)]
 mod tests {
     use crate::range::*;
-
 
     #[test]
     fn test_range_length() {

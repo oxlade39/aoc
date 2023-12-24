@@ -73,9 +73,6 @@ enum Rule {
     Target(Target),
 }
 
-
-
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct State {
     x: ExclusionRange,
@@ -87,7 +84,12 @@ struct State {
 impl State {
     fn new() -> Self {
         let r = ExclusionRange::new(1, 4001);
-        Self { x: r.clone(), m: r.clone(), a: r.clone(), s: r.clone() }
+        Self {
+            x: r.clone(),
+            m: r.clone(),
+            a: r.clone(),
+            s: r.clone(),
+        }
     }
 
     fn length(&self) -> usize {
@@ -98,16 +100,16 @@ impl State {
         match c {
             'x' => {
                 self.x.update_less_than(less_than);
-            },
+            }
             'm' => {
                 self.m.update_less_than(less_than);
-            },
+            }
             'a' => {
                 self.a.update_less_than(less_than);
-            },
+            }
             's' => {
                 self.s.update_less_than(less_than);
-            },
+            }
             _ => panic!("bad character"),
         }
     }
@@ -116,27 +118,22 @@ impl State {
         match c {
             'x' => {
                 self.x.update_more_than(less_than);
-            },
+            }
             'm' => {
                 self.m.update_more_than(less_than);
-            },
+            }
             'a' => {
                 self.a.update_more_than(less_than);
-            },
+            }
             's' => {
                 self.s.update_more_than(less_than);
-            },
+            }
             _ => panic!("bad character"),
         }
     }
 }
 
-fn step(
-    state: &mut State,
-    workflow: &Workflow,
-    workflows: &HashMap<String, Workflow>,
-) -> usize {
-
+fn step(state: &mut State, workflow: &Workflow, workflows: &HashMap<String, Workflow>) -> usize {
     let mut total = 0;
     for r in &workflow.rules {
         let contributes = match r {
@@ -147,7 +144,7 @@ fn step(
                 state.update_more_than(*c, *n - 1);
 
                 t.step(&mut left, workflows)
-            },
+            }
             Rule::GreaterThan(c, n, t) => {
                 let mut left = state.clone();
 
@@ -155,8 +152,8 @@ fn step(
                 state.update_less_than(*c, *n + 1);
 
                 t.step(&mut left, workflows)
-            },
-            Rule::Target(t) => t.step(state, workflows)
+            }
+            Rule::Target(t) => t.step(state, workflows),
         };
         total += contributes;
     }
@@ -171,22 +168,14 @@ enum Target {
 }
 
 impl Target {
-    fn step(
-        &self, 
-        state: &mut State,
-        workflows: &HashMap<String, Workflow>,
-    ) -> usize {
+    fn step(&self, state: &mut State, workflows: &HashMap<String, Workflow>) -> usize {
         match self {
             Target::Workflow(wf) => {
                 let next = workflows.get(wf).unwrap();
                 step(state, next, workflows)
-            },
-            Target::Accept => {
-                state.length()
-            },
-            Target::Reject => {
-                0
-            },
+            }
+            Target::Accept => state.length(),
+            Target::Reject => 0,
         }
     }
 }
@@ -313,7 +302,6 @@ impl FromStr for Rating {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
 
@@ -414,21 +402,16 @@ mod tests {
     #[test]
     fn test_start_point() {
         let wf_in: Workflow = "in{A}".parse().unwrap();
-        let workflows: HashMap<_, _> = vec![
-            ("in".to_owned(), wf_in),
-        ].into_iter().collect();
+        let workflows: HashMap<_, _> = vec![("in".to_owned(), wf_in)].into_iter().collect();
         let result = Target::Workflow("in".to_owned()).step(&mut State::new(), &workflows);
 
         assert_eq!(4000 * 4000 * 4000 * 4000, result);
     }
 
-
     #[test]
     fn test_updating_state_simple() {
-        let wf_in: Workflow = "in{s<21:A,R}".parse().unwrap();        
-        let workflows: HashMap<_, _> = vec![
-            ("in".to_owned(), wf_in),            
-        ].into_iter().collect();
+        let wf_in: Workflow = "in{s<21:A,R}".parse().unwrap();
+        let workflows: HashMap<_, _> = vec![("in".to_owned(), wf_in)].into_iter().collect();
         let result = Target::Workflow("in".to_owned()).step(&mut State::new(), &workflows);
 
         assert_eq!(20 * 4000 * 4000 * 4000, result);
@@ -436,10 +419,8 @@ mod tests {
 
     #[test]
     fn test_updating_state_simple_reject() {
-        let wf_in: Workflow = "in{s>20:R,A}".parse().unwrap();        
-        let workflows: HashMap<_, _> = vec![
-            ("in".to_owned(), wf_in),            
-        ].into_iter().collect();
+        let wf_in: Workflow = "in{s>20:R,A}".parse().unwrap();
+        let workflows: HashMap<_, _> = vec![("in".to_owned(), wf_in)].into_iter().collect();
         let result = Target::Workflow("in".to_owned()).step(&mut State::new(), &workflows);
 
         assert!(result < (4000 * 4000 * 4000 * 4000));
