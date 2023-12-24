@@ -75,15 +75,15 @@ enum Rule {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct State {
-    x: ExclusionRange,
-    m: ExclusionRange,
-    a: ExclusionRange,
-    s: ExclusionRange,
+    x: InclusionRange,
+    m: InclusionRange,
+    a: InclusionRange,
+    s: InclusionRange,
 }
 
 impl State {
     fn new() -> Self {
-        let r = ExclusionRange::new(1, 4001);
+        let r = InclusionRange::new(1, 4001);
         Self {
             x: r.clone(),
             m: r.clone(),

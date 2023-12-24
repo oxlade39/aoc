@@ -2,12 +2,12 @@
 pub struct Range(usize, usize);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ExclusionRange {
+pub struct InclusionRange {
     initial: Range,
     inclusions: Vec<Range>,
 }
 
-impl ExclusionRange {
+impl InclusionRange {
     pub fn new(from: usize, to: usize) -> Self {
         Self {
             initial: Range::new(from, to),
@@ -92,7 +92,7 @@ impl RangeContains for Range {
     }
 }
 
-impl RangeContains for ExclusionRange {
+impl RangeContains for InclusionRange {
     fn contains(&self, i: usize) -> bool {
         self.inclusions.iter().any(|r| r.contains(i))
     }
@@ -151,7 +151,7 @@ mod tests {
 
     #[test]
     fn test_exclusion_range() {
-        let mut r = ExclusionRange::new(1, 4001);
+        let mut r = InclusionRange::new(1, 4001);
         r.update_less_than(1416);
         r.update_more_than(2662);
 
