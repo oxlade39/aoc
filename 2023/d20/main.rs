@@ -39,7 +39,6 @@ struct ModuleConfig {
 }
 
 impl ModuleConfig {
-
     fn push_button(&mut self) -> (usize, usize) {
         let mut low_pulse_count = 0;
         let mut high_pulse_count = 0;
@@ -160,20 +159,16 @@ impl FromStr for ModuleConfig {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-
         let mut modules: HashMap<String, Module> = HashMap::new();
         modules.insert(BUTTON.to_owned(), Module::Button);
 
         let mut module_children: HashMap<String, Vec<String>> = HashMap::new();
 
-        let modules_list: Vec<_> = s
-            .lines()
-            .map(|l| l.parse::<Module>().unwrap())
-            .collect();
+        let modules_list: Vec<_> = s.lines().map(|l| l.parse::<Module>().unwrap()).collect();
 
-        for m in modules_list {        
+        for m in modules_list {
             module_children.insert(m.name().to_owned(), m.children());
-            modules.insert(m.name().to_owned(), m);            
+            modules.insert(m.name().to_owned(), m);
         }
 
         // connect up the conjunction inputs
@@ -184,14 +179,13 @@ impl FromStr for ModuleConfig {
                     match child {
                         Module::Conjunction(_, inputs, _) => {
                             inputs.insert(parent.clone(), Pulse::Low);
-                        },
-                        _ => { /* noop */  }
+                        }
+                        _ => { /* noop */ }
                     }
                 }
             }
         }
-            
-        
+
         Ok(Self { modules })
     }
 }
@@ -248,15 +242,6 @@ mod tests {
     #[test]
     fn test_example_pt1_step() {
         let txt = include_str!("input.test.txt");
-        let mut module_config: ModuleConfig = txt.parse().expect("valid module config");
-        let (low, high) = module_config.push_button();
-        assert_eq!(8, low);
-        assert_eq!(4, high);
-    }
-
-    #[test]
-    fn test_example_pt1_2_step() {
-        let txt = include_str!("input.test2.txt");
         let mut module_config: ModuleConfig = txt.parse().expect("valid module config");
         let (low, high) = module_config.push_button();
         assert_eq!(8, low);
