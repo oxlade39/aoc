@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::{collections::{HashMap, HashSet}, time::Instant};
 
 use aoclib::{
     cartesian::{Plane, Point},
@@ -9,8 +9,10 @@ use itertools::Itertools;
 
 fn main() {
     let input = include_str!("input.txt");
+    let now = Instant::now();
     println!("part1: {}", part1(input));
     println!("part2: {}", part2(input));
+    println!("{}ms", now.elapsed().as_millis());
 }
 
 fn is_symbol(c: char) -> bool {

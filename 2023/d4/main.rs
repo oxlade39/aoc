@@ -1,11 +1,13 @@
-use std::{collections::HashSet, str::FromStr};
+use std::{collections::HashSet, str::FromStr, time::Instant};
 
 use itertools::Itertools;
 
 fn main() {
     let input = include_str!("input.txt");
+    let now = Instant::now();
     println!("part1: {}", part1(input));
     println!("part2: {}", part2(input));
+    println!("{}ms", now.elapsed().as_millis());
 }
 
 fn part1(txt: &str) -> i64 {
