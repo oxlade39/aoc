@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, VecDeque, HashSet},
+    collections::{HashMap, HashSet, VecDeque},
     str::FromStr,
     time::Instant,
 };
@@ -20,7 +20,7 @@ fn part1(txt: &str) -> usize {
     let mut counter = HighLowCount::new();
 
     for _ in 0..1000 {
-        module_config.push_button(&mut counter);        
+        module_config.push_button(&mut counter);
     }
 
     counter.prod()
@@ -29,44 +29,44 @@ fn part1(txt: &str) -> usize {
 fn part2(txt: &str) -> u64 {
     let mut module_config: ModuleConfig = txt.parse().expect("valid module config");
 
-    let rx_parent = module_config.modules.iter()
-        .find_map(|(_, module)| {
-            match module {                
-                Module::Conjunction(name, _inputs, children) => {
-                    if children.iter().any(|child| child == RX) {
-                        Some(name)
-                    } else {
-                        None
-                    }
-                },        
-                _ => None,        
+    let rx_parent = module_config
+        .modules
+        .iter()
+        .find_map(|(_, module)| match module {
+            Module::Conjunction(name, _inputs, children) => {
+                if children.iter().any(|child| child == RX) {
+                    Some(name)
+                } else {
+                    None
+                }
             }
+            _ => None,
         })
         .expect("something must feed 'RX'");
 
-    let rx_grand_parents = module_config.modules.iter()
-        .filter_map(|(_, module)| {
-            match module {                
-                Module::Conjunction(name, _inputs, children) => {
-                    if children.iter().any(|child| child == rx_parent) {
-                        Some(name.clone())
-                    } else {
-                        None
-                    }
-                },        
-                _ => None,        
+    let rx_grand_parents = module_config
+        .modules
+        .iter()
+        .filter_map(|(_, module)| match module {
+            Module::Conjunction(name, _inputs, children) => {
+                if children.iter().any(|child| child == rx_parent) {
+                    Some(name.clone())
+                } else {
+                    None
+                }
             }
+            _ => None,
         });
 
     let mut counts = CountUntilHigh::new(rx_grand_parents);
-    
+
     loop {
         module_config.push_button(&mut counts);
         if counts.all_found() {
             break;
         }
     }
-    
+
     counts.solve()
 }
 
@@ -86,16 +86,15 @@ impl ModuleConfig {
         while let Some((from_module, to_module, pulse)) = inbox.pop_front() {
             listener.on_pulse(&from_module, &to_module, &pulse);
             self.consume_pulse(from_module, to_module, pulse, &mut inbox);
-            
         }
     }
 
     fn consume_pulse(
-        &mut self, 
-        from_module: String, 
-        to_module: String, 
+        &mut self,
+        from_module: String,
+        to_module: String,
         pulse: Pulse,
-        inbox: &mut VecDeque<(String, String, Pulse)>
+        inbox: &mut VecDeque<(String, String, Pulse)>,
     ) {
         if let Some(module) = self.modules.get_mut(&to_module) {
             match module {
@@ -137,7 +136,7 @@ impl ModuleConfig {
                 }
                 Module::RX(state) => {
                     *state = Some(pulse);
-                },
+                }
             }
         }
     }
@@ -173,7 +172,7 @@ impl InboxListener for HighLowCount {
                     self.low += 1;
                 }
             }
-        }        
+        }
     }
 }
 
@@ -186,7 +185,11 @@ struct CountUntilHigh {
 impl CountUntilHigh {
     fn new(to_watch: impl Iterator<Item = String>) -> Self {
         let watching = to_watch.collect();
-        Self { watching, counts: HashMap::new(), press_count: 0 }
+        Self {
+            watching,
+            counts: HashMap::new(),
+            press_count: 0,
+        }
     }
 
     /// we have found all of the cycle counts when we have captures a count for all watched
@@ -214,11 +217,11 @@ impl InboxListener for CountUntilHigh {
                 if self.watching.contains(from_module) && !self.counts.contains_key(from_module) {
                     self.counts.insert(from_module.to_owned(), self.press_count);
                 }
-            },
+            }
             Pulse::Low => {
                 // ignore
-            },
-        }        
+            }
+        }
     }
 }
 
