@@ -26,7 +26,7 @@ fn part1(txt: &str) -> usize {
     counter.prod()
 }
 
-fn part2(txt: &str) -> u64 {
+fn part2(txt: &str) -> usize {
     let mut module_config: ModuleConfig = txt.parse().expect("valid module config");
 
     let rx_parent = module_config
@@ -198,8 +198,8 @@ impl CountUntilHigh {
     }
 
     /// the Lowest Common Multiple (`aoclib::number::lcm`) for all of the press counts
-    fn solve(self) -> u64 {
-        let counts: Vec<_> = self.counts.into_values().map(|i| i as u64).collect();
+    fn solve(self) -> usize {
+        let counts: Vec<_> = self.counts.into_values().collect();
         number::lcm(&counts[0..])
     }
 }
