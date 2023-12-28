@@ -33,30 +33,30 @@ fn solve(txt: &str, min: usize, max: usize) -> usize {
     let end_state = |es: &State| es.grid_pos == end_pos;
     let result = shortest_path::astar(&lf, &lf, &end_pos, initial_state, end_state).unwrap();
 
-    for row in 0..lf.map.height() {
-        for col in 0..lf.map.width() {
-            match result
-                .path
-                .iter()
-                .find(|(s, _)| s.grid_pos == GridPosition::new(col, row))
-            {
-                Some((s, _)) => match s.direction {
-                    Direction::Up => print!("^"),
-                    Direction::Down => print!("v"),
-                    Direction::Left => print!("<"),
-                    Direction::Right => print!(">"),
-                },
-                None => {
-                    print!(".")
-                }
-            }
-        }
-        println!("");
-    }
+    // for row in 0..lf.map.height() {
+    //     for col in 0..lf.map.width() {
+    //         match result
+    //             .path
+    //             .iter()
+    //             .find(|(s, _)| s.grid_pos == GridPosition::new(col, row))
+    //         {
+    //             Some((s, _)) => match s.direction {
+    //                 Direction::Up => print!("^"),
+    //                 Direction::Down => print!("v"),
+    //                 Direction::Left => print!("<"),
+    //                 Direction::Right => print!(">"),
+    //             },
+    //             None => {
+    //                 print!(".")
+    //             }
+    //         }
+    //     }
+    //     println!("");
+    // }
 
-    for (p, c) in &result.path {
-        println!("{:?} = {}", p.grid_pos, c);
-    }
+    // for (p, c) in &result.path {
+    //     println!("{:?} = {}", p.grid_pos, c);
+    // }
 
     result.total_cost
     // result.path.into_iter().map(|(_, cost)| cost).sum()
