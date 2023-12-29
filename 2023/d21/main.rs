@@ -58,7 +58,7 @@ fn part2(txt: &str) -> i64 {
 
     let target_step = (target - distance_to_side) / map.0.width() as i64;
 
-    let mut step = samples.len() as i64 + 1;
+    let mut step = samples.len() as i64;
     let mut step_increment = *deltas.last().unwrap() as i64;
     let mut value = *samples.last().unwrap() as i64;
     loop {
@@ -69,7 +69,7 @@ fn part2(txt: &str) -> i64 {
         // println!("step {} = {}", step, value);
 
         // have some off by ones somewhere
-        if step == target_step + 2 {
+        if step == target_step + 1 {
             break;
         }
     }
