@@ -105,6 +105,40 @@ impl Point {
     }
 }
 
+impl Transform {
+    pub fn left() -> Self {
+        (-1, 0).into()
+    }
+
+    pub fn right() -> Self {
+        (1, 0).into()
+    }
+
+    pub fn up() -> Self {
+        (0, 1).into()
+    }
+
+    pub fn down() -> Self {
+        (0, -1).into()
+    }
+
+    pub fn east() -> Self {
+        Self::right()
+    }
+
+    pub fn west() -> Self {
+        Self::left()
+    }
+
+    pub fn north() -> Self {
+        Self::up()
+    }
+
+    pub fn south() -> Self {
+        Self::down()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Vector {
     pub start: Point,
