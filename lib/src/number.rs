@@ -1,4 +1,4 @@
-use std::ops::{Add, Div, Mul, Rem, Sub};
+use std::{ops::{Add, Div, Mul, Rem, Sub}, fmt::Display};
 
 pub trait Number:
     From<u8>
@@ -9,6 +9,7 @@ pub trait Number:
     + Div<Output = Self>
     + Rem<Output = Self>
     + Copy
+    + Display
 {
 }
 
@@ -21,6 +22,7 @@ impl<T> Number for T where
         + Div<Output = Self>
         + Rem<Output = Self>
         + Copy
+        + Display
 {
 }
 
