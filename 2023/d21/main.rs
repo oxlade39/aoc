@@ -255,7 +255,6 @@ mod tests {
         let origin = include_str!("input.test.txt");
         let g_orig: Grid<Position> = origin.parse().unwrap();
         let m_orig = Map(g_orig.flip());
-        let orig_start = m_orig.start_pos().unwrap();
 
         let expanded_steps = m_orig.steps(7);
         print_steps(&m_orig, &expanded_steps);
