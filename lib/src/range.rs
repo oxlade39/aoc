@@ -67,6 +67,10 @@ impl Range {
             panic!("broken range conditions with {more_than} with {self:?}");
         }
     }
+
+    pub fn overlaps(&self, other: Self) -> bool {
+        self.from().max(other.from()) < self.to().min(other.to())
+    }
 }
 
 pub trait WithinRange<T>
@@ -162,5 +166,18 @@ mod tests {
 
         assert_eq!(false, 2662_usize.within(&r));
         assert_eq!(true, 2663_usize.within(&r));
+    }
+
+    #[test]
+    fn test_range_overlaps() {
+        let a = Range::new(5, 10);
+
+        assert_eq!(true, a.overlaps(a), "iteself");
+        assert_eq!(true, a.overlaps(Range::new(9, 11)), "overlaps end");
+        assert_eq!(true, a.overlaps(Range::new(0, 11)), "overlaps all");
+        assert_eq!(true, a.overlaps(Range::new(6, 7)), "overlaps within");
+
+        assert_eq!(false, a.overlaps(Range::new(11, 12)), "completely outside");
+        assert_eq!(false, a.overlaps(Range::new(10, 11)), "touches upper bound");
     }
 }

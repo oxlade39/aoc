@@ -1,4 +1,7 @@
-use std::{ops::{Add, Div, Mul, Rem, Sub}, fmt::Display};
+use std::{
+    fmt::Display,
+    ops::{Add, Div, Mul, Rem, Sub},
+};
 
 pub trait Number:
     From<u8>
