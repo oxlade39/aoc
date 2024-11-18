@@ -174,12 +174,6 @@ impl Dir {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
-struct DirState {
-    dirs: Vec<String>,
-    files: Vec<(i32, String)>,
-}
-
 #[test]
 fn test_size() {
     let mut root = Dir::new("/");

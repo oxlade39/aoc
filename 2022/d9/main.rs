@@ -56,8 +56,6 @@ trait MoveListener {
     fn on_tail_move(&mut self, from: &(i32, i32), to: &(i32, i32));
 }
 
-struct NOOP {}
-
 struct MoveTracker {
     tail_positions: HashSet<(i32, i32)>,
 }
@@ -74,10 +72,6 @@ impl MoveListener for MoveTracker {
     fn on_tail_move(&mut self, _: &(i32, i32), to: &(i32, i32)) {
         self.tail_positions.insert((to.0, to.1));
     }
-}
-
-impl MoveListener for NOOP {
-    fn on_tail_move(&mut self, _: &(i32, i32), _: &(i32, i32)) {}
 }
 
 impl Head {
@@ -180,6 +174,10 @@ fn depth(n: i32) -> Option<Head> {
     }
 }
 
+impl MoveListener for () {
+    fn on_tail_move(&mut self, _: &(i32, i32), _: &(i32, i32)) {}
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -194,7 +192,7 @@ mod test {
             })),
         };
 
-        initial.apply(Move(Direction::U, 1), &mut NOOP {});
+        initial.apply(Move(Direction::U, 1), &mut ());
 
         let expected = Head {
             pos: (1, 0),
@@ -217,7 +215,7 @@ mod test {
             })),
         };
 
-        initial.apply(Move(Direction::D, 1), &mut NOOP {});
+        initial.apply(Move(Direction::D, 1), &mut ());
 
         let expected = Head {
             pos: (-1, 0),
@@ -240,7 +238,7 @@ mod test {
             })),
         };
 
-        initial.apply(Move(Direction::R, 1), &mut NOOP {});
+        initial.apply(Move(Direction::R, 1), &mut ());
 
         let expected = Head {
             pos: (0, 1),
@@ -263,7 +261,7 @@ mod test {
             })),
         };
 
-        initial.apply(Move(Direction::R, 1), &mut NOOP {});
+        initial.apply(Move(Direction::R, 1), &mut ());
 
         let expected = Head {
             pos: (0, 1),
@@ -286,7 +284,7 @@ mod test {
             })),
         };
 
-        initial.apply(Move(Direction::R, 5), &mut NOOP {});
+        initial.apply(Move(Direction::R, 5), &mut ());
 
         let expected = Head {
             pos: (0, 5),
@@ -309,7 +307,7 @@ mod test {
             })),
         };
 
-        initial.apply(Move(Direction::U, 1), &mut NOOP {});
+        initial.apply(Move(Direction::U, 1), &mut ());
 
         let expected = Head {
             pos: (2, 0),
@@ -332,7 +330,7 @@ mod test {
             })),
         };
 
-        initial.apply(Move(Direction::D, 1), &mut NOOP {});
+        initial.apply(Move(Direction::D, 1), &mut ());
 
         let expected = Head {
             pos: (-2, 0),
@@ -355,7 +353,7 @@ mod test {
             })),
         };
 
-        initial.apply(Move(Direction::R, 1), &mut NOOP {});
+        initial.apply(Move(Direction::R, 1), &mut ());
 
         let expected = Head {
             pos: (0, 2),
@@ -378,7 +376,7 @@ mod test {
             })),
         };
 
-        initial.apply(Move(Direction::L, 1), &mut NOOP {});
+        initial.apply(Move(Direction::L, 1), &mut ());
 
         let expected = Head {
             pos: (0, -2),
@@ -408,7 +406,7 @@ mod test {
             })),
         };
 
-        initial.apply(Move(Direction::U, 1), &mut NOOP {});
+        initial.apply(Move(Direction::U, 1), &mut ());
 
         let expected = Head {
             pos: (2, 1),
@@ -438,7 +436,7 @@ mod test {
             })),
         };
 
-        initial.apply(Move(Direction::D, 1), &mut NOOP {});
+        initial.apply(Move(Direction::D, 1), &mut ());
 
         let expected = Head {
             pos: (-2, -1),
@@ -468,7 +466,7 @@ mod test {
             })),
         };
 
-        initial.apply(Move(Direction::U, 1), &mut NOOP {});
+        initial.apply(Move(Direction::U, 1), &mut ());
 
         let expected = Head {
             pos: (1, 1),

@@ -60,7 +60,7 @@ fn neighbours(row: i32, col: i32) -> Vec<(i32, i32)> {
         .collect()
 }
 
-struct Grid(Vec<Vec<i32>>, usize, usize);
+struct Grid(Vec<Vec<i32>>);
 
 #[derive(Debug, PartialEq, Eq)]
 struct GridParseErr {
@@ -90,9 +90,7 @@ impl FromStr for Grid {
                 }
             }
         }
-        let rows = grid.len();
-        let cols = grid[0].len();
-        Ok(Grid(grid, rows, cols))
+        Ok(Grid(grid))
     }
 }
 

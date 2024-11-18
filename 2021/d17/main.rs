@@ -78,27 +78,9 @@ struct Point {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct Velocity {
-    x: i64,
-    y: i64,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
 struct Box {
     top_left: Point,
     bottom_right: Point,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct Probe {
-    position: Point,
-    velocity: Velocity,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct Board {
-    probe: Probe,
-    target_area: Box,
 }
 
 impl Box {

@@ -13,11 +13,6 @@ enum Instruction {
     Addx(i32),
 }
 
-#[derive(Debug, PartialEq)]
-struct InstructionProcessor {
-    cycle: u32,
-}
-
 #[derive(Debug, PartialEq, Clone)]
 struct Register<const N: usize> {
     values: [i32; N],

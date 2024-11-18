@@ -34,7 +34,7 @@ fn part1(txt: &str) -> usize {
     count
 }
 
-fn part2(txt: &str) -> usize {
+fn part2(_txt: &str) -> usize {
     0
 }
 
