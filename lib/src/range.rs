@@ -130,6 +130,7 @@ mod tests {
     #[test]
     fn test_range_within() {
         let range = Range::new(1, 4001);
+        assert_eq!(false, 0_usize.within(&range));
         assert_eq!(true, 1_usize.within(&range));
         assert_eq!(true, 4000_usize.within(&range));
         assert_eq!(false, 4001_usize.within(&range));
