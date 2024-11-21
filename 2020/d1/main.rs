@@ -18,24 +18,11 @@ fn part1(txt: &str) -> i32 {
         .map(|l| l.parse::<i32>().expect(&format!("integer but was '{l}'")))
         .collect_vec();
         
-    if let Some((i, j)) = find_pair(target, &expenses) {
-        i * j
+    if let Some(i) = find_pair(target, &expenses) {
+        i
     } else {
         0
     }
-}
-
-fn find_pair(target: i32, within: &Vec<i32>) -> Option<(i32, i32)> {
-    let filtered = within.into_iter().filter(|i| **i < target).collect_vec();
-
-    for i in filtered.iter() {
-        let remainder = target - *i;
-        if filtered.iter().any(|j| **j == remainder) {
-            return Some((**i, remainder));
-        }
-    }
-
-    None
 }
 
 fn part2(txt: &str) -> i32 {
@@ -49,12 +36,25 @@ fn part2(txt: &str) -> i32 {
 
     for i in expenses.iter() {
         let remainder = target - *i;
-        if let Some((j, z)) = find_pair(remainder, &expenses) {
-            return i * j * z;
+        if let Some(j) = find_pair(remainder, &expenses) {
+            return i * j;
         }
     }
 
     0
+}
+
+fn find_pair(target: i32, within: &Vec<i32>) -> Option<i32> {
+    let filtered = within.into_iter().filter(|i| **i < target).collect_vec();
+
+    for i in filtered.iter() {
+        let remainder = target - *i;
+        if filtered.iter().any(|j| **j == remainder) {
+            return Some(**i * remainder);
+        }
+    }
+
+    None
 }
 
 #[cfg(test)]
