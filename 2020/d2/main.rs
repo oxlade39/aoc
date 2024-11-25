@@ -14,14 +14,18 @@ fn main() {
 }
 
 fn part1(txt: &str) -> usize {
-    txt.lines()
-        .map(|l| l.parse::<PasswordPolicy>().expect("password policy"))
-        .filter(|p| p.passes())
-        .count()
+    count(txt, Part1)
 }
 
-fn part2(txt: &str) -> i32 {
-    0
+fn part2(txt: &str) -> usize {
+    count(txt, Part2)
+}
+
+fn count<T: PasswordValidator>(txt: &str, validator: T) -> usize {
+    txt.lines()
+        .map(|l| l.parse::<PasswordPolicy>().expect("password policy"))
+        .filter(|p| (&validator).valid(p))
+        .count()
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -32,16 +36,46 @@ struct PasswordPolicy {
     password: String,
 }
 
-impl PasswordPolicy {
-    fn passes(&self) -> bool {
+trait PasswordValidator {
+    fn valid(&self, policy: &PasswordPolicy) -> bool;
+}
+
+struct Part1;
+struct Part2;
+
+impl PasswordValidator for Part1 {
+    fn valid(&self, policy: &PasswordPolicy) -> bool {
         let mut count = 0;
-        for c in self.password.chars() {
-            if c == self.c {
+        for c in policy.password.chars() {
+            if c == policy.c {
                 count += 1;
             }
         }
 
-        count >= self.lower && count <= self.upper
+        count >= policy.lower && count <= policy.upper
+    }
+}
+
+impl PasswordValidator for Part2 {
+    fn valid(&self, policy: &PasswordPolicy) -> bool {
+        let mut password_chars = policy.password.chars();
+        let lower_offset = (policy.lower - 1) as usize;
+        let upper_offset = ((policy.upper - policy.lower) - 1) as usize;
+        let lower_char = password_chars
+            .nth(lower_offset)
+            .filter(|c| *c == policy.c);
+        let upper_char = password_chars
+            .nth(upper_offset)
+            .filter(|c| *c == policy.c);
+
+        // let s = format!("lower {:?} - upper {:?}", lower_char, upper_char);
+        // dbg!(s);
+
+        match (lower_char, upper_char) {
+            (Some(_), None) => true,
+            (None, Some(_)) => true,
+            _ => false,
+        }
     }
 }
 
@@ -121,6 +155,20 @@ mod tests {
 
     #[test]
     fn sample_input_pt2() {
-        assert_eq!(0, part2(include_str!("input.test.txt")));
+        let validator = Part2;
+        let txt = include_str!("input.test.txt");
+        let result = txt
+            .lines()
+            .map(|l| l.parse::<PasswordPolicy>().expect("password policy"))
+            .filter(|p| (&validator).valid(p))
+            .collect_vec();
+        println!("{:?}", result);
+        assert_eq!(1, result.len());
+    }
+
+    #[test]
+    fn input_pt2_answer() {
+        let test_input = include_str!("input.txt");
+        assert_eq!(688, part2(test_input));
     }
 }
