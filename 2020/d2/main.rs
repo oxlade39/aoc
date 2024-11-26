@@ -68,9 +68,6 @@ impl PasswordValidator for Part2 {
             .nth(upper_offset)
             .filter(|c| *c == policy.c);
 
-        // let s = format!("lower {:?} - upper {:?}", lower_char, upper_char);
-        // dbg!(s);
-
         match (lower_char, upper_char) {
             (Some(_), None) => true,
             (None, Some(_)) => true,
