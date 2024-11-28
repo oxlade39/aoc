@@ -1,4 +1,4 @@
-use std::{str::FromStr, time::Instant};
+use std::{collections::HashSet, str::FromStr, time::Instant};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -21,7 +21,23 @@ fn part1(txt: &str) -> usize {
 }
 
 fn part2(txt: &str) -> usize {
-    0
+    let all_seat_ids: HashSet<usize> = (0..843).collect();
+
+    let seats_with_tickets: HashSet<usize> = txt
+        .lines()
+        .map(|l| l.parse::<BoardingPass>().unwrap())
+        .map(|pass| pass.seat(128, 8))
+        .map(|seat| seat.seat_id())
+        .collect();
+
+    all_seat_ids
+        .difference(&seats_with_tickets)
+        .copied()
+        .filter(|&candidate| candidate > 0)
+        .filter(|&candidate| seats_with_tickets.contains(&(candidate - 1)))
+        .filter(|&candidate| seats_with_tickets.contains(&(candidate + 1)))
+        .next()
+        .unwrap()
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -147,17 +163,12 @@ mod tests {
     #[test]
     fn input_pt1() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part1(test_input));
-    }
-
-    #[test]
-    fn sample_input_pt2() {
-        assert_eq!(0, part2(include_str!("input.test.txt")));
+        assert_eq!(842, part1(test_input));
     }
 
     #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part1(test_input));
+        assert_eq!(842, part1(test_input));
     }
 }
