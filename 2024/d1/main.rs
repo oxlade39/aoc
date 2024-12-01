@@ -1,4 +1,7 @@
-use std::{collections::{BinaryHeap, HashSet}, iter::zip, str::FromStr, time::Instant};
+use std::{
+    iter::zip,
+    time::Instant,
+};
 
 use itertools::Itertools;
 
@@ -20,16 +23,12 @@ fn part1(txt: &str) -> usize {
         let mut split = l.split("   ");
         left.push(split.next().unwrap().parse::<usize>().unwrap());
         right.push(split.next().unwrap().parse::<usize>().unwrap());
-    }    
+    }
 
     left.sort();
     right.sort();
 
-    zip(left, right)
-        .map(|(l,r)| {
-            l.max(r) - l.min(r)
-        }
-        ).sum()
+    zip(left, right).map(|(l, r)| l.max(r) - l.min(r)).sum()
 }
 
 fn part2(txt: &str) -> usize {
@@ -39,7 +38,7 @@ fn part2(txt: &str) -> usize {
         let mut split = l.split("   ");
         left.push(split.next().unwrap().parse::<usize>().unwrap());
         right.push(split.next().unwrap().parse::<usize>().unwrap());
-    } 
+    }
 
     let right_counts = right.iter().counts();
     let mut sum = 0;
