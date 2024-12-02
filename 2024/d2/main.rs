@@ -1,6 +1,5 @@
-use std::{iter::zip, str::FromStr, time::Instant};
+use std::{str::FromStr, time::Instant};
 
-use aoclib::grid::{Grid, GridPosition};
 use itertools::Itertools;
 
 fn main() {
@@ -15,7 +14,19 @@ fn main() {
 }
 
 fn part1(txt: &str) -> usize {
-    solve(txt, 0)
+    txt.lines()
+    .map(|l| l.parse::<Report>().unwrap())
+    .map(|report| Part1(report))
+    .filter(|pt| pt.is_safe())
+    .count()
+}
+
+fn part2(txt: &str) -> usize {
+    txt.lines()
+        .map(|l| l.parse::<Report>().unwrap())
+        .map(|report| Part2(report))
+        .filter(|pt| pt.is_safe())
+        .count()
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -77,97 +88,6 @@ fn any_safe(r: &Report) -> bool {
         without.remove(i);
         all_safe(&without)
     })
-}
-
-fn part2(txt: &str) -> usize {
-    txt.lines()
-        .map(|l| l.parse::<Report>().unwrap())
-        .map(|report| Part2(report))
-        .filter(|pt| pt.is_safe())
-        .count()
-}
-
-fn solve(txt: &str, allowed_n: i32) -> usize {
-    let valid = txt.lines().filter_map(|l| {
-        l.split_whitespace()
-            .fold(Some(RowState::new(allowed_n)), |accum, rs| {
-                let n: i32 = rs.parse().unwrap();
-                match accum {
-                    Some(RowState {
-                        prev,
-                        prev_delta,
-                        allowed,
-                    }) => match (prev, prev_delta) {
-                        (Some(p), Some(pd)) => {
-                            let diff = n - p;
-
-                            if diff.signum() != pd.signum() || diff.abs() < 1 || diff.abs() > 3 {
-                                if allowed == 0 {
-                                    return None;
-                                }
-                                return Some(RowState {
-                                    prev,
-                                    prev_delta,
-                                    allowed: allowed - 1,
-                                });
-                            }
-
-                            Some(RowState {
-                                prev: Some(n),
-                                prev_delta: Some(diff),
-                                allowed,
-                            })
-                        }
-                        (Some(p), None) => {
-                            let diff = n - p;
-                            if diff.abs() < 1 || diff.abs() > 3 {
-                                if allowed == 0 {
-                                    return None;
-                                }
-
-                                return Some(RowState {
-                                    prev,
-                                    prev_delta,
-                                    allowed: allowed - 1,
-                                });
-                            }
-
-                            Some(RowState {
-                                prev: Some(n),
-                                prev_delta: Some(diff),
-                                allowed,
-                            })
-                        }
-                        (None, None) => Some(RowState {
-                            prev: Some(n),
-                            prev_delta: None,
-                            allowed,
-                        }),
-                        (None, Some(_)) => panic!("impossible"),
-                    },
-                    None => None,
-                }
-            })
-    });
-
-    valid.count()
-}
-
-#[derive(Debug)]
-struct RowState {
-    prev: Option<i32>,
-    prev_delta: Option<i32>,
-    allowed: i32,
-}
-
-impl RowState {
-    fn new(allowed: i32) -> Self {
-        RowState {
-            prev: None,
-            prev_delta: None,
-            allowed,
-        }
-    }
 }
 
 #[cfg(test)]
