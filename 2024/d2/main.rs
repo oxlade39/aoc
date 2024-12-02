@@ -14,17 +14,21 @@ fn main() {
 }
 
 fn part1(txt: &str) -> usize {
-    txt.lines()
-    .map(|l| l.parse::<Report>().unwrap())
-    .map(|report| Part1(report))
-    .filter(|pt| pt.is_safe())
-    .count()
+    solve::<Part1>(txt)
 }
 
 fn part2(txt: &str) -> usize {
+    solve::<Part2>(txt)
+}
+
+fn solve<T>(txt: &str) -> usize 
+    where T: SafetyReport,
+        T: Sized,
+        T: From<Report>,
+{
     txt.lines()
         .map(|l| l.parse::<Report>().unwrap())
-        .map(|report| Part2(report))
+        .map(|report| T::from(report))
         .filter(|pt| pt.is_safe())
         .count()
 }
@@ -65,6 +69,18 @@ impl SafetyReport for Part1 {
 impl SafetyReport for Part2 {
     fn is_safe(&self) -> bool {
         any_safe(&self.0)
+    }
+}
+
+impl From<Report> for Part1 {
+    fn from(value: Report) -> Self {
+        Part1(value)
+    }
+}
+
+impl From<Report> for Part2 {
+    fn from(value: Report) -> Self {
+        Part2(value)
     }
 }
 
