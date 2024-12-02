@@ -12,3 +12,6 @@ aoclib = {path = "../lib"}
 name = "d1"
 path = "d1/main.rs"
 
+[[bin]]
+name = "d2"
+path = "d2/main.rs"
