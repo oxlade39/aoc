@@ -1,6 +1,5 @@
 use std::{sync::LazyLock, time::Instant};
 
-use itertools::Itertools;
 use regex::Regex;
 
 fn main() {
@@ -17,25 +16,20 @@ fn main() {
 static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").unwrap());
 
 fn part1(txt: &str) -> i64 {
-    let mut sum = 0;
-    for (_, [left, right]) in RE.captures_iter(&txt).map(|c| c.extract()) {
-        let l: i64 = left.parse().unwrap();
-        let r: i64 = right.parse().unwrap();
-        sum += l * r
-    }
-    sum
+    RE.captures_iter(&txt)
+        .map(|c| c.extract())
+        .fold(0, |accum, (_, [left, right])| {
+            let l: i64 = left.parse().unwrap();
+            let r: i64 = right.parse().unwrap();
+            accum + l * r
+        })
 }
 
 fn part2(txt: &str) -> i64 {
-    let mut sum = 0;
-    let do_chunks = txt.split("do()").collect_vec();
-
-    for chunk in do_chunks {
-        let sub = chunk.split("don't()").collect_vec();
-        sum += part1(sub[0]);
-    }
-
-    sum
+    txt.split("do()")
+        .filter_map(|do_chunk| do_chunk.split("don't()").next())
+        .map(part1)
+        .sum()
 }
 
 #[cfg(test)]
