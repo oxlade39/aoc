@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{sync::LazyLock, time::Instant};
 
 use itertools::Itertools;
 use regex::Regex;
@@ -14,15 +14,14 @@ fn main() {
     );
 }
 
+static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").unwrap());
+
 fn part1(txt: &str) -> i64 {
-    let re = Regex::new(r"mul\((\d+),(\d+)\)").unwrap();
     let mut sum = 0;
-    for (_, [left, right]) in re.captures_iter(&txt).map(|c| c.extract()) {
+    for (_, [left, right]) in RE.captures_iter(&txt).map(|c| c.extract()) {
         let l: i64 = left.parse().unwrap();
         let r: i64 = right.parse().unwrap();
-        if l <= 999 && r <= 999 {
-            sum += l * r
-        }        
+        sum += l * r
     }
     sum
 }
