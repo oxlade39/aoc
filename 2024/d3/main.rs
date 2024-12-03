@@ -1,4 +1,4 @@
-use std::{iter::zip, time::Instant};
+use std::time::Instant;
 
 use itertools::Itertools;
 use regex::Regex;
@@ -27,25 +27,21 @@ fn part1(txt: &str) -> i64 {
     sum
 }
 
-fn part2(txt: &str) -> usize {
-    0
+fn part2(txt: &str) -> i64 {
+    let mut sum = 0;
+    let do_chunks = txt.split("do()").collect_vec();
+
+    for chunk in do_chunks {
+        let sub = chunk.split("don't()").collect_vec();
+        sum += part1(sub[0]);
+    }
+
+    sum
 }
 
 #[cfg(test)]
 mod tests {
-    use regex::Regex;
-
     use crate::*;
-
-    #[test]
-    fn test_regexp() {
-        let input = "dfdmul(1,2)grtmul(567,433)";
-        let re = Regex::new(r"mul\((\d+),(\d+)\)").unwrap();
-        println!("here");
-        for (_, [left, right]) in re.captures_iter(&input).map(|c| c.extract()) {
-            println!("{} * {}", left, right)
-        }
-    }
 
     #[test]
     fn test_input_pt1() {
@@ -61,13 +57,13 @@ mod tests {
 
     #[test]
     fn test_input_pt2() {
-        let test_input = include_str!("input.test.txt");
-        assert_eq!(0, part2(test_input));
+        let test_input = include_str!("input.test2.txt");
+        assert_eq!(48, part2(test_input));
     }
 
     #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part2(test_input));
+        assert_eq!(107069718, part2(test_input));
     }
 }
