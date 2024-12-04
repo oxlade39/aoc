@@ -15,8 +15,8 @@ fn main() {
 }
 
 fn part1(txt: &str) -> i64 {
-    let forward = "XMAS";
-    let backwards = "SAMX";
+    let forward = ['X', 'M', 'A', 'S'];
+    let backwards = ['S', 'A', 'M', 'X'];
 
     let g: Grid<char> = txt.parse().unwrap();
     let mut count = 0;
@@ -37,9 +37,7 @@ fn part1(txt: &str) -> i64 {
                     *g.at(&p.down().down()),
                     *g.at(&p.down().down().down()),
                 ];
-                let string = String::from_iter(down);
-                let s = string.as_str();
-                if s == forward || s == backwards {
+                if (down == forward) || (down == backwards) {
                     count += 1;
                 }
             }
@@ -53,9 +51,7 @@ fn part1(txt: &str) -> i64 {
                     *g.at(&p.right().right().right()),
                 ];
 
-                let string = String::from_iter(right);
-                let s = string.as_str();
-                if s == forward || s == backwards {
+                if (right == forward) || (right == backwards) {
                     count += 1;
                 }
             }
@@ -69,9 +65,7 @@ fn part1(txt: &str) -> i64 {
                     *g.at(&p.down().right().down().right().down().right()),
                 ];
 
-                let string = String::from_iter(down_right);
-                let s = string.as_str();
-                if s == forward || s == backwards {
+                if (down_right == forward) || (down_right == backwards) {
                     count += 1;
                 }
             }
@@ -85,9 +79,7 @@ fn part1(txt: &str) -> i64 {
                     *g.at(&p.down().left().down().left().down().left()),
                 ];
 
-                let string = String::from_iter(down_left);
-                let s = string.as_str();
-                if s == forward || s == backwards {
+                if (down_left == forward) || (down_left == backwards) {
                     count += 1;
                 }
             }
