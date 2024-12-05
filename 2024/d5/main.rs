@@ -1,5 +1,5 @@
 use core::str;
-use std::{cmp::Ordering, collections::{HashMap, HashSet}, time::Instant};
+use std::{cmp::Ordering, collections::{HashMap, HashSet}, str::FromStr, time::Instant};
 
 use aoclib::input;
 use itertools::Itertools;
@@ -17,28 +17,7 @@ fn main() {
 
 fn part1(txt: &str) -> i64 {
     let parts = input::empty_line_chunks(txt).collect_vec();
-    let mut befores: HashMap<i64, HashSet<i64>> = HashMap::new();
-    let mut afters: HashMap<i64, HashSet<i64>> = HashMap::new();
-
-    for order in parts[0]
-        .lines()
-        .map(|l| l.split("|").map(|n| n.parse::<i64>().unwrap()).collect_vec()) {
-
-        let left = order[0];
-        let right = order[1];
-        
-        if let Some(existing) = befores.get_mut(&right) {
-            existing.insert(left);
-        } else {
-            befores.insert(right, HashSet::from_iter([left]));
-        }
-
-        if let Some(existing) = afters.get_mut(&left) {
-            existing.insert(right);
-        } else {
-            afters.insert(left, HashSet::from_iter([right]));
-        }
-    }
+    let ord: PageOrdering = parts[0].parse().unwrap();
 
     let mut count = 0;
 
@@ -46,68 +25,19 @@ fn part1(txt: &str) -> i64 {
         .lines()
         .map(|l| l.split(",").map(|i| i.parse::<i64>().unwrap()).collect_vec()) {
 
-        let mut copy = list.clone();
-        copy.sort_by(|l,r| {
-            if let Some(mapping) = befores.get(r) {
-                if mapping.contains(l) {
-                    return Ordering::Less;
-                }
-            }
-            if let Some(mapping) = afters.get(r) {
-                if mapping.contains(l) {
-                    return Ordering::Greater;
-                }
-            }
-
-            // if let Some(mapping) = befores.get(l) {
-            //     if mapping.contains(r) {
-            //         return Ordering::Greater;
-            //     }
-            // }
-            // if let Some(mapping) = afters.get(l) {
-            //     if mapping.contains(r) {
-            //         return Ordering::Less;
-            //     }
-            // }
-            println!("oops: {},{}", l, r);
-            return Ordering::Equal;
-        });
+        let copy = ord.sorted(&list);
 
         if list == copy {
             let middle = list[list.len() / 2];
-            // println!("ordered:\n{:?}\nmiddle: {:?}", list, middle);
             count += middle;
         }
     }
-
-
     count
 }
 
 fn part2(txt: &str) -> i64 {
     let parts = input::empty_line_chunks(txt).collect_vec();
-    let mut befores: HashMap<i64, HashSet<i64>> = HashMap::new();
-    let mut afters: HashMap<i64, HashSet<i64>> = HashMap::new();
-
-    for order in parts[0]
-        .lines()
-        .map(|l| l.split("|").map(|n| n.parse::<i64>().unwrap()).collect_vec()) {
-
-        let left = order[0];
-        let right = order[1];
-        
-        if let Some(existing) = befores.get_mut(&right) {
-            existing.insert(left);
-        } else {
-            befores.insert(right, HashSet::from_iter([left]));
-        }
-
-        if let Some(existing) = afters.get_mut(&left) {
-            existing.insert(right);
-        } else {
-            afters.insert(left, HashSet::from_iter([right]));
-        }
-    }
+    let ord: PageOrdering = parts[0].parse().unwrap();
 
     let mut count = 0;
 
@@ -115,20 +45,7 @@ fn part2(txt: &str) -> i64 {
         .lines()
         .map(|l| l.split(",").map(|i| i.parse::<i64>().unwrap()).collect_vec()) {
 
-        let mut copy = list.clone();
-        copy.sort_by(|l,r| {
-            if let Some(mapping) = befores.get(r) {
-                if mapping.contains(l) {
-                    return Ordering::Less;
-                }
-            }
-            if let Some(mapping) = afters.get(r) {
-                if mapping.contains(l) {
-                    return Ordering::Greater;
-                }
-            }
-            return Ordering::Equal;
-        });
+        let copy = ord.sorted(&list);
 
         if list != copy {
             let middle = copy[copy.len() / 2];
@@ -136,6 +53,63 @@ fn part2(txt: &str) -> i64 {
         }
     }
     count
+}
+
+struct PageOrdering {
+    /// values are before key
+    befores: HashMap<i64, HashSet<i64>>,
+    /// values are after key
+    afters: HashMap<i64, HashSet<i64>>,
+}
+
+impl PageOrdering {
+    fn sorted(&self, pages: &Vec<i64>) -> Vec<i64> {
+        let mut copy = pages.clone();
+        copy.sort_by(|l,r| {
+            if let Some(mapping) = self.befores.get(r) {
+                if mapping.contains(l) {
+                    return Ordering::Less;
+                }
+            }
+            if let Some(mapping) = self.afters.get(r) {
+                if mapping.contains(l) {
+                    return Ordering::Greater;
+                }
+            }
+            return Ordering::Equal;
+        });
+        copy
+    }
+}
+
+impl FromStr for PageOrdering {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut befores: HashMap<i64, HashSet<i64>> = HashMap::new();
+        let mut afters: HashMap<i64, HashSet<i64>> = HashMap::new();
+
+        for order in s
+            .lines()
+            .map(|l| l.split("|").map(|n| n.parse::<i64>().unwrap()).collect_vec()) {
+
+            let left = order[0];
+            let right = order[1];
+            
+            if let Some(existing) = befores.get_mut(&right) {
+                existing.insert(left);
+            } else {
+                befores.insert(right, HashSet::from_iter([left]));
+            }
+
+            if let Some(existing) = afters.get_mut(&left) {
+                existing.insert(right);
+            } else {
+                afters.insert(left, HashSet::from_iter([right]));
+            }
+        }
+        Ok(Self{ befores, afters })
+    }
 }
 
 #[cfg(test)]
@@ -163,6 +137,6 @@ mod tests {
     #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part2(test_input));
+        assert_eq!(7380, part2(test_input));
     }
 }
