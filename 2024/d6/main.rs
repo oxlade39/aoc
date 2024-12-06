@@ -9,8 +9,8 @@ fn main() {
     println!("part1: {}", part1(input));
     println!("part2: {}", part2(input));
     println!(
-        "{:.2}ms",
-        (now.elapsed().subsec_nanos() as f32) / 1_000_000 as f32
+        "{:.2}s",
+        now.elapsed().as_secs_f64()
     );
 }
 
