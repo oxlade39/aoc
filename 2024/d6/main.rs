@@ -16,8 +16,7 @@ fn main() {
 
 fn part1(txt: &str) -> i64 {
     let g: Grid<Tile> = txt.parse().unwrap();
-
-    let mut guard_position = {
+    let guard_position = {
         let mut it = None;
         for row in 0..g.height() {
             for col in 0..g.width() {
@@ -29,25 +28,7 @@ fn part1(txt: &str) -> i64 {
         }
         it.unwrap()
     };
-
-    let mut visited: HashSet<GridPosition> = HashSet::from_iter(vec![guard_position]);
-    let mut direction = Direction::Up;
-
-    while let Some(next_pos) = direction.make_move(&guard_position) {
-        if next_pos.row == g.height() || next_pos.col == g.width() {
-            break;
-        }
-        match g.at(&next_pos) {
-            Tile::Obstruction => {
-                direction = direction.turn_right();
-            },
-            Tile::Guard | Tile::Space => {
-                guard_position = next_pos;
-                visited.insert(guard_position);
-            },
-        }
-    }       
-    visited.len() as i64
+    path(&g, &guard_position).len() as i64
 }
 
 fn part2(txt: &str) -> i64 {
@@ -65,25 +46,46 @@ fn part2(txt: &str) -> i64 {
         }
         it.unwrap()
     };
+    let path = path(&g, &guard_position);
+
     let direction = Direction::Up;
     let visited: HashSet<(GridPosition, Direction)> = HashSet::from_iter(vec![(guard_position, direction)]);
     let mut count = 0;
 
-    for row in 0..g.height() {
-        for col in 0..g.width() {
-            let test_pos = GridPosition::new(col, row);
-            if g.at(&test_pos) == &Tile::Obstruction {
-                continue;
-            }
-            g.rows[row][col] = Tile::Obstruction;
-            if loops(direction, &visited, &guard_position, &g) {
-                count += 1;
-            }
-            g.rows[row][col] = Tile::Space;
+    for test_pos in path {
+        if g.at(&test_pos) == &Tile::Obstruction {
+            continue;
         }
+        g.rows[test_pos.row][test_pos.col] = Tile::Obstruction;
+        if loops(direction, &visited, &guard_position, &g) {
+            count += 1;
+        }
+        g.rows[test_pos.row][test_pos.col] = Tile::Space;
     }
     count
     
+}
+
+fn path(g: &Grid<Tile>, guard_position: &GridPosition) -> HashSet<GridPosition> {
+    let mut guard_position = guard_position.clone();
+    let mut visited: HashSet<GridPosition> = HashSet::from_iter(vec![guard_position]);
+    let mut direction = Direction::Up;
+
+    while let Some(next_pos) = direction.make_move(&guard_position) {
+        if next_pos.row == g.height() || next_pos.col == g.width() {
+            break;
+        }
+        match g.at(&next_pos) {
+            Tile::Obstruction => {
+                direction = direction.turn_right();
+            },
+            Tile::Guard | Tile::Space => {
+                guard_position = next_pos;
+                visited.insert(guard_position);
+            },
+        }
+    }
+    visited
 }
 
 fn loops(
