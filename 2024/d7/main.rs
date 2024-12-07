@@ -1,5 +1,5 @@
 use core::str;
-use std::{str::FromStr, time::Instant};
+use std::{i64, str::FromStr, time::Instant, usize};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -10,17 +10,17 @@ fn main() {
 }
 
 fn part1(txt: &str) -> i64 {
-    txt.lines()
-        .map(|l| l.parse::<Calibration>().unwrap())
-        .filter(|calibration| calibration.can_work())
-        .map(|c| c.total)
-        .sum()
+    solve(txt, [Operation::Plus, Operation::Mul])
 }
 
 fn part2(txt: &str) -> i64 {
+    solve(txt, [Operation::Plus, Operation::Mul, Operation::Concat])
+}
+
+fn solve<const N: usize>(txt: &str, operations: [Operation; N]) -> i64 {
     txt.lines()
         .map(|l| l.parse::<Calibration>().unwrap())
-        .filter(|calibration| calibration.can_work_2())
+        .filter(|c| c.can_work(0, 0, operations))
         .map(|c| c.total)
         .sum()
 }
@@ -46,13 +46,31 @@ impl FromStr for Calibration {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+enum Operation {
+    Plus,
+    Mul,
+    Concat,
+}
+
+impl Operation {
+    fn exec(&self, x: (i64, i64)) -> i64 {
+        match self {
+            Operation::Plus => x.0 + x.1,
+            Operation::Mul => x.0 * x.1,
+            Operation::Concat => format!("{}{}", x.0, x.1).parse().unwrap(),
+        }
+    }
+}
+
 impl Calibration {
-    fn can_work(&self) -> bool {
-        self.can_work_n(0, 0)
-    }
-
-    fn can_work_n(&self, running_total: i64, pos: usize) -> bool {
-        if pos == self.values.len() {
+    fn can_work<const N: usize>(
+        &self,
+        running_total: i64,
+        position: usize,
+        operands: [Operation; N],
+    ) -> bool {
+        if position == self.values.len() {
             return running_total == self.total;
         }
 
@@ -60,34 +78,12 @@ impl Calibration {
             return false;
         }
 
-        let next = self.values[pos];
-        let next_pos = pos + 1;
+        let next = self.values[position];
+        let next_pos = position + 1;
 
-        self.can_work_n(running_total + next, next_pos)
-            || self.can_work_n(running_total * next, next_pos)
-    }
-
-    fn can_work_2(&self) -> bool {
-        self.can_work_n2(0, 0)
-    }
-
-    fn can_work_n2(&self, running_total: i64, pos: usize) -> bool {
-        if pos == self.values.len() {
-            return running_total == self.total;
-        }
-
-        if running_total > self.total {
-            return false;
-        }
-
-        let next = self.values[pos];
-        let next_pos = pos + 1;
-
-        let concat = format!("{}{}", running_total, next).parse().unwrap();
-
-        self.can_work_n2(running_total + next, next_pos)
-            || self.can_work_n2(running_total * next, next_pos)
-            || self.can_work_n2(concat, next_pos)
+        operands
+            .iter()
+            .any(|op| self.can_work(op.exec((running_total, next)), next_pos, operands))
     }
 }
 
@@ -104,7 +100,7 @@ mod tests {
     #[test]
     fn input_pt1() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part1(test_input));
+        assert_eq!(1038838357795, part1(test_input));
     }
 
     #[test]
@@ -116,6 +112,6 @@ mod tests {
     #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part2(test_input));
+        assert_eq!(254136560217241, part2(test_input));
     }
 }
