@@ -6,7 +6,10 @@ fn main() {
     let now = Instant::now();
     println!("part1: {}", part1(input));
     println!("part2: {}", part2(input));
-    println!("{:.2}s", now.elapsed().as_secs_f64());
+    println!(
+        "{:.2}ms",
+        (now.elapsed().subsec_nanos() as f32) / 1_000_000 as f32
+    );
 }
 
 fn part1(txt: &str) -> i64 {
@@ -58,7 +61,12 @@ impl Operation {
         match self {
             Operation::Plus => x.0 + x.1,
             Operation::Mul => x.0 * x.1,
-            Operation::Concat => format!("{}{}", x.0, x.1).parse().unwrap(),
+            Operation::Concat => {
+                // slow version:
+                // format!("{}{}", x.0, x.1).parse().unwrap()
+                let right_digits = (x.1 as f64).log10().floor() as u32 + 1;
+                x.0 * 10_i64.pow(right_digits) + x.1
+            },
         }
     }
 }
