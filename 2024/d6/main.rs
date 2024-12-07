@@ -1,5 +1,7 @@
 use core::str;
-use std::{collections::HashSet, time::Instant};
+use std::time::Instant;
+
+use hashbrown::HashSet;
 
 use aoclib::grid::{FromChar, Grid, GridPosition};
 
