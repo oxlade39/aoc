@@ -21,7 +21,11 @@ fn part1(txt: &str) -> i64 {
 }
 
 fn part2(txt: &str) -> i64 {
-    0
+    txt.lines()
+        .map(|l| l.parse::<Calibration>().unwrap())
+        .filter(|calibration| calibration.can_work_2())
+        .map(|c| c.total)
+        .sum()
 }
 
 #[derive(Debug, Clone)]
@@ -65,6 +69,29 @@ impl Calibration {
         self.can_work_n(running_total + next, next_pos)
             || self.can_work_n(running_total * next, next_pos)
     }
+
+    fn can_work_2(&self) -> bool {
+        self.can_work_n2(0, 0)
+    }
+
+    fn can_work_n2(&self, running_total: i64, pos: usize) -> bool {
+        if pos == self.values.len() {
+            return running_total == self.total;
+        }
+
+        if running_total > self.total {
+            return false;
+        }
+
+        let next = self.values[pos];
+        let next_pos = pos + 1;
+
+        let concat = format!("{}{}", running_total, next).parse().unwrap();
+
+        self.can_work_n2(running_total + next, next_pos)
+            || self.can_work_n2(running_total * next, next_pos)
+            || self.can_work_n2(concat, next_pos)
+    }
 }
 
 #[cfg(test)]
@@ -86,7 +113,7 @@ mod tests {
     #[test]
     fn test_input_pt2() {
         let test_input = include_str!("input.test.txt");
-        assert_eq!(0, part2(test_input));
+        assert_eq!(11387, part2(test_input));
     }
 
     #[test]
