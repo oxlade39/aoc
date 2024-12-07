@@ -1,8 +1,5 @@
 use core::str;
-use std::{collections::HashSet, str::FromStr, time::Instant};
-
-use aoclib::grid::{FromChar, Grid, GridPosition};
-use itertools::Itertools;
+use std::{str::FromStr, time::Instant};
 
 fn main() {
     let input = include_str!("input.txt");
