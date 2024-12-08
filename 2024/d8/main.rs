@@ -24,17 +24,8 @@ fn part1(txt: &str) -> usize {
     let mut antinodes: HashSet<GridPosition> = HashSet::new();
     for (_, positions) in antenna_positions {
         for (left, right) in positions.iter().tuple_combinations() {
-            let (a1, a2) = calc_antinodes(left, right);
-            if let Some(a1_node) = a1 {
-                if a1_node.col < g.width() && a1_node.row < g.height() {
-                    antinodes.insert(a1.unwrap());
-                }
-            }
-            if let Some(a2_node) = a2 {
-                if a2_node.col < g.width() && a2_node.row < g.height() {
-                    antinodes.insert(a2.unwrap());
-                }
-            }
+            let new_antinodes = calc_antinodes(left, right, &g);
+            antinodes.extend(new_antinodes);
         }
     }
 
@@ -43,6 +34,25 @@ fn part1(txt: &str) -> usize {
     // print_with_antinodes(&g, &antinodes);
 
     antinodes.len()
+}
+
+fn part2(txt: &str) -> usize {
+    let g: Grid<Tile> = txt.parse().unwrap();
+
+    let (antenna_positions, antenna_position_set) = antenna_positions(&g);
+
+    let mut antinodes: HashSet<GridPosition> = HashSet::new();
+    for (_, positions) in antenna_positions {
+        for (left, right) in positions.iter().tuple_combinations() {
+            let all = calc_harmonic_antinodes(left, right, &g);
+            antinodes.extend(all);
+        }
+    }
+
+    // print(&g);
+    // println!("");
+    // print_with_antinodes(&g, &antinodes);
+    antinodes.union(&antenna_position_set).count()
 }
 
 fn antenna_positions(g: &Grid<Tile>) -> (HashMap<char, HashSet<GridPosition>>, HashSet<GridPosition>) {
@@ -105,7 +115,12 @@ fn print_with_antinodes(g: &Grid<Tile>, antinodes: &HashSet<GridPosition>) {
     }
 }
 
-fn calc_antinodes(a: &GridPosition, b: &GridPosition) -> (Option<GridPosition>, Option<GridPosition>) {
+fn calc_antinodes(
+    a: &GridPosition, 
+    b: &GridPosition,
+    g: &Grid<Tile>,
+) -> HashSet<GridPosition> {
+    let mut results = HashSet::new();
     let col_delta = a.col as i64 - b.col as i64;
     let row_delta = a.row as i64 - b.row as i64;
 
@@ -115,36 +130,14 @@ fn calc_antinodes(a: &GridPosition, b: &GridPosition) -> (Option<GridPosition>, 
     let col2 = b.col as i64 - col_delta;
     let row2 = b.row as i64 - row_delta;
 
-    let mut a1 = None;
-    let mut b1 = None;
-
-    if col1 >= 0 && row1 >= 0 {
-        a1 = Some(GridPosition::new(col1 as usize, row1 as usize));
+    if col1 >= 0 && row1 >= 0 && col1 < g.width() as i64 && row1 < g.height() as i64 {
+        results.insert(GridPosition::new(col1 as usize, row1 as usize));
     }
-    if col2 >= 0 && row2 >= 0 {
-        b1 = Some(GridPosition::new(col2 as usize, row2 as usize));
+    if col2 >= 0 && row2 >= 0 && col2 < g.width() as i64 && row2 < g.height() as i64 {
+        results.insert(GridPosition::new(col2 as usize, row2 as usize));
     }
 
-    (a1, b1)
-}
-
-fn part2(txt: &str) -> usize {
-    let g: Grid<Tile> = txt.parse().unwrap();
-
-    let (antenna_positions, antenna_position_set) = antenna_positions(&g);
-
-    let mut antinodes: HashSet<GridPosition> = HashSet::new();
-    for (_, positions) in antenna_positions {
-        for (left, right) in positions.iter().tuple_combinations() {
-            let all = calc_harmonic_antinodes(left, right, &g);
-            antinodes = antinodes.union(&all).copied().collect();
-        }
-    }
-
-    // print(&g);
-    // println!("");
-    // print_with_antinodes(&g, &antinodes);
-    antinodes.union(&antenna_position_set).count()
+    results
 }
 
 fn calc_harmonic_antinodes(
@@ -209,15 +202,19 @@ mod tests {
     fn test_antinode_positions() {
         let a = GridPosition::new(1, 1);
         let b = GridPosition::new(2, 2);
-        let (a1, b1) = calc_antinodes(&a, &b);
-        assert_eq!(Some(GridPosition::new(0, 0)), a1);
-        assert_eq!(Some(GridPosition::new(3, 3)), b1);
+        let g = Grid { rows: vec![
+            vec![Tile::Space, Tile::Space, Tile::Space, Tile::Space],
+            vec![Tile::Space, Tile::Space, Tile::Space, Tile::Space],
+            vec![Tile::Space, Tile::Space, Tile::Space, Tile::Space],
+            vec![Tile::Space, Tile::Space, Tile::Space, Tile::Space],
+        ] };
+        let antinodes = calc_antinodes(&a, &b, &g);
+        assert_eq!(true, antinodes.contains(&GridPosition::new(0, 0)));
+        assert_eq!(true, antinodes.contains(&GridPosition::new(3, 3)));
 
-        let a = GridPosition::new(1, 1);
-        let b = GridPosition::new(2, 2);
-        let (b1, a1) = calc_antinodes(&b, &a);
-        assert_eq!(Some(GridPosition::new(0, 0)), a1);
-        assert_eq!(Some(GridPosition::new(3, 3)), b1);
+        let antinodes = calc_antinodes(&b, &a, &g);
+        assert_eq!(true, antinodes.contains(&GridPosition::new(0, 0)));
+        assert_eq!(true, antinodes.contains(&GridPosition::new(3, 3)));
     }
 
     #[test]
