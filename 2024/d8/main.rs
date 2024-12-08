@@ -19,28 +19,7 @@ fn main() {
 fn part1(txt: &str) -> usize {
     let g: Grid<Tile> = txt.parse().unwrap();
 
-    let mut antenna_positions: HashMap<char, HashSet<GridPosition>> = HashMap::new();
-    let mut antenna_positions_inv: HashMap<GridPosition, char> = HashMap::new();
-
-    for row in 0..g.height() {
-        for col in 0..g.width() {
-            let p = GridPosition::new(col, row);
-            let t = g.at(&p);
-            match t {
-                Tile::Antenna(c) => {
-                    antenna_positions_inv.insert(p.clone(), *c);
-                    if let Some(existing) = antenna_positions.get_mut(c) {
-                        existing.insert(p);
-                    } else {
-                        antenna_positions.insert(*c, HashSet::from_iter(vec![p]));
-                    }
-                }
-                Tile::Space => {
-                    // noop
-                }
-            }
-        }
-    }
+    let (antenna_positions, _) = antenna_positions(&g);
 
     let mut antinodes: HashSet<GridPosition> = HashSet::new();
     for (_, positions) in antenna_positions {
@@ -64,6 +43,32 @@ fn part1(txt: &str) -> usize {
     // print_with_antinodes(&g, &antinodes);
 
     antinodes.len()
+}
+
+fn antenna_positions(g: &Grid<Tile>) -> (HashMap<char, HashSet<GridPosition>>, HashSet<GridPosition>) {
+    let mut antenna_positions: HashMap<char, HashSet<GridPosition>> = HashMap::new();
+    let mut antenna_position_set: HashSet<GridPosition> = HashSet::new();
+
+    for row in 0..g.height() {
+        for col in 0..g.width() {
+            let p = GridPosition::new(col, row);
+            let t = g.at(&p);
+            match t {
+                Tile::Antenna(c) => {
+                    antenna_position_set.insert(p.clone());
+                    if let Some(existing) = antenna_positions.get_mut(c) {
+                        existing.insert(p);
+                    } else {
+                        antenna_positions.insert(*c, HashSet::from_iter(vec![p]));
+                    }
+                }
+                Tile::Space => {
+                    // noop
+                }
+            }
+        }
+    }
+    (antenna_positions, antenna_position_set)
 }
 
 #[allow(dead_code)]
@@ -126,28 +131,7 @@ fn calc_antinodes(a: &GridPosition, b: &GridPosition) -> (Option<GridPosition>, 
 fn part2(txt: &str) -> usize {
     let g: Grid<Tile> = txt.parse().unwrap();
 
-    let mut antenna_positions: HashMap<char, HashSet<GridPosition>> = HashMap::new();
-    let mut antenna_position_set: HashSet<GridPosition> = HashSet::new();
-
-    for row in 0..g.height() {
-        for col in 0..g.width() {
-            let p = GridPosition::new(col, row);
-            let t = g.at(&p);
-            match t {
-                Tile::Antenna(c) => {
-                    antenna_position_set.insert(p.clone());
-                    if let Some(existing) = antenna_positions.get_mut(c) {
-                        existing.insert(p);
-                    } else {
-                        antenna_positions.insert(*c, HashSet::from_iter(vec![p]));
-                    }
-                }
-                Tile::Space => {
-                    // noop
-                }
-            }
-        }
-    }
+    let (antenna_positions, antenna_position_set) = antenna_positions(&g);
 
     let mut antinodes: HashSet<GridPosition> = HashSet::new();
     for (_, positions) in antenna_positions {
