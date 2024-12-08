@@ -10,10 +10,12 @@ fn main() {
     let now = Instant::now();
     println!("part1: {}", part1(input));
     println!("part2: {}", part2(input));
+    let elapsed = now.elapsed();
     println!(
         "{:.2}ms",
-        (now.elapsed().subsec_nanos() as f32) / 1_000_000 as f32
+        (elapsed.subsec_nanos() as f32) / 1_000_000 as f32
     );
+    println!("{:.4}s", elapsed.as_secs_f64());
 }
 
 fn part1(txt: &str) -> usize {
@@ -55,7 +57,9 @@ fn part2(txt: &str) -> usize {
     antinodes.union(&antenna_position_set).count()
 }
 
-fn antenna_positions(g: &Grid<Tile>) -> (HashMap<char, HashSet<GridPosition>>, HashSet<GridPosition>) {
+fn antenna_positions(
+    g: &Grid<Tile>,
+) -> (HashMap<char, HashSet<GridPosition>>, HashSet<GridPosition>) {
     let mut antenna_positions: HashMap<char, HashSet<GridPosition>> = HashMap::new();
     let mut antenna_position_set: HashSet<GridPosition> = HashSet::new();
 
@@ -85,8 +89,8 @@ fn antenna_positions(g: &Grid<Tile>) -> (HashMap<char, HashSet<GridPosition>>, H
 fn print(g: &Grid<Tile>) {
     for row in 0..g.height() {
         for col in 0..g.width() {
-            let p =GridPosition::new(col, row);
-            let t = g.at(&p);            
+            let p = GridPosition::new(col, row);
+            let t = g.at(&p);
             match t {
                 Tile::Antenna(c) => print!("{c}"),
                 Tile::Space => print!("."),
@@ -100,7 +104,7 @@ fn print(g: &Grid<Tile>) {
 fn print_with_antinodes(g: &Grid<Tile>, antinodes: &HashSet<GridPosition>) {
     for row in 0..g.height() {
         for col in 0..g.width() {
-            let p =GridPosition::new(col, row);
+            let p = GridPosition::new(col, row);
             let t = g.at(&p);
             if antinodes.contains(&p) {
                 print!("#")
@@ -115,11 +119,7 @@ fn print_with_antinodes(g: &Grid<Tile>, antinodes: &HashSet<GridPosition>) {
     }
 }
 
-fn calc_antinodes(
-    a: &GridPosition, 
-    b: &GridPosition,
-    g: &Grid<Tile>,
-) -> HashSet<GridPosition> {
+fn calc_antinodes(a: &GridPosition, b: &GridPosition, g: &Grid<Tile>) -> HashSet<GridPosition> {
     let mut results = HashSet::new();
     let col_delta = a.col as i64 - b.col as i64;
     let row_delta = a.row as i64 - b.row as i64;
@@ -141,7 +141,7 @@ fn calc_antinodes(
 }
 
 fn calc_harmonic_antinodes(
-    a: &GridPosition, 
+    a: &GridPosition,
     b: &GridPosition,
     g: &Grid<Tile>,
 ) -> HashSet<GridPosition> {
@@ -159,7 +159,7 @@ fn calc_harmonic_antinodes(
         results.insert(GridPosition::new(col as usize, row as usize));
 
         col = col + col_delta;
-        row = row + row_delta;        
+        row = row + row_delta;
     }
 
     // other side
@@ -172,7 +172,7 @@ fn calc_harmonic_antinodes(
         results.insert(GridPosition::new(col as usize, row as usize));
 
         col = col - col_delta;
-        row = row - row_delta;        
+        row = row - row_delta;
     }
     results
 }
@@ -202,12 +202,14 @@ mod tests {
     fn test_antinode_positions() {
         let a = GridPosition::new(1, 1);
         let b = GridPosition::new(2, 2);
-        let g = Grid { rows: vec![
-            vec![Tile::Space, Tile::Space, Tile::Space, Tile::Space],
-            vec![Tile::Space, Tile::Space, Tile::Space, Tile::Space],
-            vec![Tile::Space, Tile::Space, Tile::Space, Tile::Space],
-            vec![Tile::Space, Tile::Space, Tile::Space, Tile::Space],
-        ] };
+        let g = Grid {
+            rows: vec![
+                vec![Tile::Space, Tile::Space, Tile::Space, Tile::Space],
+                vec![Tile::Space, Tile::Space, Tile::Space, Tile::Space],
+                vec![Tile::Space, Tile::Space, Tile::Space, Tile::Space],
+                vec![Tile::Space, Tile::Space, Tile::Space, Tile::Space],
+            ],
+        };
         let antinodes = calc_antinodes(&a, &b, &g);
         assert_eq!(true, antinodes.contains(&GridPosition::new(0, 0)));
         assert_eq!(true, antinodes.contains(&GridPosition::new(3, 3)));
