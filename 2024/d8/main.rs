@@ -1,7 +1,7 @@
 use core::str;
 use std::{i64, time::Instant, usize};
 
-use aoclib::grid::{FromChar, Grid, GridPosition};
+use aoclib::{grid::{FromChar, Grid, GridPosition}, timing};
 use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
 
@@ -10,12 +10,7 @@ fn main() {
     let now = Instant::now();
     println!("part1: {}", part1(input));
     println!("part2: {}", part2(input));
-    let elapsed = now.elapsed();
-    println!(
-        "{:.2}ms",
-        (elapsed.subsec_nanos() as f32) / 1_000_000 as f32
-    );
-    println!("{:.4}s", elapsed.as_secs_f64());
+    println!("{}", timing::format_elapsed_time(now.elapsed()));
 }
 
 fn part1(txt: &str) -> usize {

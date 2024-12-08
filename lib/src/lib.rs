@@ -6,3 +6,4 @@ pub mod neighbour;
 pub mod number;
 pub mod range;
 pub mod shortest_path;
+pub mod timing;
