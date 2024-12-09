@@ -132,33 +132,22 @@ fn part2(txt: &str) -> usize {
         // println!("back_position: {}, {:?}", back_position, b);
         match b {
             ContiguousBlock::File(File { position, size, id }) => {
-                for i in 0..back_position {
-                    let potential = (&blocks[i]).clone();
-                    match potential {
-                        ContiguousBlock::File(_) => {
-                            // ignore
-                        },
-                        ContiguousBlock::Space(space) => {
-                            if space.size >= size {
-                                // reduce the free blocks by the file size
-                                blocks[i] = ContiguousBlock::Space(Space { 
-                                    position: space.position + size, 
-                                    size: space.size - size,
-                                });
-                                let block_idx = space.position;
-                                for j in block_idx..block_idx + size {
-                                    disk[j] = Block::File(id);
-                                }
-                                for j in position..position + size {
-                                    disk[j] = Block::Space;
-                                }
-                                // print_disk(&disk);
-                                // println!("blocks: {:?}", blocks[free_pos]);
-                                break;
-                            }
-                        },
+                if let Some(found) = find_free_size(size, &mut blocks[0..back_position]) {
+                    let block_idx = found.position;
+                    // reduce the free blocks by the file size
+
+                    found.position = found.position + size;
+                    found.size = found.size - size;
+
+                    for j in block_idx..block_idx + size {
+                        disk[j] = Block::File(id);
                     }
-                }
+                    for j in position..position + size {
+                        disk[j] = Block::Space;
+                    }
+                    // print_disk(&disk);
+                    // println!("blocks: {:?}", blocks[free_pos]);
+                }                
             },
             ContiguousBlock::Space(_) => {
                 // noop
@@ -169,6 +158,20 @@ fn part2(txt: &str) -> usize {
     // print_disk(&disk);
 
     checksum(&disk)
+}
+
+fn find_free_size(size: usize, blocks: &mut [ContiguousBlock]) -> Option<&mut Space> {
+    for b in blocks {
+        match b {
+            ContiguousBlock::File(_file) => {
+                // no match
+            },
+            ContiguousBlock::Space(space) => if space.size >= size {
+                return Some(space);
+            }
+        }
+    }
+    None
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
