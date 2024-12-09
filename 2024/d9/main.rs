@@ -89,33 +89,30 @@ fn checksum(disk: &Vec<Block>) -> usize {
 
 fn part2(txt: &str) -> usize {
     let mut disk: Vec<Block> = Vec::new();
-    for (i, c) in txt.chars().enumerate() {
-        let block =  if i % 2 == 0 {
-            Block::File(i / 2)
-        } else {
-            Block::Space    
-        };
-        let size = c.to_digit(10).unwrap();
-        disk.extend(std::iter::repeat_n(block, size as usize));
-    }
-
     let mut blocks = Vec::new();
     let mut pos = 0;
-    for (char_pos, c) in txt.chars().enumerate() {
+
+    for (i, c) in txt.chars().enumerate() {
         let size = c.to_digit(10).unwrap() as usize;
-        let b = if char_pos % 2 == 0 {
-            ContiguousBlock::File(File { 
+
+        if i % 2 == 0 {
+            let block = Block::File(i / 2);
+            disk.extend(std::iter::repeat_n(block, size as usize));
+            let contiguous_block = ContiguousBlock::File(File { 
                 position: pos,
                 size,
-                id: char_pos / 2 
-            })
+                id: i / 2 
+            });
+            blocks.push(contiguous_block);
         } else {
-            ContiguousBlock::Space(Space { 
+            let block = Block::Space;
+            disk.extend(std::iter::repeat_n(block, size as usize));
+            let contiguous_block = ContiguousBlock::Space(Space { 
                 position: pos,
                 size 
-            })
+            });
+            blocks.push(contiguous_block);
         };
-        blocks.push(b);
         pos += size;
     }
 
