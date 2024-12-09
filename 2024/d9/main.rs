@@ -1,5 +1,5 @@
 use core::str;
-use std::{clone, time::Instant, usize};
+use std::{time::Instant, usize};
 
 use aoclib::timing;
 use itertools::Itertools;
@@ -61,6 +61,7 @@ fn next_space(disk: &Vec<Block>) -> usize {
     left
 }
 
+#[allow(dead_code)]
 fn print_disk(d: &Vec<Block>) {
     for b in d {
         match b {
@@ -134,7 +135,7 @@ fn part2(txt: &str) -> usize {
                 for i in 0..back_position {
                     let potential = (&blocks[i]).clone();
                     match potential {
-                        ContiguousBlock::File(file) => {
+                        ContiguousBlock::File(_) => {
                             // ignore
                         },
                         ContiguousBlock::Space(space) => {
@@ -159,14 +160,13 @@ fn part2(txt: &str) -> usize {
                     }
                 }
             },
-            ContiguousBlock::Space(s) => {
-                // put it back on
-                // blocks.push(ContiguousBlock::Space(s));
+            ContiguousBlock::Space(_) => {
+                // noop
             },
         }
     }
 
-    print_disk(&disk);
+    // print_disk(&disk);
 
     checksum(&disk)
 }
@@ -196,13 +196,6 @@ struct Space {
     size: usize
 }
 
-fn next_space_for_size(min_size: usize, disk: &Vec<ContiguousBlock>) -> Option<(usize, &ContiguousBlock)> {
-    disk.iter().find_position(|b| match b  {
-        ContiguousBlock::File(_) => false,
-        ContiguousBlock::Space(Space { size, position}) => *size >= min_size,
-    })
-}
-
 #[cfg(test)]
 mod tests {
     use crate::*;
@@ -228,6 +221,6 @@ mod tests {
     #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part2(test_input));
+        assert_eq!(6335972980679, part2(test_input));
     }
 }
