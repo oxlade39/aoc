@@ -29,12 +29,11 @@ fn part1(txt: &str) -> usize {
     for start in starts {
         let trailhead = next(start, &g, &mut vec![]);
         if !trailhead.is_empty() {
+            let ends = trailhead.iter().map(|path| path.last().unwrap().clone()).collect();
             if let Some(existing) = unique.get_mut(&start) {
-                for path in trailhead {
-                    existing.insert(path.last().unwrap().clone());
-                }
+                existing.extend(ends);
             } else {
-                unique.insert(start, trailhead.iter().map(|path| path.last().unwrap().clone()).collect());
+                unique.insert(start, ends);
             }
         }
     }
