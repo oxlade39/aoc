@@ -1,9 +1,8 @@
 use core::str;
 use std::{time::Instant, usize};
 
-use aoclib::{grid::{self, Grid, GridPosition}, neighbour, shortest_path::{astar, Cost, ManhattenDistanceTo, NonDiagonalNeighbours}, timing};
+use aoclib::{grid::{Grid, GridPosition}, shortest_path::{astar, Cost, ManhattenDistanceTo, NonDiagonalNeighbours}, timing};
 use hashbrown::{HashMap, HashSet};
-use itertools::Itertools;
 
 fn main() {
     let input = include_str!("input.txt");
@@ -80,12 +79,116 @@ impl<'a> Cost<GridPosition, usize> for ExactlyOne<'a> {
 }
 
 fn part2(txt: &str) -> usize {
-    0
+    let g: Grid<usize> = txt.parse().unwrap();
+    let mut starts = HashSet::new();
+    for row in 0..g.height() {
+        for col in 0..g.width() {
+            let p = GridPosition::new(col, row);
+            if *g.at(&p) == 0 {
+                starts.insert(p);
+            }
+        }
+    }
+
+    let mut paths: HashMap<GridPosition, Vec<Vec<GridPosition>>> = HashMap::new();
+
+    for start in starts {
+        let mut trailhead = Vec::new();
+        if start.col != 0 {
+            let left = next(&start, &start.left(), &g, vec![]);
+            if !left.is_empty() {
+                trailhead.extend(left);
+            }
+        }
+        if start.col != g.width() - 1 {
+            let right = next(&start, &start.right(), &g, vec![]);
+            if !right.is_empty() {
+                trailhead.extend(right);
+            }
+        }
+
+        if start.row != 0 {
+            let up = next(&start, &start.up(), &g, vec![]);
+            if !up.is_empty() {
+                trailhead.extend(up);
+            }
+        }
+        if start.row != g.height() - 1 {
+            let down = next(&start, &start.down(), &g, vec![]);
+            if !down.is_empty() {
+                trailhead.extend(down);
+            }
+        }
+
+        if !trailhead.is_empty() {
+            paths.insert(start, trailhead);
+        }
+    }
+
+    paths.values().map(|trailhead| trailhead.len()).sum()
+}
+
+fn next(
+    from: &GridPosition,
+    to: &GridPosition,
+    g: &Grid<usize>,
+    mut path: Vec<GridPosition>,
+) -> Vec<Vec<GridPosition>> {
+
+    let from_height = *g.at(from) as i64;
+    let to_height = *g.at(to) as i64;
+    let diff = to_height - from_height;
+
+    if diff != 1 {
+        return vec![];
+    }
+    
+    path.push(to.clone());
+
+    if *g.at(to) == 9 {        
+        return vec![path];
+    }
+
+    let mut all_combinations: Vec<Vec<GridPosition>> = Vec::new();
+
+    if to.col != 0 {
+        let left = next(to, &to.left(), g, path.clone());
+        for child in left {
+            if !child.is_empty() {
+                all_combinations.push(child);
+            }
+        }
+    }
+    if to.col != g.width() - 1 {
+        let right = next(to, &to.right(), g, path.clone());
+        for child in right {
+            if !child.is_empty() {
+                all_combinations.push(child);
+            }
+        }
+    }
+    if to.row != 0 {
+        let up = next(to, &to.up(), g, path.clone());
+        for child in up {
+            if !child.is_empty() {
+                all_combinations.push(child);
+            }
+        }
+    }
+    if to.row != g.height() - 1 {
+        let down = next(to, &to.down(), g, path.clone());
+        for child in down {
+            if !child.is_empty() {
+                all_combinations.push(child);
+            }
+        }
+    }
+    all_combinations
 }
 
 #[cfg(test)]
 mod tests {
-    use aoclib::shortest_path::Neighbours;
+    use aoclib::shortest_path::{Neighbours, NonDiagonalNeighbours};
 
     use crate::*;
 
@@ -99,13 +202,6 @@ mod tests {
         assert_eq!(3, all.len());
     }
 
-
-    #[test]
-    fn test_input_pt1_simpl() {
-        let test_input = include_str!("input.test.simpl.txt");
-        assert_eq!(1, part1(test_input));
-    }
-
     #[test]
     fn test_input_pt1() {
         let test_input = include_str!("input.test.txt");
@@ -115,18 +211,18 @@ mod tests {
     #[test]
     fn input_pt1() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part1(test_input));
+        assert_eq!(746, part1(test_input));
     }
 
     #[test]
     fn test_input_pt2() {
         let test_input = include_str!("input.test.txt");
-        assert_eq!(0, part2(test_input));
+        assert_eq!(81, part2(test_input));
     }
 
     #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part2(test_input));
+        assert_eq!(1541, part2(test_input));
     }
 }
