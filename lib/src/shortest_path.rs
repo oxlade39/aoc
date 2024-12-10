@@ -181,7 +181,7 @@ where
                 g_scores.insert(neighbour.clone(), tentative_g_score);
 
                 // distance to target
-                let h = heuristic.predict(&neighbour);
+                let h = heuristic.predict(&neighbour);                
                 f_scores.insert(neighbour.clone(), tentative_g_score + h);
                 open_set.push(Candidate::new(neighbour.clone(), tentative_g_score + h));
             }
@@ -219,7 +219,7 @@ impl<'a, T> Neighbours<GridPosition> for NonDiagonalNeighbours<'a, T> {
             result.push(state.up());
         }
 
-        if state.col as i32 - 1 > 0 {
+        if state.col as i32 - 1 >= 0 {
             result.push(state.left());
         }
 
