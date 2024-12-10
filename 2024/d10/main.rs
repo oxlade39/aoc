@@ -1,7 +1,7 @@
 use core::str;
 use std::{time::Instant, usize};
 
-use aoclib::{grid::{Grid, GridPosition}, shortest_path::{astar, Cost, ManhattenDistanceTo, NonDiagonalNeighbours}, timing};
+use aoclib::{grid::{Grid, GridPosition}, timing};
 use hashbrown::{HashMap, HashSet};
 
 fn main() {
@@ -14,68 +14,32 @@ fn main() {
 
 fn part1(txt: &str) -> usize {
     let g: Grid<usize> = txt.parse().unwrap();
-
-    let neighbours = NonDiagonalNeighbours(&g);
-    let mut zeros = HashSet::new();
-    let mut nines = HashSet::new();
-
+    let mut starts = HashSet::new();
     for row in 0..g.height() {
         for col in 0..g.width() {
             let p = GridPosition::new(col, row);
-            let height = g.at(&p);
-            if *height == 0 {
-                zeros.insert(p.clone());                
-            }
-            if *height == 9 {
-                nines.insert(p);
+            if *g.at(&p) == 0 {
+                starts.insert(p);
             }
         }
     }
 
-    let mut total = 0;
-    for start in zeros {
-        let mut trailhead_score = 0;
-        for end in &nines {
-            let cost = ExactlyOne(&g);
-            let heuristic = ManhattenDistanceTo(end.clone());
-            
-            let p = astar(
-                &neighbours, 
-                &cost, 
-                &heuristic, 
-                start.clone(), 
-                |p| {                    
-                    let is_end = p == end;
-                    // println!("{:?} == {:?} - {}", p, end, is_end);
-                    is_end
+
+    let mut unique: HashMap<GridPosition, HashSet<GridPosition>> = HashMap::new();
+    for start in starts {
+        let trailhead = next(start, &g, &mut vec![]);
+        if !trailhead.is_empty() {
+            if let Some(existing) = unique.get_mut(&start) {
+                for path in trailhead {
+                    existing.insert(path.last().unwrap().clone());
                 }
-            );
-            if p.is_some() {
-                trailhead_score += 1;
             } else {
-                // println!("no path {:?} to {:?}", start, end);
+                unique.insert(start, trailhead.iter().map(|path| path.last().unwrap().clone()).collect());
             }
         }
-        total += trailhead_score;
     }
-
-    total
-}
-
-struct ExactlyOne<'a>(&'a Grid<usize>);
-
-impl<'a> Cost<GridPosition, usize> for ExactlyOne<'a> {
-    fn measure(&self, from: &GridPosition, to: &GridPosition) -> usize {        
-        let from_height = *self.0.at(from) as i64;
-        let to_height = *self.0.at(to) as i64;
-        let diff = to_height - from_height;
-
-        if diff != 1 {
-            10000000
-        } else {
-            1
-        }
-    }
+    unique.values().map(|p| p.len()).sum()
+    
 }
 
 fn part2(txt: &str) -> usize {

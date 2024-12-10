@@ -1,6 +1,6 @@
 use std::{
     cmp::Ordering,
-    collections::{BinaryHeap},
+    collections::BinaryHeap,
     fmt::{Debug, Display},
     hash::Hash,
     ops::{Add, AddAssign},
