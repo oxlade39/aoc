@@ -1,2 +1,4 @@
 target/
 input.txt
+.DS_Store
+flamegraph.svg

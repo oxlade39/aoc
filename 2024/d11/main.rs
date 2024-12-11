@@ -34,8 +34,17 @@ struct Stone(usize);
 
 impl Stone {
     fn n_digits(&self) -> usize {
-        let f = (self.0 as f64).log10().floor();
-        f as usize + 1
+        let mut n = self.0;
+        if n == 0 {
+            return 1; // Special case: 0 has 1 digit
+        }
+    
+        let mut digits = 0;
+        while n > 0 {
+            n /= 10;
+            digits += 1;
+        }
+        digits
     }
 
     fn split(&self) -> (Stone, Stone) {        
@@ -70,7 +79,7 @@ enum Split {
 }
 
 fn count_all(n: usize, stones: Vec<Stone>) -> usize {
-    let mut memo = HashMap::new();
+    let mut memo = HashMap::with_capacity(130000);
     stones.iter().map(|&s| count_n(s, 0, n, &mut memo)).sum()
 }
 
