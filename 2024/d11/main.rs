@@ -38,29 +38,35 @@ impl Stone {
         f as usize + 1
     }
 
-    fn next(&self) -> Vec<Stone> {
+    fn split(&self) -> (Stone, Stone) {        
+        let digits = self.n_digits();
+
+        // Compute the divisor for splitting
+        let half_digits = digits / 2;
+        let divisor = 10_u64.pow(half_digits as u32);
+    
+        // Split the number
+        let first_half = self.0 as u64 / divisor;
+        let second_half = self.0 as u64 % divisor;
+    
+        (Self(first_half as usize), Self(second_half as usize))
+    }
+
+    fn next(&self) -> Split {
         if self.0 == 0 {
-            return vec![Stone(1)];
+            return Split::Stone(Stone(1));
         }
         if self.n_digits() % 2 == 0 {
-            let s = format!("{}", self.0);
-            let left_str = &s[0..s.len() / 2];
-            let right_str = &s[(s.len() / 2)..];
-            let left = if left_str.is_empty() {
-                0
-            } else {
-                left_str.parse::<usize>().expect(format!("number: '{}'", left_str).as_str())
-            };                        
-            let right = if right_str.is_empty() {
-                0
-            } else {
-                right_str.parse::<usize>().expect(format!("number: '{}'", right_str).as_str())
-            };
-
-            return vec![Stone(left), Stone(right)];
+            let (left, right) = self.split();
+            return Split::Pair(left, right);
         }
-        vec![Stone(self.0 * 2024)]
+        Split::Stone(Stone(self.0 * 2024))
     }
+}
+
+enum Split {
+    Stone(Stone),
+    Pair(Stone, Stone),
 }
 
 fn count_all(n: usize, stones: Vec<Stone>) -> usize {
@@ -82,8 +88,10 @@ fn count_n(
         return count + 1;
     }
 
-    let next = s.next();
-    let sum = next.iter().map(|&stone| count_n(stone, count, depth - 1, memo)).sum();
+    let sum = match s.next() {
+        Split::Stone(stone) => count_n(stone, count, depth - 1, memo),
+        Split::Pair(left, right) => count_n(left, count, depth - 1, memo) + count_n(right, count, depth - 1, memo),
+    };
     memo.insert((s, depth), sum);
     sum
 }
