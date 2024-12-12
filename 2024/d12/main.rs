@@ -1,7 +1,7 @@
 use core::str;
 use std::{str::FromStr, time::Instant, usize};
 
-use aoclib::{grid::{FromChar, Grid, GridPosition}, neighbour, shortest_path::{Neighbours, NonDiagonalNeighbours}, timing};
+use aoclib::{grid::{FromChar, Grid, GridPosition}, timing};
 use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
 
@@ -62,7 +62,7 @@ impl FromStr for Garden {
             let mut grouping = HashSet::new();
             flood_fill(p, &pos, &g, &mut grouping);
             seen.extend(grouping.clone());
-            plots.push(Plot { plant: p.clone(), positions: grouping });
+            plots.push(Plot { positions: grouping });
         }
         
         Ok(Garden(g, plots))
@@ -74,15 +74,10 @@ struct Plant(char);
 
 #[derive(Debug, Clone)]
 struct Plot {
-    plant: Plant,
     positions: HashSet<GridPosition>,
 }
 
 impl Plot {
-    fn insert(&mut self, p: GridPosition) {
-        self.positions.insert(p);
-    }
-
     fn perimeter(&self, g: &Grid<Plant>) -> usize {
         let mut total = 0;
         for p in &self.positions {
@@ -188,20 +183,18 @@ impl Plot {
 
         let mut hs = 0;
         let mut h_gaps = 0;
-        for (k, mut v) in tops {
+        for (_k, mut v) in tops {
             v.sort_by(|a,b| a.col.cmp(&b.col));
             hs += 1;
-            println!("H{} -> {:?}", k, v);
             for (left, right) in v.iter().tuple_windows() {
                 if &left.right() != right {
                     h_gaps += 1;
                 }
             }
         }
-        for (k, mut v) in bottoms {
+        for (_k, mut v) in bottoms {
             v.sort_by(|a,b| a.col.cmp(&b.col));
             hs += 1;
-            println!("H{} -> {:?}", k, v);
             for (left, right) in v.iter().tuple_windows() {
                 if &left.right() != right {
                     h_gaps += 1;
@@ -228,28 +221,24 @@ impl Plot {
         
         let mut vs = 0;
         let mut v_gaps = 0;
-        for (k, mut v) in lefts {
+        for (_k, mut v) in lefts {
             v.sort_by(|a,b| a.row.cmp(&b.row));
             vs += 1;
-            println!("V{} -> {:?}", k, v);
             for (top, bottom) in v.iter().tuple_windows() {
                 if &top.down() != bottom {
                     v_gaps += 1;
                 }
             }
         }
-        for (k, mut v) in rights {
+        for (_k, mut v) in rights {
             v.sort_by(|a,b| a.row.cmp(&b.row));
             vs += 1;
-            println!("V{} -> {:?}", k, v);
             for (top, bottom) in v.iter().tuple_windows() {
                 if &top.down() != bottom {
                     v_gaps += 1;
                 }
             }
         }
-
-        println!("hs: {} h_gaps: {} vs: {} v_gaps: {}", hs, h_gaps, vs, v_gaps);
         hs + h_gaps + vs + v_gaps
     }
 
@@ -311,31 +300,8 @@ fn flood_fill(
 
 #[cfg(test)]
 mod tests {    
-    use itertools::Itertools;
-
     use crate::*;
 
-    fn print(g: Garden) {
-        println!("Garden Report");
-        for plot in g.1 {
-            println!("{:?} - A {}, P {}", plot.plant, plot.area(), plot.perimeter(&g.0));
-            for p in plot.positions {
-                println!("{},{}", p.col, p.row);
-            }
-            println!("")
-        }
-    }
-
-    fn print_2(g: Garden) {
-        println!("Garden Report");
-        for plot in g.1 {
-            println!("{:?} - A {}, S {}", plot.plant, plot.area(), plot.sides(&g.0));
-            for p in plot.positions {
-                println!("{},{}", p.col, p.row);
-            }
-            println!("")
-        }
-    }
 
     #[test]
     fn test_input_pt1() {
@@ -353,20 +319,18 @@ mod tests {
     #[test]
     fn input_test_pt2_e() {
         let test_input = include_str!("input.part2.test.txt");
-        print_2(test_input.parse().unwrap());
         assert_eq!(236, part2(test_input));
     }
 
     #[test]
     fn input_test_pt2() {
         let test_input = include_str!("input.test.txt");
-        print_2(test_input.parse().unwrap());
         assert_eq!(1206, part2(test_input));
     }
 
     #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part2(test_input));
+        assert_eq!(862714, part2(test_input));
     }
 }
