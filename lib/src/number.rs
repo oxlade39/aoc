@@ -42,7 +42,7 @@ where
     prod / gcd_of_two_numbers(a, b)
 }
 
-fn gcd_of_two_numbers<T>(a: T, b: T) -> T
+pub fn gcd_of_two_numbers<T>(a: T, b: T) -> T
 where
     T: Number,
 {
