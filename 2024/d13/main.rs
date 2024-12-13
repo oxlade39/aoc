@@ -55,21 +55,14 @@ impl ClawMachine {
 
         // rearrange simultaneous equation
 
-        let a1 = a.x;
-        let b1 = b.x;
-        let c1 = prize.x;
-        let a2 = a.y;
-        let b2 = b.y;
-        let c2 = prize.y;
-
-        let determinant = a1 * b2 - a2 * b1;
+        let determinant = a.x * b.y - a.y * b.x;
     
         if determinant == 0 {
             return None
         }
         
-        let x = (c1 * b2 - c2 * b1) / determinant;
-        let y = (a1 * c2 - a2 * c1) / determinant;        
+        let x = (prize.x * b.y - prize.y * b.x) / determinant;
+        let y = (a.x * prize.y - a.y * prize.x) / determinant;        
 
         if (a.x * x) + (b.x * y) == prize.x && (a.y * x) + (b.y * y) == prize.y {
             Some((x, y))
