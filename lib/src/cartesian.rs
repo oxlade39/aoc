@@ -6,7 +6,7 @@ pub struct Point {
     pub y: i64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Transform {
     pub x: i64,
     pub y: i64,
