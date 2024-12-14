@@ -21,6 +21,54 @@ fn part1(txt: &str) -> i64 {
 }
 
 fn part2(txt: &str) -> i64 {
+    let robots = txt.lines().map(|l| l.parse::<Robot>().unwrap()).collect_vec();
+        let b = Bathroom::new(101, 103);
+
+        let centre: HashSet<Point> = (25..75).flat_map(|i| vec![
+            (25 + 25, 103 - i).into(),
+            (25 + 26, 103 - i).into(),
+            (25 + 27, 103 - i).into(),
+            (25 + 28, 103 - i).into(),
+            (25 + 29, 103 - i).into(),
+            (25 + 30, 103 - i).into(),
+            (25 + 31, 103 - i).into(),
+            (25 + 32, 103 - i).into(),
+            (25 + 33, 103 - i).into(),
+            (25 + 34, 103 - i).into(),
+            (25 + 35, 103 - i).into(),
+            (25 + 36, 103 - i).into(),
+            (25 + 37, 103 - i).into(),
+            (25 + 38, 103 - i).into(),
+            (25 + 39, 103 - i).into(),
+            (25 + 40, 103 - i).into(),
+            (25 + 41, 103 - i).into(),
+            (25 + 42, 103 - i).into(),
+            (25 + 43, 103 - i).into(),
+            (25 + 44, 103 - i).into(),
+            (25 + 45, 103 - i).into(),
+            (25 + 46, 103 - i).into(),
+            (25 + 47, 103 - i).into(),
+            (25 + 48, 103 - i).into(),
+            (25 + 49, 103 - i).into(),
+            (25 + 50, 103 - i).into(),
+        ]).collect();
+
+        let mut most_intersections = 0;
+        let mut seconds = 0;
+
+        for i in 1..100000 {
+            let sim = robots.iter().map(|robot| robot.simulate(i, &b)).collect_vec();
+            let placed = b.place(&sim);
+            let keys: HashSet<Point> = placed.keys().cloned().collect();
+            let intersection_count = keys.intersection(&centre).count();
+            if intersection_count > most_intersections {
+                most_intersections = intersection_count;
+                seconds = i;
+            }
+        }
+
+        println!("{} at {}s", most_intersections, seconds);
+        print_bathroom(&b, &robots.iter().map(|robot| robot.simulate(seconds, &b)).collect());
     0
 }
 
@@ -115,26 +163,26 @@ impl FromStr for Robot {
     }
 }
 
+#[allow(dead_code)]
+fn print_bathroom(b: &Bathroom, r: &Vec<Robot>) {
+    let placed = b.place(r);
+    
+    for y in 0..b.0.height() {
+        for x in 0..b.0.width() {
+            let p = Point::new(x, y);
+            if let Some(here) = placed.get(&p) {
+                print!("{}", here.len());
+            } else {
+                print!(".");
+            }
+        }
+        println!("");
+    }
+}
+
 #[cfg(test)]
 mod tests {    
     use crate::*;
-
-    #[allow(dead_code)]
-    fn print_bathroom(b: &Bathroom, r: &Vec<Robot>) {
-        let placed = b.place(r);
-        
-        for y in 0..b.0.height() {
-            for x in 0..b.0.width() {
-                let p = Point::new(x, y);
-                if let Some(here) = placed.get(&p) {
-                    print!("{}", here.len());
-                } else {
-                    print!(".");
-                }
-            }
-            println!("");
-        }
-    }
 
     #[test]
     fn test_robot_movement() {
@@ -170,6 +218,22 @@ mod tests {
     #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
+        let robots = test_input.lines().map(|l| l.parse::<Robot>().unwrap()).collect_vec();
+        let b = Bathroom::new(101, 103);
+
+        let trunk: HashSet<Point> = (1..50).map(|i| (50, 103 - i).into()).collect();
+
+        for i in 1..100000 {
+            let sim = robots.iter().map(|robot| robot.simulate(i, &b)).collect_vec();
+            let placed = b.place(&sim);
+            let keys: HashSet<Point> = placed.keys().cloned().collect();
+            if (keys.intersection(&trunk).count()) > 10 {
+                println!("Seconds: {}", i);
+                print_bathroom(&b, &sim);
+            }            
+            println!("\n\n");
+        }
+
         assert_eq!(0, part2(test_input));
     }
 }
