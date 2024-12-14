@@ -313,7 +313,7 @@ mod tests {
     #[test]
     fn input_pt1() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part1(test_input));
+        assert_eq!(1415378, part1(test_input));
     }
 
     #[test]
