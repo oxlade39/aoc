@@ -1,10 +1,6 @@
 use core::str;
 use std::{
-    fmt::Display,
-    i64,
-    str::FromStr,
-    time::Instant,
-    usize,
+    fmt::Display, str::FromStr, time::Instant, usize
 };
 
 use aoclib::{
@@ -26,8 +22,10 @@ fn part1(txt: &str) -> usize {
     puzzle.sum_of_gps()
 }
 
-fn part2(txt: &str) -> i64 {
-    0
+fn part2(txt: &str) -> usize {
+    let mut puzzle: Puzzle2 = txt.parse::<Puzzle>().unwrap().into();
+    puzzle.apply_moves();
+    puzzle.sum_of_gps()
 }
 
 #[derive(Debug)]
@@ -263,7 +261,7 @@ impl Puzzle2 {
         let mut robot = self.robot_position().clone();
         for i in 0..self.directions.len() {            
             let d = &self.directions[i].clone();
-            println!("Move {}:", d);
+            // println!("Move {}:", d);
 
             match d {
                 Direction::Left | Direction::Right => {
@@ -271,16 +269,16 @@ impl Puzzle2 {
                     if moved.is_ok() {
                         robot = moved.unwrap();
                     }            
-                    println!("{}", self.map);
-                    println!("robot at {:?}\n\n", robot);                
+                    // println!("{}", self.map);
+                    // println!("robot at {:?}\n\n", robot);                
                 },
                 Direction::Up | Direction::Down => {
-                    let moved = self.apply_vertical_move(robot, d.clone());
-                    if moved.is_ok() {
-                        robot = moved.unwrap();
-                    }            
-                    println!("{}", self.map);
-                    println!("robot at {:?}\n\n", robot);                
+                    if self.can_move_vertically(robot, d.clone()) {
+                        self.move_vertically(robot, d.clone());
+                        robot = d.apply(robot);
+                        // println!("{}", self.map);
+                        // println!("robot at {:?}\n\n", robot);                
+                    }                    
                 },
             }            
         }
@@ -319,54 +317,6 @@ impl Puzzle2 {
         }
     }
 
-    fn apply_vertical_move(&mut self, p: GridPosition, d: Direction) -> Result<GridPosition, ()> {
-        let next_pos = d.apply(p);
-        let next_tile = self.map.at(&next_pos);
-
-        // println!("next tile after {} is {}", d, next_tile);
-
-        let can_move = match next_tile {
-            Tile2::Wall => return Err(()),
-            Tile2::LeftBox => {
-                let right_box = next_pos.right();
-                let can_move_right = self.apply_vertical_move(right_box, d.clone());
-                if can_move_right.is_ok() {
-                    self.apply_vertical_move(next_pos, d.clone())
-                } else {
-                    can_move_right
-                }
-            },
-            Tile2::RightBox => {
-                let left_box = next_pos.left();
-                let can_move_left = self.apply_vertical_move(left_box, d.clone());
-                if can_move_left.is_ok() {
-                    self.apply_vertical_move(next_pos, d.clone())
-                } else {
-                    can_move_left
-                }
-            },
-            Tile2::Space => {
-                // can move
-                Ok(next_pos)
-
-            },
-            Tile2::Robot => Err(()),
-        };
-        if can_move.is_ok() {
-            // move current into            
-            let tile_at_p = self.map.at(&p);
-            // let next_pos = can_move.unwrap();
-
-            // println!("moving {} at {:?} into {:?}", tile_at_p, p, next_pos);
-
-            self.map.rows[next_pos.row][next_pos.col] = tile_at_p.clone();
-            self.map.rows[p.row][p.col] = Tile2::Space;
-            Ok(next_pos)
-        } else {
-            Err(())
-        }
-    }
-
     fn can_move_vertically(&self, p: GridPosition, d: Direction) -> bool {
         let next_pos = d.apply(p);
         let next_tile = self.map.at(&next_pos);
@@ -374,7 +324,7 @@ impl Puzzle2 {
         match next_tile {
             Tile2::Wall => false,
             Tile2::Space => true,
-            Tile2::Robot => false,
+            Tile2::Robot => true,
             Tile2::LeftBox => {
                 self.can_move_vertically(next_pos, d.clone()) && self.can_move_vertically(next_pos.right(), d.clone())
             },
@@ -395,16 +345,31 @@ impl Puzzle2 {
             },
             Tile2::RightBox => {
                 self.move_vertically(next_pos.left(), d.clone());
-                self.move_vertically(next_pos, d.clone());
+                self.move_vertically(next_pos, d.clone()); 
             },
-            Tile2::Space => {
-                let tile_at_p = self.map.at(&p);
-                self.map.rows[next_pos.row][next_pos.col] = tile_at_p.clone();
-                self.map.rows[p.row][p.col] = Tile2::Space;
+            Tile2::Space | Tile2::Robot => {
+                // let tile_at_p = self.map.at(&p);
+                // self.map.rows[next_pos.row][next_pos.col] = tile_at_p.clone();
+                // self.map.rows[p.row][p.col] = Tile2::Space;
             },
             Tile2::Wall => panic!("next tile is wall"),
-            Tile2::Robot => panic!("next tile is robot"),
         }
+        let tile_at_p = self.map.at(&p);
+        self.map.rows[next_pos.row][next_pos.col] = tile_at_p.clone();
+        self.map.rows[p.row][p.col] = Tile2::Space;
+    }
+
+    fn sum_of_gps(&self) -> usize {
+        let mut sum = 0;
+        for row in 0..self.map.height() {
+            for col in 0..self.map.width() {
+                let p = GridPosition::new(col, row);
+                if *self.map.at(&p) == Tile2::LeftBox {
+                    sum += 100 * row + col;
+                }
+            }
+        }
+        sum
     }
 }
 
@@ -416,7 +381,7 @@ mod tests {
     fn test_input_pt1_parse() {
         let test_input = include_str!("input.test.small.txt");
         let mut puzzle: Puzzle = test_input.parse().unwrap();
-        println!("{}", puzzle.map);
+        // println!("{}", puzzle.map);
         puzzle.apply_moves();
         assert_eq!(2028, puzzle.sum_of_gps());
     }
@@ -425,7 +390,7 @@ mod tests {
     fn test_gps_sum() {
         let test_input = include_str!("input.sum.txt");
         let puzzle: Puzzle = test_input.parse().unwrap();
-        println!("{}", puzzle.map);
+        // println!("{}", puzzle.map);
         assert_eq!(104, puzzle.sum_of_gps());
     }
 
@@ -433,10 +398,10 @@ mod tests {
     fn test_input_pt1() {
         let test_input = include_str!("input.test.txt");
         let mut puzzle: Puzzle = test_input.parse().unwrap();
-        println!("{}", puzzle.map);
+        // println!("{}", puzzle.map);
         puzzle.apply_moves();
 
-        println!("Final:\n{}", puzzle.map);
+        // println!("Final:\n{}", puzzle.map);
         assert_eq!(10092, puzzle.sum_of_gps());
     }
 
@@ -457,15 +422,17 @@ mod tests {
 
     #[test]
     fn test_input_pt2_steps() {
-        let test_input = include_str!("input.test2.small.txt");
+        let test_input = include_str!("input.test.txt");
         let mut puzzle: Puzzle2 = test_input.parse::<Puzzle>().unwrap().into();
-        println!("{}", puzzle.map);
+        // println!("{}", puzzle.map);
         puzzle.apply_moves();
+        // println!("Final Map:\n{}", puzzle.map);
+        assert_eq!(9021, puzzle.sum_of_gps());
     }
 
     #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part2(test_input));
+        assert_eq!(1516544, part2(test_input));
     }
 }
