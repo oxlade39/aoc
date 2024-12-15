@@ -136,6 +136,15 @@ enum Tile {
     Robot,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+enum Tile2 {
+    Wall,
+    LeftBox,
+    RightBox,
+    Space,
+    Robot,
+}
+
 impl FromChar for Tile {
     type Err = String;
 
@@ -157,6 +166,18 @@ impl Display for Tile {
             Tile::Robot => f.write_str("@"),
             Tile::Space => f.write_str("."),
             Tile::Wall => f.write_str("#"),
+        }
+    }
+}
+
+impl Display for Tile2 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Tile2::LeftBox => f.write_str("["),
+            Tile2::RightBox => f.write_str("]"),
+            Tile2::Robot => f.write_str("@"),
+            Tile2::Space => f.write_str("."),
+            Tile2::Wall => f.write_str("#"),
         }
     }
 }
@@ -205,6 +226,188 @@ impl FromChar for Direction {
     }
 }
 
+struct Puzzle2 {
+    map: Grid<Tile2>,
+    directions: Vec<Direction>,
+}
+
+impl From<Puzzle> for Puzzle2 {
+    fn from(value: Puzzle) -> Self {
+        let rows = value.map.rows.into_iter()
+            .map(|row| row.into_iter().flat_map(|col| match col {
+                Tile::Wall => vec![Tile2::Wall, Tile2::Wall].into_iter(),
+                Tile::Box => vec![Tile2::LeftBox, Tile2::RightBox].into_iter(),
+                Tile::Space => vec![Tile2::Space, Tile2::Space].into_iter(),
+                Tile::Robot => vec![Tile2::Robot, Tile2::Space].into_iter(),
+            }).collect())
+            .collect();
+
+        Puzzle2 { map: Grid { rows }, directions: value.directions }
+    }
+}
+
+impl Puzzle2 {
+    fn robot_position(&self) -> GridPosition {
+        for row in 0..self.map.height() {
+            for col in 0..self.map.width() {
+                let p = GridPosition::new(col, row);
+                if *self.map.at(&p) == Tile2::Robot {
+                    return p;
+                }
+            }
+        }
+        panic!("no robot found")
+    }
+
+    fn apply_moves(&mut self) {
+        let mut robot = self.robot_position().clone();
+        for i in 0..self.directions.len() {            
+            let d = &self.directions[i].clone();
+            println!("Move {}:", d);
+
+            match d {
+                Direction::Left | Direction::Right => {
+                    let moved = self.apply_horontal_move(robot, d.clone());
+                    if moved.is_ok() {
+                        robot = moved.unwrap();
+                    }            
+                    println!("{}", self.map);
+                    println!("robot at {:?}\n\n", robot);                
+                },
+                Direction::Up | Direction::Down => {
+                    let moved = self.apply_vertical_move(robot, d.clone());
+                    if moved.is_ok() {
+                        robot = moved.unwrap();
+                    }            
+                    println!("{}", self.map);
+                    println!("robot at {:?}\n\n", robot);                
+                },
+            }            
+        }
+    }
+
+    fn apply_horontal_move(&mut self, p: GridPosition, d: Direction) -> Result<GridPosition, ()> {
+        let next_pos = d.apply(p);
+        let next_tile = self.map.at(&next_pos);
+
+        // println!("next tile after {} is {}", d, next_tile);
+
+        let can_move = match next_tile {
+            Tile2::Wall => return Err(()),
+            Tile2::LeftBox | Tile2::RightBox => {
+                self.apply_horontal_move(next_pos, d)
+            },
+            Tile2::Space => {
+                // can move
+                Ok(next_pos)
+
+            },
+            Tile2::Robot => Err(()),
+        };
+        if can_move.is_ok() {
+            // move current into            
+            let tile_at_p = self.map.at(&p);
+            // let next_pos = can_move.unwrap();
+
+            // println!("moving {} at {:?} into {:?}", tile_at_p, p, next_pos);
+
+            self.map.rows[next_pos.row][next_pos.col] = tile_at_p.clone();
+            self.map.rows[p.row][p.col] = Tile2::Space;
+            Ok(next_pos)
+        } else {
+            Err(())
+        }
+    }
+
+    fn apply_vertical_move(&mut self, p: GridPosition, d: Direction) -> Result<GridPosition, ()> {
+        let next_pos = d.apply(p);
+        let next_tile = self.map.at(&next_pos);
+
+        // println!("next tile after {} is {}", d, next_tile);
+
+        let can_move = match next_tile {
+            Tile2::Wall => return Err(()),
+            Tile2::LeftBox => {
+                let right_box = next_pos.right();
+                let can_move_right = self.apply_vertical_move(right_box, d.clone());
+                if can_move_right.is_ok() {
+                    self.apply_vertical_move(next_pos, d.clone())
+                } else {
+                    can_move_right
+                }
+            },
+            Tile2::RightBox => {
+                let left_box = next_pos.left();
+                let can_move_left = self.apply_vertical_move(left_box, d.clone());
+                if can_move_left.is_ok() {
+                    self.apply_vertical_move(next_pos, d.clone())
+                } else {
+                    can_move_left
+                }
+            },
+            Tile2::Space => {
+                // can move
+                Ok(next_pos)
+
+            },
+            Tile2::Robot => Err(()),
+        };
+        if can_move.is_ok() {
+            // move current into            
+            let tile_at_p = self.map.at(&p);
+            // let next_pos = can_move.unwrap();
+
+            // println!("moving {} at {:?} into {:?}", tile_at_p, p, next_pos);
+
+            self.map.rows[next_pos.row][next_pos.col] = tile_at_p.clone();
+            self.map.rows[p.row][p.col] = Tile2::Space;
+            Ok(next_pos)
+        } else {
+            Err(())
+        }
+    }
+
+    fn can_move_vertically(&self, p: GridPosition, d: Direction) -> bool {
+        let next_pos = d.apply(p);
+        let next_tile = self.map.at(&next_pos);
+
+        match next_tile {
+            Tile2::Wall => false,
+            Tile2::Space => true,
+            Tile2::Robot => false,
+            Tile2::LeftBox => {
+                self.can_move_vertically(next_pos, d.clone()) && self.can_move_vertically(next_pos.right(), d.clone())
+            },
+            Tile2::RightBox => {
+                self.can_move_vertically(next_pos, d.clone()) && self.can_move_vertically(next_pos.left(), d.clone())
+            },                        
+        }
+    }
+
+    fn move_vertically(&mut self, p: GridPosition, d: Direction) {
+        let next_pos = d.apply(p);
+        let next_tile = self.map.at(&next_pos);
+
+        match next_tile {            
+            Tile2::LeftBox => {
+                self.move_vertically(next_pos, d.clone());
+                self.move_vertically(next_pos.right(), d.clone());
+            },
+            Tile2::RightBox => {
+                self.move_vertically(next_pos.left(), d.clone());
+                self.move_vertically(next_pos, d.clone());
+            },
+            Tile2::Space => {
+                let tile_at_p = self.map.at(&p);
+                self.map.rows[next_pos.row][next_pos.col] = tile_at_p.clone();
+                self.map.rows[p.row][p.col] = Tile2::Space;
+            },
+            Tile2::Wall => panic!("next tile is wall"),
+            Tile2::Robot => panic!("next tile is robot"),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::*;
@@ -244,9 +447,20 @@ mod tests {
     }
 
     #[test]
-    fn test_input_pt2() {
+    fn test_input_puzzle2_into() {
         let test_input = include_str!("input.test.txt");
-        assert_eq!(0, part2(test_input));
+        let puzzle: Puzzle = test_input.parse().unwrap();
+        let p2: Puzzle2 = puzzle.into();
+        // println!("{}", p2.map);
+        assert_eq!(20, p2.map.width());
+    }
+
+    #[test]
+    fn test_input_pt2_steps() {
+        let test_input = include_str!("input.test2.small.txt");
+        let mut puzzle: Puzzle2 = test_input.parse::<Puzzle>().unwrap().into();
+        println!("{}", puzzle.map);
+        puzzle.apply_moves();
     }
 
     #[test]
