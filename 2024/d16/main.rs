@@ -1,9 +1,8 @@
 use core::str;
-use std::{i64, str::FromStr, time::Instant, usize};
+use std::{str::FromStr, time::Instant, usize};
 
-use aoclib::{grid::{FromChar, Grid, GridPosition}, input, shortest_path::{astar, Cost, Heuristic, ManhattenDistanceTo, Neighbours}, timing};
+use aoclib::{grid::{FromChar, Grid, GridPosition}, shortest_path::{astar, Cost, Heuristic, ManhattenDistanceTo, Neighbours}, timing};
 use hashbrown::HashSet;
-use itertools::Itertools;
 
 fn main() {
     let input = include_str!("input.txt");
@@ -47,8 +46,6 @@ fn part2(txt: &str) -> usize {
 
     let mut best_cost = 10000000000000;
 
-    let mut count = 0;
-
     while let Some(path) = astar(
         &visited_map, 
         &visited_map, 
@@ -69,14 +66,6 @@ fn part2(txt: &str) -> usize {
             break;
         }
         if num_same_points == this_path_points.len() {
-            break;
-        }
-
-        dbg!(num_same_points, this_path_cost, original_cost, this_path_points.len());
-        println!("");
-
-        count += 1;
-        if count > 10 {
             break;
         }
 
@@ -264,7 +253,7 @@ mod tests {
     #[test]
     fn input_pt1() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part1(test_input));
+        assert_eq!(115500, part1(test_input));
     }
 
     #[test]
@@ -276,6 +265,6 @@ mod tests {
     #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part2(test_input));
+        assert_eq!(679, part2(test_input));
     }
 }
