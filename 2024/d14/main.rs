@@ -1,7 +1,7 @@
 use core::str;
-use std::{cmp, i64, str::FromStr, time::Instant, usize};
+use std::{i64, str::FromStr, time::Instant, usize};
 
-use aoclib::{cartesian::{Plane, Point, Transform}, input, timing};
+use aoclib::{cartesian::{Plane, Point, Transform}, timing};
 use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
 

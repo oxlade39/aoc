@@ -189,7 +189,7 @@ impl FromStr for Map {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let g: Grid<Tile> = s.parse().unwrap();
+        let g: Grid<Tile> = s.parse()?;
 
         let mut start = None;
         let mut end = None;
