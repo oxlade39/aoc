@@ -1,8 +1,10 @@
 use core::str;
-use std::{i64, str::FromStr, time::Instant, usize};
+use std::{i64, io, str::FromStr, time::Instant, usize};
 
 use aoclib::{input, timing};
 use itertools::Itertools;
+
+use std::io::{BufRead};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -29,13 +31,91 @@ fn part1(txt: &str) -> String {
         output: String::new() 
     };
 
-    reg.process(0, program);
+    reg.process(0, &program);
 
     reg.output
 }
 
 fn part2(txt: &str) -> i64 {
-    0
+    let mut lines_itr = txt.lines();
+    let (_, a) = lines_itr.next().unwrap().split_once(": ").unwrap();
+    let (_, b) = lines_itr.next().unwrap().split_once(": ").unwrap();
+    let (_, c) = lines_itr.next().unwrap().split_once(": ").unwrap();
+    lines_itr.next().unwrap();
+
+    let (_, program_txt) = lines_itr.next().unwrap().split_once(": ").unwrap();
+    let program: Vec<_> = program_txt.split(",").map(|n| n.parse().unwrap()).collect();
+
+    let mut reg = Registers { 
+        a: a.parse().unwrap(), 
+        b: b.parse().unwrap(), 
+        c: c.parse().unwrap(), 
+        output: String::new() 
+    };
+
+    let mut reg_a_value = 0;
+
+    // 164278585000000 => 4,0,4,4,4,0,3,2,0,2,5,5,0,3,3,0
+    // ANSWER
+    // 164278496489149 => 2,4,1,1,7,5,1,5,4,2,5,5,0,3,3,0
+
+    let mut i = 164278585000000;
+
+    loop {
+        let mut reg = Registers {
+            a: i,
+            b: 0,
+            c: 0,
+            output: String::new(),
+        };
+        reg.process(0, &program);
+
+        if reg.output == "2,4,1,1,7,5,1,5,4,2,5,5,0,3,3,0" {
+            println!("{} => {}", i, reg.output);
+            // break;            
+        }        
+        i -= 1;
+
+        // if i % 1000000 == 0 {
+        //     println!("{} => {}", i, reg.output);
+        // }
+    }
+    
+    // let mut i = 0;
+
+    // println!("enter an incrememnt or decrement");
+    // let stdin = io::stdin();
+    // for line in stdin.lock().lines() {
+    //     let line_str = line.unwrap();
+    //     let plus_minus = &line_str[0..1];
+    //     match plus_minus {
+    //         "+" => {
+    //             let increment: i64 = line_str[1..].parse().unwrap();
+    //             i = i + increment;
+    //             reg.a = i;
+    //             reg.b = 0;
+    //             reg.c = 0;
+    //             reg.output = String::new();
+    //             reg.process(0, &program);
+    //             println!("{} => {}", i, reg.output);
+    //         },
+    //         "-" => {
+    //             let decrement: i64 = line_str[1..].parse().unwrap();
+    //             i = i - decrement;
+    //             reg.a = i;
+    //             reg.b = 0;
+    //             reg.c = 0;
+    //             reg.output = String::new();
+    //             reg.process(0, &program);
+    //             println!("{} => {}", i, reg.output);
+    //         },
+    //         _ignored => {
+    //             println!("ignored");
+    //         },
+    //     }
+    // }
+
+    reg_a_value
 }
 
 enum ComboOperand {
@@ -100,7 +180,7 @@ impl Registers {
     fn process(
         &mut self,
         instuction_pointer: usize,
-        program: Vec<usize>
+        program: &Vec<usize>
     ) {
         if instuction_pointer >= program.len(){
             return;
@@ -244,15 +324,15 @@ mod tests {
     fn test_smaller_examples() {
         // If register C contains 9, the program 2,6 would set register B to 1.
         let mut reg = Registers { a: 1, b: 1, c: 9, output: String::new() };
-        reg.process(0, vec![2,6]);
+        reg.process(0, &vec![2,6]);
         assert_eq!(1, reg.b);
         // If register A contains 10, the program 5,0,5,1,5,4 would output 0,1,2.
         let mut reg = Registers { a: 10, b: 1, c: 1, output: String::new() };
-        reg.process(0, vec![5,0,5,1,5,4]);
+        reg.process(0, &vec![5,0,5,1,5,4]);
         assert_eq!("0,1,2", reg.output);
         // If register A contains 2024, the program 0,1,5,4,3,0 would output 4,2,5,6,7,7,7,7,3,1,0 and leave 0 in register A.
         let mut reg = Registers { a: 2024, b: 1, c: 1, output: String::new() };
-        reg.process(0, vec![0,1,5,4,3,0]);
+        reg.process(0, &vec![0,1,5,4,3,0]);
         assert_eq!("4,2,5,6,7,7,7,7,3,1,0", reg.output);
         assert_eq!(0, reg.a);
     }
@@ -269,15 +349,15 @@ mod tests {
         assert_eq!("", part1(test_input));
     }
 
-    #[test]
-    fn test_input_pt2() {
-        let test_input = include_str!("input.test.txt");
-        assert_eq!(0, part2(test_input));
-    }
+    // #[test]
+    // fn test_input_pt2() {
+    //     let test_input = include_str!("input.repeat.txt");
+    //     assert_eq!(117440, part2(test_input));
+    // }
 
-    #[test]
-    fn input_pt2() {
-        let test_input = include_str!("input.txt");
-        assert_eq!(0, part2(test_input));
-    }
+    // #[test]
+    // fn input_pt2() {
+    //     let test_input = include_str!("input.txt");
+    //     assert_eq!(0, part2(test_input));
+    // }
 }
