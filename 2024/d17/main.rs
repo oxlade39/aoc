@@ -346,7 +346,7 @@ mod tests {
     #[test]
     fn input_pt1() {
         let test_input = include_str!("input.txt");
-        assert_eq!("", part1(test_input));
+        assert_eq!("3,6,7,0,5,7,3,1,4", part1(test_input));
     }
 
     // #[test]
