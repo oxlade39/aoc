@@ -67,8 +67,6 @@ fn first_blockage(
     txt: &str,
     end: Point
 ) -> String {
-    let mut bytes_fallen = 0;
-
     // invert y axis
     let end = Point::new(end.x, end.y * -1);
 
@@ -83,18 +81,24 @@ fn first_blockage(
 
     let start = Point::new(0, 0);
     let memory_space = Plane { top_left: start.clone(), bottom_right: end.clone() };    
-    // println!("Plane: {:?}", memory_space);
-    // println!("Corrupted: {:?}", points);
 
     let cost = UnitCost;
-    let mut corrupted = HashSet::new();
+    // we could start at 1024 here but it makes the test harder and saving not significant
+    let mut lower = 0;
+    let mut upper = points.len();
 
     loop {
-        corrupted.insert(points[bytes_fallen].clone());
+        // binary search starting from the mid point
+        let bytes_pos = lower + (upper - lower) / 2;
+        let corrupted: HashSet<_> = points[0..bytes_pos].iter().cloned().collect();
         let state = Part1State { 
             memory_space: memory_space.clone(),
             corrupted: corrupted.clone(),
         };
+
+        if upper - lower <= 1 {
+            return format!("{},{}", points[bytes_pos].x, points[bytes_pos].y);
+        }
         if let Some(_) = astar(
             &state, 
             &cost, 
@@ -102,9 +106,11 @@ fn first_blockage(
             Position(start.clone()), 
             |p| p.0 == end
         ) {
-            bytes_fallen += 1;
+            // if we find a path - update the lower bound to the tested point
+            lower = lower + (upper - lower) / 2;
         } else {
-            return format!("{},{}", points[bytes_fallen].x, points[bytes_fallen].y);
+            // if we don't find a path - update the upper bound to the tested point
+            upper = upper - (upper - lower) / 2;
         }
     }
 }
