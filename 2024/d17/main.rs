@@ -1,10 +1,8 @@
 use core::str;
-use std::{i64, io, str::FromStr, time::Instant, usize};
+use std::{i64, time::Instant, usize};
 
-use aoclib::{input, timing};
-use itertools::Itertools;
+use aoclib::timing;
 
-use std::io::{BufRead};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -38,22 +36,13 @@ fn part1(txt: &str) -> String {
 
 fn part2(txt: &str) -> i64 {
     let mut lines_itr = txt.lines();
-    let (_, a) = lines_itr.next().unwrap().split_once(": ").unwrap();
-    let (_, b) = lines_itr.next().unwrap().split_once(": ").unwrap();
-    let (_, c) = lines_itr.next().unwrap().split_once(": ").unwrap();
+    // let (_, a) = lines_itr.next().unwrap().split_once(": ").unwrap();
+    // let (_, b) = lines_itr.next().unwrap().split_once(": ").unwrap();
+    // let (_, c) = lines_itr.next().unwrap().split_once(": ").unwrap();
     lines_itr.next().unwrap();
 
     let (_, program_txt) = lines_itr.next().unwrap().split_once(": ").unwrap();
     let program: Vec<_> = program_txt.split(",").map(|n| n.parse().unwrap()).collect();
-
-    let mut reg = Registers { 
-        a: a.parse().unwrap(), 
-        b: b.parse().unwrap(), 
-        c: c.parse().unwrap(), 
-        output: String::new() 
-    };
-
-    let mut reg_a_value = 0;
 
     // 164278585000000 => 4,0,4,4,4,0,3,2,0,2,5,5,0,3,3,0
     // ANSWER
@@ -115,7 +104,7 @@ fn part2(txt: &str) -> i64 {
     //     }
     // }
 
-    reg_a_value
+    // reg_a_value
 }
 
 enum ComboOperand {
@@ -316,8 +305,6 @@ impl Registers {
 
 #[cfg(test)]
 mod tests {    
-    use std::process::Output;
-
     use crate::*;
 
     #[test]

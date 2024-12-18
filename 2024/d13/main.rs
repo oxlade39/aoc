@@ -1,5 +1,5 @@
 use core::str;
-use std::{i64, str::FromStr, time::Instant, usize};
+use std::{i64, str::FromStr, time::Instant};
 
 use aoclib::{input, timing};
 use itertools::Itertools;

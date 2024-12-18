@@ -1,9 +1,8 @@
 use core::str;
-use std::{i64, str::FromStr, time::Instant, usize};
+use std::{i64, time::Instant, usize};
 
-use aoclib::{cartesian::{Plane, Point, Transform, Vector}, distance::{Distance, ManhattenDistance}, input, shortest_path::{astar, Cost, Heuristic, Neighbours}, timing};
+use aoclib::{cartesian::{Plane, Point, Transform, Vector}, distance::{Distance, ManhattenDistance}, shortest_path::{astar, Cost, Heuristic, Neighbours}, timing};
 use hashbrown::HashSet;
-use itertools::Itertools;
 
 fn main() {
     let input = include_str!("input.txt");
@@ -41,9 +40,6 @@ fn min_steps(
 
     let start = Point::new(0, 0);
     let memory_space = Plane { top_left: start.clone(), bottom_right: end.clone() };    
-    // println!("Plane: {:?}", memory_space);
-    // println!("Corrupted: {:?}", points);
-
 
     let state = Part1State { 
         memory_space,
@@ -151,7 +147,7 @@ struct Position(Point);
 struct UnitCost;
 
 impl Cost<Position, i64> for UnitCost {
-    fn measure(&self, from: &Position, to: &Position) -> i64 {
+    fn measure(&self, _: &Position, _: &Position) -> i64 {
         1
     }
 }
