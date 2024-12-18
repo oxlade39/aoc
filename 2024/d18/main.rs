@@ -103,10 +103,10 @@ fn first_blockage(
             |p| p.0 == end
         ) {
             // if we find a path - update the lower bound to the tested point
-            lower = lower + (upper - lower) / 2;
+            lower = bytes_pos;
         } else {
             // if we don't find a path - update the upper bound to the tested point
-            upper = upper - (upper - lower) / 2;
+            upper = bytes_pos;
         }
     }
 }
