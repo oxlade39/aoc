@@ -15,7 +15,7 @@ fn main() {
 
 fn part1(txt: &str) -> i64 {
     let (towels, to_check) = input::empty_line_chunks(txt).tuples().next().unwrap();
-    let towels = towels.split(", ").map(|p| TowelPattern(p.to_owned()));
+    let towels = towels.split(", ").map(|p| TowelPattern(p));
     
     let mut patterns: HashMap<char, Vec<TowelPattern>> = HashMap::new();
 
@@ -33,17 +33,19 @@ fn part1(txt: &str) -> i64 {
     let mut c = 0;
     let to_check: Vec<_> = to_check.lines().collect();
 
+    let mut memo = HashMap::with_capacity(20000);
     for item in to_check {
-        if count(item, 0, &mut patterns, &mut HashMap::new()) > 0 {
+        if count(item, 0, &mut patterns, &mut memo) > 0 {
             c += 1;
         }
     }
+    println!("size: {}", memo.len());
     c
 }
 
 fn part2(txt: &str) -> usize {
     let (towels, to_check) = input::empty_line_chunks(txt).tuples().next().unwrap();
-    let towels = towels.split(", ").map(|p| TowelPattern(p.to_owned()));
+    let towels = towels.split(", ").map(|p| TowelPattern(p));
     
     let mut patterns: HashMap<char, Vec<TowelPattern>> = HashMap::new();
 
@@ -60,18 +62,18 @@ fn part2(txt: &str) -> usize {
 
     let mut c = 0;
     let to_check: Vec<_> = to_check.lines().collect();
-
+    let mut memo = HashMap::with_capacity(20000);
     for item in to_check {
-        c += count(item, 0, &patterns, &mut HashMap::new());
+        c += count(item, 0, &patterns, &mut memo);
     }
     c
 }
 
-fn count(
-    s: &str,
+fn count<'a>(
+    s: &'a str,
     position: usize,
     patterns: &HashMap<char, Vec<TowelPattern>>,
-    memo: &mut HashMap<String, usize>,
+    memo: &mut HashMap<&'a str, usize>,
 ) -> usize {
 
     if position == s.len() {
@@ -101,14 +103,14 @@ fn count(
                 combos += count(s, position + child.0.len(), patterns, memo);
             }            
         }
-        memo.insert(remainder.to_owned(), combos);
+        memo.insert(remainder, combos);
         return combos;
     }
     0
 }
 
 #[derive(Debug)]
-struct TowelPattern(String);
+struct TowelPattern<'a>(&'a str);
 
 #[cfg(test)]
 mod tests {    
@@ -117,17 +119,17 @@ mod tests {
     #[test]
     fn test_find() {
         let mut patterns: HashMap<char, Vec<TowelPattern>> = HashMap::new();
-        patterns.insert('r', vec![TowelPattern("r".to_owned())]);
+        patterns.insert('r', vec![TowelPattern("r")]);
         assert_eq!(true, count("r", 0, &mut patterns, &mut HashMap::new()) > 0);
 
         let mut patterns: HashMap<char, Vec<TowelPattern>> = HashMap::new();
-        patterns.insert('r', vec![TowelPattern("rw".to_owned())]);
+        patterns.insert('r', vec![TowelPattern("rw")]);
         assert_eq!(true, count("rw", 0, &mut patterns, &mut HashMap::new()) > 0);
 
         let mut patterns: HashMap<char, Vec<TowelPattern>> = HashMap::new();
         patterns.insert('r', vec![
-            TowelPattern("r".to_owned()),
-            TowelPattern("rw".to_owned()),
+            TowelPattern("r"),
+            TowelPattern("rw"),
         ]);
         assert_eq!(true, count("rw", 0, &mut patterns, &mut HashMap::new()) > 0);
         assert_eq!(true, count("rrw", 0, &mut patterns, &mut HashMap::new()) > 0);
@@ -139,11 +141,11 @@ mod tests {
         // greedy
         let mut patterns: HashMap<char, Vec<TowelPattern>> = HashMap::new();
         patterns.insert('r', vec![
-            TowelPattern("rw".to_owned()),
-            TowelPattern("rww".to_owned()),            
+            TowelPattern("rw"),
+            TowelPattern("rww"),            
         ]);
         patterns.insert('w', vec![
-            TowelPattern("wr".to_owned()),
+            TowelPattern("wr"),
         ]);
         assert_eq!(true, count("rwwr", 0, &mut patterns, &mut HashMap::new()) > 0);
     }
@@ -163,16 +165,16 @@ mod tests {
     #[test]
     fn test_count() {
         let mut patterns: HashMap<char, Vec<TowelPattern>> = HashMap::new();
-        patterns.insert('r', vec![TowelPattern("r".to_owned())]);
+        patterns.insert('r', vec![TowelPattern("r")]);
         assert_eq!(1, count("r", 0, &mut patterns, &mut HashMap::new()));
 
         let mut patterns: HashMap<char, Vec<TowelPattern>> = HashMap::new();
         patterns.insert('r', vec![
-            TowelPattern("r".to_owned()),
-            TowelPattern("rw".to_owned()),
+            TowelPattern("r"),
+            TowelPattern("rw"),
         ]);
         patterns.insert('w', vec![
-            TowelPattern("w".to_owned()),
+            TowelPattern("w"),
         ]);
         assert_eq!(2, count("rw", 0, &mut patterns, &mut HashMap::new()));
     }
