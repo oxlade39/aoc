@@ -30,13 +30,10 @@ fn part1(txt: &str) -> i64 {
         }
     }
 
-    // println!("towel patterns: {:?}", patterns);
-
     let mut count = 0;
     let to_check: Vec<_> = to_check.lines().collect();
 
     for item in to_check {
-        println!("checking {:?}", item);
         if find(item, 0, &mut patterns, &mut HashSet::new()) {
             count += 1;
         }
@@ -44,8 +41,30 @@ fn part1(txt: &str) -> i64 {
     count
 }
 
-fn part2(txt: &str) -> i64 {
-    0
+fn part2(txt: &str) -> usize {
+    let (towels, to_check) = input::empty_line_chunks(txt).tuples().next().unwrap();
+    let towels = towels.split(", ").map(|p| TowelPattern(p.to_owned()));
+    
+    let mut patterns: HashMap<char, BinaryHeap<TowelPattern>> = HashMap::new();
+
+    for t in towels {
+        let fc = t.0.chars().next().unwrap();
+        if let Some(existing) = patterns.get_mut(&fc) {
+            existing.push(t);
+        } else {
+            let mut bh = BinaryHeap::new();
+            bh.push(t);
+            patterns.insert(fc, bh);
+        }
+    }
+
+    let mut c = 0;
+    let to_check: Vec<_> = to_check.lines().collect();
+
+    for item in to_check {
+        c += count(item, 0, &patterns, &mut HashMap::new());
+    }
+    c
 }
 
 fn find(
@@ -61,11 +80,8 @@ fn find(
     if seen.contains(sub) {
         return false;
     }
-    // println!("find: {}, {} of {}", s, position, s.len());
     let c = sub.chars().next().expect(&format!("no char in {:?}", sub));
     if let Some(potential_children) = patterns.get_mut(&c) {
-
-        // println!("potential children: {:?}", potential_children);
 
         let mut clone = potential_children.clone();
         while let Some(next) = clone.pop() {
@@ -77,19 +93,56 @@ fn find(
             if sub_sub == next.0 {
                 // try match recursive
                 let matched_pos = position + next.0.len();
-                let rhs = &s[matched_pos..];
-                // println!("RHS: {:?}", rhs);
+                let _rhs = &s[matched_pos..];
                 if find(s, matched_pos, patterns, seen) {                    
-                    println!("TRUE: find: {}", sub_sub);
                     seen.insert(sub_sub.to_owned());
                     return true;
                 }
             }
         }
     }
-    println!("FALSE: find: {}, {} of {}", s, position, s.len());
     seen.insert(sub.to_owned());
     false
+}
+
+fn count(
+    s: &str,
+    position: usize,
+    patterns: &HashMap<char, BinaryHeap<TowelPattern>>,
+    memo: &mut HashMap<String, usize>,
+) -> usize {
+
+    if position == s.len() {
+        return 1;
+    }
+
+    let remainder = &s[position..];
+    if remainder.is_empty() {
+        return 1;
+    }
+
+    if let Some(exising) = memo.get(remainder) {
+        return *exising;
+    }
+
+    let next_char = remainder.chars().next().expect("non empty string");
+
+    if let Some(mapping) = patterns.get(&next_char) {        
+        let mut combos = 0;
+        for child in mapping {
+            if child.0.len() > remainder.len() {
+                // can't be match at too short
+                continue;
+            }
+            let begginning = &remainder[0..child.0.len()];
+            if begginning == child.0 {
+                combos += count(s, position + child.0.len(), patterns, memo);
+            }            
+        }
+        memo.insert(remainder.to_owned(), combos);
+        return combos;
+    }
+    0
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -158,9 +211,24 @@ mod tests {
     #[test]
     fn input_pt1() {
         let test_input = include_str!("input.txt");
-        // not 288 - too low
-        // 400 too high
-        assert_eq!(0, part1(test_input));
+        assert_eq!(344, part1(test_input));
+    }
+
+    #[test]
+    fn test_count() {
+        let mut patterns: HashMap<char, BinaryHeap<TowelPattern>> = HashMap::new();
+        patterns.insert('r', BinaryHeap::from_iter(vec![TowelPattern("r".to_owned())]));
+        assert_eq!(1, count("r", 0, &mut patterns, &mut HashMap::new()));
+
+        let mut patterns: HashMap<char, BinaryHeap<TowelPattern>> = HashMap::new();
+        patterns.insert('r', BinaryHeap::from_iter(vec![
+            TowelPattern("r".to_owned()),
+            TowelPattern("rw".to_owned()),
+        ]));
+        patterns.insert('w', BinaryHeap::from_iter(vec![
+            TowelPattern("w".to_owned()),
+        ]));
+        assert_eq!(2, count("rw", 0, &mut patterns, &mut HashMap::new()));
     }
 
     #[test]
@@ -172,6 +240,6 @@ mod tests {
     #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part2(test_input));
+        assert_eq!(996172272010026, part2(test_input));
     }
 }
