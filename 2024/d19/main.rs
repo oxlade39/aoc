@@ -14,28 +14,12 @@ fn main() {
 }
 
 fn part1(txt: &str) -> i64 {
-    let (towels, to_check) = input::empty_line_chunks(txt).tuples().next().unwrap();
-    let towels = towels.split(", ").map(|p| TowelPattern(p));
-    
-    let mut patterns: HashMap<char, Vec<TowelPattern>> = HashMap::new();
-
-    for t in towels {
-        let fc = t.0.chars().next().unwrap();
-        if let Some(existing) = patterns.get_mut(&fc) {
-            existing.push(t);
-        } else {
-            let mut bh = Vec::new();
-            bh.push(t);
-            patterns.insert(fc, bh);
-        }
-    }
-
+    let (patterns, to_check) = parse(txt);
     let mut c = 0;
-    let to_check: Vec<_> = to_check.lines().collect();
 
     let mut memo = HashMap::with_capacity(20000);
     for item in to_check {
-        if count(item, 0, &mut patterns, &mut memo) > 0 {
+        if count(item, 0, &patterns, &mut memo) > 0 {
             c += 1;
         }
     }
@@ -44,6 +28,17 @@ fn part1(txt: &str) -> i64 {
 }
 
 fn part2(txt: &str) -> usize {
+    let (patterns, to_check) = parse(txt);
+    
+    let mut c = 0;
+    let mut memo = HashMap::with_capacity(20000);
+    for item in to_check {
+        c += count(item, 0, &patterns, &mut memo);
+    }
+    c
+}
+
+fn parse(txt: &str) -> (HashMap<char, Vec<TowelPattern>>, Vec<&str>) {
     let (towels, to_check) = input::empty_line_chunks(txt).tuples().next().unwrap();
     let towels = towels.split(", ").map(|p| TowelPattern(p));
     
@@ -59,14 +54,9 @@ fn part2(txt: &str) -> usize {
             patterns.insert(fc, bh);
         }
     }
-
-    let mut c = 0;
     let to_check: Vec<_> = to_check.lines().collect();
-    let mut memo = HashMap::with_capacity(20000);
-    for item in to_check {
-        c += count(item, 0, &patterns, &mut memo);
-    }
-    c
+
+    (patterns, to_check)
 }
 
 fn count<'a>(
