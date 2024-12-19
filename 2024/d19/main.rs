@@ -23,7 +23,6 @@ fn part1(txt: &str) -> i64 {
             c += 1;
         }
     }
-    println!("size: {}", memo.len());
     c
 }
 
@@ -71,10 +70,6 @@ fn count<'a>(
     }
 
     let remainder = &s[position..];
-    if remainder.is_empty() {
-        return 1;
-    }
-
     if let Some(exising) = memo.get(remainder) {
         return *exising;
     }
