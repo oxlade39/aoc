@@ -1,7 +1,9 @@
 use core::fmt;
 use std::str::FromStr;
 
-use crate::{cartesian::Plane, input};
+use hashbrown::HashSet;
+
+use crate::{cartesian::Plane, grid, input};
 
 /// Utility for a grid of input. A common input type for aoc puzzles.
 /// Supports a number of common utilities on grids of input.
@@ -86,6 +88,76 @@ impl<T> Grid<T> {
                 None                
             }
         }).map(move |p| (p, self.at(&p)))
+    }
+
+    pub fn position_itr(&self) -> impl Iterator<Item = (GridPosition, &T)> {
+        (0..self.height())
+            .flat_map(move |row| (0..self.width())
+            .map(move |col| {
+                let p = GridPosition::new(col, row);
+                (p, self.at(&p))
+            })
+        )
+    }
+
+    fn walk_grid_internal<F>(
+        &self, 
+        f: &mut F,
+        p: GridPosition,
+        depth: usize,
+        seen: &mut HashSet<GridPosition>,
+    ) 
+    where F: FnMut(GridPosition, &T, usize)
+    {
+        if depth == 0 {
+            return;
+        }
+        seen.insert(p.clone());
+        if p.col > 0 {
+            let p1 = p.left();
+            let item = self.at(&p1);
+            if !seen.contains(&p1) {
+                f(p1, item, depth - 1);
+                self.walk_grid_internal(f, p1, depth - 1, seen);
+            }
+        }
+        if p.row > 0 {
+            let p1 = p.up();
+            let item = self.at(&p1);
+            if !seen.contains(&p1) {
+                f(p1, item, depth - 1);
+                self.walk_grid_internal(f, p1, depth - 1, seen);
+            }
+        }
+        if p.col < self.width() - 1 {
+            let p1 = p.right();
+            let item = self.at(&p1);
+            if !seen.contains(&p1) {
+                f(p1, item, depth - 1);
+                self.walk_grid_internal(f, p1, depth - 1, seen);
+            }
+        }
+        if p.row < self.height() - 1 {
+            let p1 = p.down();
+            let item = self.at(&p1);
+            if !seen.contains(&p1) {
+                f(p1, item, depth - 1);
+                self.walk_grid_internal(f, p1, depth - 1, seen);
+            }
+        }
+        // seen.remove(&p);
+        
+    }
+
+    pub fn walk_grid<F>(
+        &self,
+        p: GridPosition, 
+        depth: usize,
+        f: &mut F,        
+    ) 
+    where F: FnMut(GridPosition, &T, usize)
+    {
+        self.walk_grid_internal(f, p, depth, &mut HashSet::new());
     }
 }
 
@@ -302,6 +374,8 @@ impl Flip for u32 {
 #[cfg(test)]
 mod tests {
 
+    use hashbrown::HashSet;
+
     use crate::{grid::Grid, input::*};
 
     use super::{Flip, GridPosition};
@@ -408,5 +482,22 @@ mod tests {
             .copied()
             .collect();
         assert_eq!(vec![2,5,8], right);
+    }
+
+    #[test]
+    fn test_walk() {
+        let mut capture = HashSet::new();
+        let g = Grid {
+            rows: vec![
+                vec![1,2,3],
+                vec![4,5,6],
+                vec![7,8,9],
+            ]
+        };
+        let mut f = |g: GridPosition, i: &i32, depth: usize| {
+            println!("{:?} - {:?}", g, i);
+            capture.insert(*i);
+        };
+        g.walk_grid(GridPosition::new(0, 0), 5, &mut f);
     }
 }
