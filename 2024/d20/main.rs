@@ -1,17 +1,15 @@
 use core::str;
-use std::{i64, str::FromStr, time::Instant, usize};
+use std::{i64, time::Instant, usize};
 
 use aoclib::{
-    grid::{FromChar, Grid, GridPosition},
-    input, timing,
+    grid::{FromChar, Grid, GridPosition}, timing,
 };
-use hashbrown::{HashMap, HashSet};
-use itertools::Itertools;
+use hashbrown::HashMap;
 
 fn main() {
-    let input = include_str!("input.test.txt");
+    let input = include_str!("input.txt");
     let now = Instant::now();
-    // println!("part1: {}", part1(input));
+    println!("part1: {}", part1(input));
     println!("part2: {}", part2(input));
     println!("{}", timing::format_elapsed_time(now.elapsed()));
 }
@@ -21,7 +19,34 @@ fn part1(txt: &str) -> usize {
 }
 
 fn part2(txt: &str) -> usize {
-    count_all_shortcuts(txt, 100).len()
+    let savings = list_savings(txt, 100, 20);
+    savings.values().sum()
+}
+
+fn list_savings(
+    txt: &str, 
+    min: usize,
+    picoseconds: usize,
+) -> HashMap<usize, usize> {
+    let g: Grid<Tile> = txt.parse().unwrap();
+    let normal_path = path(&g);
+
+    let mut savings: HashMap<usize, usize> = HashMap::new();
+    for i in 0..normal_path.len() {
+        for j in i..normal_path.len() {
+            let position_i = normal_path[i];
+            let position_j = normal_path[j];
+            let manhatten_distance = position_i.col.abs_diff(position_j.col) + position_i.row.abs_diff(position_j.row);
+            if manhatten_distance <= picoseconds {
+                let saving = (j as i64) - (i as i64) - (manhatten_distance as i64);
+                if saving >= min as i64 {
+                    let saving = saving as usize;
+                    savings.insert(saving, savings.get(&saving).unwrap_or(&0) + 1);
+                }
+            }            
+        }
+    }
+    savings
 }
 
 fn find_all_shortcuts(txt: &str, gte: usize) -> usize {
@@ -37,93 +62,9 @@ fn find_all_shortcuts(txt: &str, gte: usize) -> usize {
     position_index.insert(e, normal_path.len() + 1);
 
     let shortcuts = build_shortcuts(&g, &normal_path, &position_index);
-
-    for (g, s) in &shortcuts.iter()
-        .sorted_by_key(|s| s.saving)
-        .group_by(|s| s.saving) {
-        println!("There are {} cheats that save {} picoseconds", s.count(), g);
-    }
-
     shortcuts.iter().filter(|s| s.saving >= gte).count()
 }
 
-fn count_all_shortcuts(txt: &str, min_saving: usize) -> Vec<Shortcut> {
-    let g: Grid<Tile> = txt.parse().unwrap();
-    let normal_path = path(&g);
-    let e = end(&g);
-    let mut position_index: HashMap<GridPosition, usize> = normal_path    
-        .iter()
-        .cloned()
-        .enumerate()
-        .map(|(index, value)| (value, index + 1))
-        .collect();
-    position_index.insert(e, normal_path.len() + 1);
-
-    find_all_within(&g, start(&g), &position_index);
-    todo!()
-}
-
-fn shortcuts_from(
-    start: GridPosition,
-    current: GridPosition,
-    count: usize,
-    max_count: usize,
-    g: &Grid<Tile>,
-    position_index: &HashMap<GridPosition, usize>,
-    min_saving: usize,
-    seen: &mut HashSet<(GridPosition, usize)>,
-) -> Vec<Shortcut> {
-
-    if count == max_count {
-        return vec![];
-    }
-    let mut all = Vec::new();
-
-    seen.insert((current.clone(), count));
-    println!("{:?} {:?}", current, count);
-
-    let tile_at_current = g.at(&current);
-
-    if tile_at_current == &Tile::Space || tile_at_current == &Tile::End {
-        let step = *position_index.get(&start).expect("position on path") as i64;
-        let current_index = *position_index.get(&current).expect("position on path") as i64;
-        let saving = current_index - step - count as i64;
-
-        if saving >= min_saving as i64 {
-            all.push(Shortcut { from: start, to: current, wall: current, step_from: step as usize, step_to: current_index as usize, saving: saving as usize });
-        }
-    } 
-    
-    if current.col > 0 {
-        let next = current.left();
-        if !seen.contains(&(next, count + 1)) {
-            all.extend(shortcuts_from(start, next, count + 1, max_count, g, position_index, min_saving, seen));
-        }
-    }
-    if current.col < g.width() - 1 {
-        let next = current.right();
-        if !seen.contains(&(next, count + 1)) {
-            all.extend(shortcuts_from(start, next, count + 1, max_count, g, position_index, min_saving, seen));
-        }
-    }
-    if current.row > 0 {
-        let next = current.up();
-        if !seen.contains(&(next, count + 1)) {
-            all.extend(shortcuts_from(start, next, count + 1, max_count, g, position_index, min_saving, seen));
-        }
-    }
-    if current.row < g.height() - 1 {
-        let next = current.down();
-        if !seen.contains(&(next, count + 1)) {
-            all.extend(shortcuts_from(start, next, count + 1, max_count, g, position_index, min_saving, seen));
-        }
-    }
-
-    // backtracking
-    // seen.remove(&(current, count));
-
-    all
-}
 
 #[derive(Debug, Hash, PartialEq, Eq)]
 struct Shortcut {
@@ -253,6 +194,7 @@ fn path(g: &Grid<Tile>) -> Vec<GridPosition> {
         current = p;
         path.push(p.clone());
     }
+    path.push(end(&g));
     path
 }
 
@@ -300,28 +242,6 @@ fn end(g: &Grid<Tile>) -> GridPosition {
     p
 }
 
-fn find_all_within(
-    g: &Grid<Tile>,
-    p: GridPosition,
-    path_positions: &HashMap<GridPosition, usize>,
-) {
-    let mut shortcuts: HashSet<(GridPosition, usize)> = HashSet::new();
-    let mut capture = |child: GridPosition, _tile: &Tile, cheat_path_len| {
-        let start_point = path_positions.get(&p).expect("start on path");
-        if let Some(child_point) = path_positions.get(&child) {
-            // println!("{:?} - {:?} - {}", p, child_point, cheat_path_len);
-            let saving = (*child_point as i64) - (*start_point as i64) - (cheat_path_len as i64);
-            if saving >= 76 {                
-                shortcuts.insert((child, saving as usize));
-            }            
-        }
-    };
-    g.walk_grid(p, 20, &mut capture);
-    for (p, s) in shortcuts {
-        println!("{:?}, {:?}", p, s);
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum Tile {
     Wall,
@@ -346,48 +266,9 @@ impl FromChar for Tile {
 
 #[cfg(test)]
 mod tests {
+    use itertools::Itertools;
+
     use crate::*;
-
-    #[test]
-    fn test_input_pt1_print() {
-        let test_input = include_str!("input.test.txt");
-        let g: Grid<Tile> = test_input.parse().unwrap();
-        let normal_path = path(&g);
-        let position_index: HashMap<GridPosition, usize> = normal_path    
-            .iter()
-            .cloned()
-            .enumerate()
-            .map(|(index, value)| (value, index + 1))
-            .collect();
-
-        println!("Normal time is {} picoseconds", normal_path.len() + 1);
-
-        let shortcuts = build_shortcuts(&g, &normal_path, &position_index);
-        
-        for shortcut in shortcuts {
-            println!("Saving: {} of {} to {}", shortcut.saving, shortcut.step_from, shortcut.step_to);
-            for row in 0..g.height() {
-                for col in 0..g.width() {
-                    let p = GridPosition::new(col, row);
-                    if p == shortcut.wall {
-                        print!("1");
-                    } else if p == shortcut.to {
-                        print!("2");
-                    } else {
-                        match g.at(&p) {
-                            Tile::Wall => print!("#"),
-                            Tile::Space => print!("."),
-                            Tile::Start => print!("S"),
-                            Tile::End => print!("E"),
-                        }
-                    }
-                }
-                println!("");
-            }
-            println!("");
-            println!("");
-        }
-    }
 
     #[test]
     fn test_input_pt1() {
@@ -397,51 +278,38 @@ mod tests {
 
     #[test]
     fn input_pt1() {
-        // 1500 too low
-        let test_input = include_str!("input.txt");
+        let test_input = include_str!("input.txt");        
         assert_eq!(1502, part1(test_input));
     }
 
     #[test]
     fn test_input_pt2() {
         let test_input = include_str!("input.test.txt");
-        assert_eq!(3, count_all_shortcuts(test_input, 76).len());
+        let savings = list_savings(test_input, 50, 20);
+        let total: usize = savings.values().sum();
+        assert_eq!(
+            32 +
+            31 +
+            29 +
+            39 +
+            25 +
+            23 +
+            20 +
+            19 +
+            12 +
+            14 +
+            12 +
+            22 +
+            4 +
+            3,
+            total);
     }
 
-    #[test]
-    fn test_input_pt2_start_end() {
-        let test_input = include_str!("input.test.txt");
-        let g: Grid<Tile> = test_input.parse().unwrap();
-        let normal_path = path(&g);
-        let e = end(&g);
-        let mut position_index: HashMap<GridPosition, usize> = normal_path    
-            .iter()
-            .cloned()
-            .enumerate()
-            .map(|(index, value)| (value, index + 1))
-            .collect();
-        position_index.insert(e, normal_path.len() + 1);
-
-        find_all_within(&g, start(&g), &position_index);
-
-        // let s = shortcuts_from(start(&g), start(&g), 0, 20, &g, &position_index, 76, &mut HashSet::new());
-        // let uniq: HashSet<_> = HashSet::from_iter(s.iter());
-        // for s1 in &uniq {
-        //     println!("{:?}", s1);
-        // }
-        // assert_eq!(3, uniq.len());
-
-        // let s = shortcuts_from(start(&g), start(&g), 0, 20, &g, &position_index, 74, &mut HashSet::new());
-        // let uniq: HashSet<_> = HashSet::from_iter(s.iter());        
-        // assert_eq!(4 + 3, uniq.len());
-
-        // let s = shortcuts_from(start(&g), start(&g), 0, 20, &g, &position_index, 72, &mut HashSet::new());
-        // let uniq: HashSet<_> = HashSet::from_iter(s.iter());        
-        // assert_eq!(22 + 4 + 3, uniq.len());
-
-        // assert_eq!(4 + 3, shortcuts_from(start(&g), start(&g), 0, 20, &g, &position_index, 74, &mut HashSet::new()));
-        // assert_eq!(22 + 4 + 3, shortcuts_from(start(&g), start(&g), 0, 20, &g, &position_index, 72, &mut HashSet::new()));
-        // assert_eq!(3 + 4 + 22, shortcuts_from(start(&g), start(&g), 0, 20, &g, &position_index, 72, &mut HashSet::new()));
+    #[allow(dead_code)]
+    fn print_savings(savings: HashMap<usize, usize>) {
+        for (saving, number) in savings.iter().sorted_by_key(|(saving, _number)| *saving) {
+            println!("There are {} cheats that save {} picoseconds", number, saving);
+        }
     }
 
     #[test]
@@ -450,7 +318,10 @@ mod tests {
         // 1045 too low
         // 22951 too low
         // 2789483 too high
-        // 1862449
-        assert_eq!(0, part2(test_input));
+        let pt2 = part2(test_input);
+        assert!(pt2 > 1045, "{}", pt2);
+        assert!(pt2 > 22951, "{}", pt2);
+        assert!(pt2 < 2789483, "{}", pt2);
+        assert_eq!(1028136, pt2);
     }
 }
