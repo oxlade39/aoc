@@ -57,6 +57,7 @@ dependencies = [
  "aoclib",
  "hashbrown",
  "itertools",
+ "rayon",
  "regex",
 ]
 

@@ -1,10 +1,12 @@
 use core::fmt;
-use std::{i64, str::FromStr, time::Instant};
+use std::{array, i64, str::FromStr, time::Instant, usize};
 
 use aoclib::{
     grid::{FromChar, Grid, GridPosition},
     timing,
 };
+
+use rayon::prelude::*;
 
 fn main() {
     let input = include_str!("input.txt");
@@ -15,13 +17,19 @@ fn main() {
 }
 
 fn part1(txt: &str) -> usize {
-    let mut chain = RobotChain::default();
     let input: Input = txt.parse().unwrap();
-    input.0.into_iter().map(|item| item.complexity(&mut chain)).sum()
+    input.0.into_par_iter().map(|item| {
+        let mut chain: RobotChain<2> = RobotChain::default();
+        item.complexity(&mut chain)
+    }).sum()
 }
 
-fn part2(_txt: &str) -> i64 {
-    0
+fn part2(txt: &str) -> usize {
+    let input: Input = txt.parse().unwrap();
+    input.0.into_par_iter().map(|item| {
+        let mut chain: RobotChain<25> = RobotChain::default();
+        item.complexity(&mut chain)
+    }).sum()
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -58,8 +66,8 @@ impl FromStr for Input {
 }
 
 impl NumericSequence {
-    fn complexity(&self, chain: &mut RobotChain) -> usize {
-        let mut keypad_input = Vec::new();
+    fn complexity<const N: usize>(&self, chain: &mut RobotChain<N>) -> usize {
+        let mut count = 0;
         let mut mut_chain = chain.clone();
         for code in &self.0 {
             let mut rows = mut_chain.clone();
@@ -67,18 +75,18 @@ impl NumericSequence {
 
             let rows_chain = rows.press::<RowsFirst>(code.clone());
             let cols_chain = cols.press::<ColumnsFirst>(code.clone());
-            if rows_chain.len() < cols_chain.len() {
-                keypad_input.extend(rows_chain);
+            if rows_chain < cols_chain {
+                count += rows_chain;
                 mut_chain = rows;
             } else {
-                keypad_input.extend(cols_chain);
+                count += cols_chain;
                 mut_chain = cols;
             }
         }
         let seq_num: usize = format!("{}{}{}", self.0[0], self.0[1], self.0[2]).parse().expect("number");
         // println!("Complexity: {} * {}", keypad_input.len(), seq_num);
         // debug_moves(&keypad_input);
-        seq_num * keypad_input.len()
+        seq_num * count
     }
 }
 
@@ -244,15 +252,15 @@ impl Default for DirectionalKeypadRobot {
 }
 
 #[derive(Clone)]
-struct RobotChain {
-    directional: [DirectionalKeypadRobot; 2],
+struct RobotChain<const N: usize> {
+    directional: [DirectionalKeypadRobot; N],
     numeric: NumericKeypadRobot,
 }
 
-impl Default for RobotChain {
+impl<const N: usize> Default for RobotChain<N> {
     fn default() -> Self {
         Self {
-            directional: [Default::default(), Default::default()],
+            directional: array::from_fn(|_| Default::default()),
             numeric: Default::default(),
         }
     }
@@ -297,7 +305,7 @@ fn debug_moves(moves: &Vec<DirectionalKeypadTile>) {
 
 #[allow(dead_code)]
 fn debug_reverse_moves(txt: &str) {
-    let mut chain = RobotChain::default();
+    let mut chain: RobotChain<2> = RobotChain::default();
     let g: Grid<DirectionalKeypadTile> = txt.parse().unwrap();
     println!("");
     for (_, tile) in g.position_itr() {
@@ -559,11 +567,11 @@ impl MovesBetween<NumericKeypadTile, DirectionalKeypadTile> for RowsFirst {
     }
 }
 
-impl RobotChain {
+impl<const R: usize> RobotChain<R> {
     fn press<N>(
         &mut self, 
         to: NumericKeypadTile,
-    ) -> Vec<DirectionalKeypadTile> 
+    ) -> usize 
         where N: MovesBetween<NumericKeypadTile, DirectionalKeypadTile>,
             N: MovesBetween<DirectionalKeypadTile, DirectionalKeypadTile>
     {
@@ -572,52 +580,52 @@ impl RobotChain {
         // for each press of the inner robot
         // calculate the presses required for the outer robot
 
-        let mut level1: Vec<DirectionalKeypadTile> = Vec::new();
-        let mut level2: Vec<DirectionalKeypadTile> = Vec::new();
-        let mut level3: Vec<DirectionalKeypadTile> = Vec::new();
-        let mut _level4: Vec<NumericKeypadTile>  = vec![to.clone()];
+        let mut count = 0;
 
         let current_numeric_pos = self.numeric.current().clone();
 
         let mut moves_required_for_number_change = N::moves_to(current_numeric_pos, to.clone());
-
         moves_required_for_number_change.push(DirectionalKeypadTile::A);
-        level3.extend(moves_required_for_number_change.clone());
 
         self.numeric.position = to.position();
         assert!(self.numeric.current() != &NumericKeypadTile::Blank);
 
-        for next_level_move in moves_required_for_number_change {
-            let robot = &self.directional[1];
-            let robot_current_pos = robot.current();
-            let mut next_level_moves_required = N::moves_to(robot_current_pos.clone(), next_level_move.clone());
-            next_level_moves_required.push(DirectionalKeypadTile::A);
-            
-            self.directional[1].position = next_level_move.position();
-            assert!(self.directional[1].current() != &DirectionalKeypadTile::Blank);
-
-            level2.extend(next_level_moves_required.clone());
-
-            for next_level_move in next_level_moves_required {
-                let robot = &self.directional[0];
-                let robot_current_pos = robot.current();
-                let mut next_level_moves_required =
-                    N::moves_to(robot_current_pos.clone(), next_level_move.clone());
-                next_level_moves_required.push(DirectionalKeypadTile::A);
-
-                self.directional[0].position = next_level_move.position();
-                assert!(self.directional[0].current() != &DirectionalKeypadTile::Blank);
-
-                level1.extend(next_level_moves_required);
-            }
-        }
+        self.down::<N>(R, moves_required_for_number_change, &mut count);
 
         // debug_moves(&level1);
         // debug_moves(&level2);
         // debug_moves(&level3);
         // println!("{:?}", _level4);
 
-        level1
+        count
+    }
+
+    fn down<N>(
+        &mut self,
+        depth: usize,
+        moves: Vec<DirectionalKeypadTile>,
+        count: &mut usize,
+    ) 
+        where N: MovesBetween<NumericKeypadTile, DirectionalKeypadTile>,
+            N: MovesBetween<DirectionalKeypadTile, DirectionalKeypadTile>
+    {
+        if depth > 0 {
+            for next_level_move in moves {
+                let robot = &self.directional[depth - 1];
+                let robot_current_pos = robot.current();
+                let mut next_level_moves_required =
+                    N::moves_to(robot_current_pos.clone(), next_level_move.clone());
+                next_level_moves_required.push(DirectionalKeypadTile::A);
+
+                self.directional[depth - 1].position = next_level_move.position();
+                assert!(self.directional[depth - 1].current() != &DirectionalKeypadTile::Blank);
+
+                self.down::<N>(depth - 1, next_level_moves_required, count);
+            }
+        } else {
+            // we're at the bottom - these are the moves we want
+            *count += moves.len()
+        }
     }
 
     fn move_arm(&mut self, dir: DirectionalKeypadTile) -> Option<NumericKeypadTile> {
@@ -701,7 +709,7 @@ mod tests {
 
     #[test]
     fn test_complexity() {
-        let mut chain = RobotChain::default();
+        let mut chain: RobotChain<2> = RobotChain::default();
         let example: Input = "029A".parse().unwrap();
         let first = example.0.into_iter().next().unwrap();
         assert_eq!(68 * 29, first.complexity(&mut chain));
@@ -709,19 +717,19 @@ mod tests {
 
     #[test]
     fn test_numeric_press_379a() {
-        let mut chain = RobotChain::default();
-        let mut all = Vec::new();
-        all.extend(chain.press::<RowsFirst>(NumericKeypadTile::Number(3)));
-        all.extend(chain.press::<RowsFirst>(NumericKeypadTile::Number(7)));
-        all.extend(chain.press::<RowsFirst>(NumericKeypadTile::Number(9)));
-        all.extend(chain.press::<RowsFirst>(NumericKeypadTile::A));
-        assert_eq!(68, all.len());
+        let mut chain: RobotChain<2> = RobotChain::default();
+        let mut count = 0;
+        count += chain.press::<RowsFirst>(NumericKeypadTile::Number(3));
+        count += chain.press::<RowsFirst>(NumericKeypadTile::Number(7));
+        count += chain.press::<RowsFirst>(NumericKeypadTile::Number(9));
+        count += chain.press::<RowsFirst>(NumericKeypadTile::A);
+        assert_eq!(68, count);
         // debug_moves(&all);
     }
 
     #[test]
     fn test_input_pt1() {
-        let mut chain = RobotChain::default();
+        let mut chain: RobotChain<2> = RobotChain::default();
         let test_input = include_str!("input.test.txt");
         let example: Input = test_input.parse().unwrap();
         let mut itr = example.0.into_iter();

@@ -8,6 +8,7 @@ itertools = "0.10.5"
 regex = "1.10.2"
 aoclib = {path = "../lib"}
 hashbrown = { version = "0.15.2", features = ["rayon"] }
+rayon = "1.10.0"
 
 [[bin]]
 name = "d1"
