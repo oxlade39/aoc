@@ -706,9 +706,6 @@ impl<const R: usize> RobotChain<R> {
                     // take the min from both
                     let child_count = cols_first_count.min(rows_first_count);
 
-                    // let mut next_level_moves_required = N::moves_to(robot_current_pos.clone(), next_level_move.clone());
-                    // next_level_moves_required.push(DirectionalKeypadTile::A);
-                    // let child_count = self.down::<N>(depth - 1, next_level_moves_required);
                     total += child_count;
                     self.move_cache.insert(
                         (depth, robot_current_pos.clone(), next_level_move.clone()),
@@ -726,11 +723,6 @@ impl<const R: usize> RobotChain<R> {
     }
 
     fn move_arm(&mut self, dir: DirectionalKeypadTile) -> Option<NumericKeypadTile> {
-        //  -> directional[0]
-        //      -> directional[1]
-        //          -> numeric
-        //
-        //
         match dir {
             DirectionalKeypadTile::A => {
                 // println!("directional[0] queue: {:?}", self.directional[0].move_queue);
@@ -846,7 +838,6 @@ mod tests {
     fn input_pt1() {
         let test_input = include_str!("input.txt");
         let pt1 = part1(test_input);
-        // assert!(pt1 < 189174, "{:?} > 189174", pt1);
         assert_eq!(184718, pt1);
     }
 
@@ -860,18 +851,9 @@ mod tests {
     // }
 
     #[test]
-    fn test_input_pt2() {
-        let test_input = include_str!("input.test.txt");
-        assert_eq!(0, part2(test_input));
-    }
-
-    #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
         let result = part2(test_input);
-        // too high
-        assert!(result < 261109466494272);
-        assert!(result < 235624901119705);
-        assert_eq!(0, part2(test_input));
+        assert_eq!(228800606998554, part2(test_input));
     }
 }
