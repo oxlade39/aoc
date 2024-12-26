@@ -7,7 +7,6 @@ use aoclib::{
 };
 
 use hashbrown::HashMap;
-use rayon::prelude::*;
 
 fn main() {
     let input = include_str!("input.txt");
@@ -20,17 +19,21 @@ fn main() {
 fn part1(txt: &str) -> usize {
     let input: Input = txt.parse().unwrap();
     let mut chain: RobotChain<2> = RobotChain::default();
-    input.0.into_iter().map(|item| {        
-        item.complexity(&mut chain)
-    }).sum()
+    input
+        .0
+        .into_iter()
+        .map(|item| item.complexity(&mut chain))
+        .sum()
 }
 
 fn part2(txt: &str) -> usize {
     let input: Input = txt.parse().unwrap();
     let mut chain: RobotChain<25> = RobotChain::default();
-    input.0.into_iter().map(|item| {        
-        item.complexity(&mut chain)
-    }).sum()
+    input
+        .0
+        .into_iter()
+        .map(|item| item.complexity(&mut chain))
+        .sum()
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -59,7 +62,9 @@ impl FromStr for Input {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let g: Grid<NumericKeypadTile> = s.parse()?;
-        let items = g.rows.into_iter()
+        let items = g
+            .rows
+            .into_iter()
             .map(|row| NumericSequence(row.try_into().expect("exactly 4 items")))
             .collect();
         Ok(Input(items))
@@ -72,7 +77,9 @@ impl NumericSequence {
         for code in &self.0 {
             count += chain.press(code.clone());
         }
-        let seq_num: usize = format!("{}{}{}", self.0[0], self.0[1], self.0[2]).parse().expect("number");
+        let seq_num: usize = format!("{}{}{}", self.0[0], self.0[1], self.0[2])
+            .parse()
+            .expect("number");
         seq_num * count
     }
 }
@@ -312,20 +319,27 @@ struct ColumnsFirst;
 struct RowsFirst;
 
 impl MovesBetween<DirectionalKeypadTile, DirectionalKeypadTile> for RowsFirst {
-    fn moves_to(from: DirectionalKeypadTile, to: DirectionalKeypadTile) -> Vec<DirectionalKeypadTile> {
+    fn moves_to(
+        from: DirectionalKeypadTile,
+        to: DirectionalKeypadTile,
+    ) -> Vec<DirectionalKeypadTile> {
         match (from, to) {
             (DirectionalKeypadTile::A, DirectionalKeypadTile::Left) => vec![
-                DirectionalKeypadTile::Down, DirectionalKeypadTile::Left, DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Left,
             ],
             (DirectionalKeypadTile::Left, DirectionalKeypadTile::A) => vec![
-                DirectionalKeypadTile::Right, DirectionalKeypadTile::Right, DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Up,
             ],
-            (DirectionalKeypadTile::Up, DirectionalKeypadTile::Left) => vec![
-                DirectionalKeypadTile::Down, DirectionalKeypadTile::Left,
-            ],
-            (DirectionalKeypadTile::Left, DirectionalKeypadTile::Up) => vec![
-                DirectionalKeypadTile::Right, DirectionalKeypadTile::Up,
-            ],
+            (DirectionalKeypadTile::Up, DirectionalKeypadTile::Left) => {
+                vec![DirectionalKeypadTile::Down, DirectionalKeypadTile::Left]
+            }
+            (DirectionalKeypadTile::Left, DirectionalKeypadTile::Up) => {
+                vec![DirectionalKeypadTile::Right, DirectionalKeypadTile::Up]
+            }
             (from, to) => {
                 let mut moves = Vec::new();
                 let my_pos = from.position();
@@ -342,7 +356,7 @@ impl MovesBetween<DirectionalKeypadTile, DirectionalKeypadTile> for RowsFirst {
                         moves.push(DirectionalKeypadTile::Up);
                     }
                 }
-                
+
                 if col_diff > 0 {
                     for _right in 0..col_diff {
                         moves.push(DirectionalKeypadTile::Right);
@@ -360,20 +374,27 @@ impl MovesBetween<DirectionalKeypadTile, DirectionalKeypadTile> for RowsFirst {
 }
 
 impl MovesBetween<DirectionalKeypadTile, DirectionalKeypadTile> for ColumnsFirst {
-    fn moves_to(from: DirectionalKeypadTile, to: DirectionalKeypadTile) -> Vec<DirectionalKeypadTile> {
+    fn moves_to(
+        from: DirectionalKeypadTile,
+        to: DirectionalKeypadTile,
+    ) -> Vec<DirectionalKeypadTile> {
         match (from, to) {
             (DirectionalKeypadTile::A, DirectionalKeypadTile::Left) => vec![
-                DirectionalKeypadTile::Down, DirectionalKeypadTile::Left, DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Left,
             ],
             (DirectionalKeypadTile::Left, DirectionalKeypadTile::A) => vec![
-                DirectionalKeypadTile::Right, DirectionalKeypadTile::Right, DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Up,
             ],
-            (DirectionalKeypadTile::Up, DirectionalKeypadTile::Left) => vec![
-                DirectionalKeypadTile::Down, DirectionalKeypadTile::Left,
-            ],
-            (DirectionalKeypadTile::Left, DirectionalKeypadTile::Up) => vec![
-                DirectionalKeypadTile::Right, DirectionalKeypadTile::Up,
-            ],
+            (DirectionalKeypadTile::Up, DirectionalKeypadTile::Left) => {
+                vec![DirectionalKeypadTile::Down, DirectionalKeypadTile::Left]
+            }
+            (DirectionalKeypadTile::Left, DirectionalKeypadTile::Up) => {
+                vec![DirectionalKeypadTile::Right, DirectionalKeypadTile::Up]
+            }
             (from, to) => {
                 let mut moves = Vec::new();
                 let my_pos = from.position();
@@ -401,7 +422,7 @@ impl MovesBetween<DirectionalKeypadTile, DirectionalKeypadTile> for ColumnsFirst
                     for _right in 0..row_diff.abs() {
                         moves.push(DirectionalKeypadTile::Up);
                     }
-                }                
+                }
                 moves
             }
         }
@@ -412,50 +433,78 @@ impl MovesBetween<NumericKeypadTile, DirectionalKeypadTile> for ColumnsFirst {
     fn moves_to(from: NumericKeypadTile, to: NumericKeypadTile) -> Vec<DirectionalKeypadTile> {
         match (from, to) {
             (NumericKeypadTile::Number(7), NumericKeypadTile::Number(0)) => vec![
-                DirectionalKeypadTile::Right, DirectionalKeypadTile::Down, DirectionalKeypadTile::Down, DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Down,
             ],
             (NumericKeypadTile::Number(7), NumericKeypadTile::A) => vec![
-                DirectionalKeypadTile::Right, DirectionalKeypadTile::Right, DirectionalKeypadTile::Down, DirectionalKeypadTile::Down, DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Down,
             ],
             (NumericKeypadTile::Number(4), NumericKeypadTile::Number(0)) => vec![
-                DirectionalKeypadTile::Right, DirectionalKeypadTile::Down, DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Down,
             ],
             (NumericKeypadTile::Number(4), NumericKeypadTile::A) => vec![
-                DirectionalKeypadTile::Right, DirectionalKeypadTile::Right, DirectionalKeypadTile::Down, DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Down,
             ],
-            (NumericKeypadTile::Number(1), NumericKeypadTile::Number(0)) => vec![
-                DirectionalKeypadTile::Right, DirectionalKeypadTile::Down,
-            ],
+            (NumericKeypadTile::Number(1), NumericKeypadTile::Number(0)) => {
+                vec![DirectionalKeypadTile::Right, DirectionalKeypadTile::Down]
+            }
             (NumericKeypadTile::Number(1), NumericKeypadTile::A) => vec![
-                DirectionalKeypadTile::Right, DirectionalKeypadTile::Right, DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Down,
             ],
-            (NumericKeypadTile::Number(0), NumericKeypadTile::Number(1)) => vec![
-                DirectionalKeypadTile::Up, DirectionalKeypadTile::Left,
-            ],
+            (NumericKeypadTile::Number(0), NumericKeypadTile::Number(1)) => {
+                vec![DirectionalKeypadTile::Up, DirectionalKeypadTile::Left]
+            }
             (NumericKeypadTile::Number(0), NumericKeypadTile::Number(4)) => vec![
-                DirectionalKeypadTile::Up, DirectionalKeypadTile::Up, DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Left,
             ],
             (NumericKeypadTile::Number(0), NumericKeypadTile::Number(7)) => vec![
-                DirectionalKeypadTile::Up, DirectionalKeypadTile::Up, DirectionalKeypadTile::Up, DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Left,
             ],
             (NumericKeypadTile::A, NumericKeypadTile::Number(1)) => vec![
-                DirectionalKeypadTile::Up, DirectionalKeypadTile::Left, DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Left,
             ],
             (NumericKeypadTile::A, NumericKeypadTile::Number(4)) => vec![
-                DirectionalKeypadTile::Up, DirectionalKeypadTile::Up, DirectionalKeypadTile::Left, DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Left,
             ],
             (NumericKeypadTile::A, NumericKeypadTile::Number(7)) => vec![
-                DirectionalKeypadTile::Up, DirectionalKeypadTile::Up, DirectionalKeypadTile::Up, DirectionalKeypadTile::Left, DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Left,
             ],
             (from, to) => {
                 let my_pos = from.position();
                 let other_pos = to.position();
-        
+
                 let mut moves = Vec::new();
-        
+
                 let col_diff = (other_pos.col as i64) - (my_pos.col as i64);
                 let row_diff = (other_pos.row as i64) - (my_pos.row as i64);
-        
+
                 if col_diff > 0 {
                     for _right in 0..col_diff {
                         moves.push(DirectionalKeypadTile::Right);
@@ -486,47 +535,75 @@ impl MovesBetween<NumericKeypadTile, DirectionalKeypadTile> for RowsFirst {
     fn moves_to(from: NumericKeypadTile, to: NumericKeypadTile) -> Vec<DirectionalKeypadTile> {
         match (from, to) {
             (NumericKeypadTile::Number(7), NumericKeypadTile::Number(0)) => vec![
-                DirectionalKeypadTile::Right, DirectionalKeypadTile::Down, DirectionalKeypadTile::Down, DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Down,
             ],
             (NumericKeypadTile::Number(7), NumericKeypadTile::A) => vec![
-                DirectionalKeypadTile::Right, DirectionalKeypadTile::Right, DirectionalKeypadTile::Down, DirectionalKeypadTile::Down, DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Down,
             ],
             (NumericKeypadTile::Number(4), NumericKeypadTile::Number(0)) => vec![
-                DirectionalKeypadTile::Right, DirectionalKeypadTile::Down, DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Down,
             ],
             (NumericKeypadTile::Number(4), NumericKeypadTile::A) => vec![
-                DirectionalKeypadTile::Right, DirectionalKeypadTile::Right, DirectionalKeypadTile::Down, DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Down,
             ],
-            (NumericKeypadTile::Number(1), NumericKeypadTile::Number(0)) => vec![
-                DirectionalKeypadTile::Right, DirectionalKeypadTile::Down,
-            ],
+            (NumericKeypadTile::Number(1), NumericKeypadTile::Number(0)) => {
+                vec![DirectionalKeypadTile::Right, DirectionalKeypadTile::Down]
+            }
             (NumericKeypadTile::Number(1), NumericKeypadTile::A) => vec![
-                DirectionalKeypadTile::Right, DirectionalKeypadTile::Right, DirectionalKeypadTile::Down,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Right,
+                DirectionalKeypadTile::Down,
             ],
-            (NumericKeypadTile::Number(0), NumericKeypadTile::Number(1)) => vec![
-                DirectionalKeypadTile::Up, DirectionalKeypadTile::Left,
-            ],
+            (NumericKeypadTile::Number(0), NumericKeypadTile::Number(1)) => {
+                vec![DirectionalKeypadTile::Up, DirectionalKeypadTile::Left]
+            }
             (NumericKeypadTile::Number(0), NumericKeypadTile::Number(4)) => vec![
-                DirectionalKeypadTile::Up, DirectionalKeypadTile::Up, DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Left,
             ],
             (NumericKeypadTile::Number(0), NumericKeypadTile::Number(7)) => vec![
-                DirectionalKeypadTile::Up, DirectionalKeypadTile::Up, DirectionalKeypadTile::Up, DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Left,
             ],
             (NumericKeypadTile::A, NumericKeypadTile::Number(1)) => vec![
-                DirectionalKeypadTile::Up, DirectionalKeypadTile::Left, DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Left,
             ],
             (NumericKeypadTile::A, NumericKeypadTile::Number(4)) => vec![
-                DirectionalKeypadTile::Up, DirectionalKeypadTile::Up, DirectionalKeypadTile::Left, DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Left,
             ],
             (NumericKeypadTile::A, NumericKeypadTile::Number(7)) => vec![
-                DirectionalKeypadTile::Up, DirectionalKeypadTile::Up, DirectionalKeypadTile::Up, DirectionalKeypadTile::Left, DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Up,
+                DirectionalKeypadTile::Left,
+                DirectionalKeypadTile::Left,
             ],
             (from, to) => {
                 let my_pos = from.position();
                 let other_pos = to.position();
-        
+
                 let mut moves = Vec::new();
-        
+
                 let col_diff = (other_pos.col as i64) - (my_pos.col as i64);
                 let row_diff = (other_pos.row as i64) - (my_pos.row as i64);
                 if row_diff > 0 {
@@ -557,11 +634,7 @@ impl MovesBetween<NumericKeypadTile, DirectionalKeypadTile> for RowsFirst {
 }
 
 impl<const R: usize> RobotChain<R> {
-    fn press(
-        &mut self, 
-        to: NumericKeypadTile,
-    ) -> usize 
-    {
+    fn press(&mut self, to: NumericKeypadTile) -> usize {
         // for each numeric keypad move
         // calculate the moves required by the inner robot
         // for each press of the inner robot
@@ -573,7 +646,8 @@ impl<const R: usize> RobotChain<R> {
 
         // try cols first moves
         let cols_first_count = {
-            let mut cols_first_moves = ColumnsFirst::moves_to(current_numeric_pos.clone(), to.clone());
+            let mut cols_first_moves =
+                ColumnsFirst::moves_to(current_numeric_pos.clone(), to.clone());
             cols_first_moves.push(DirectionalKeypadTile::A);
             self.down(R, cols_first_moves.clone())
         };
@@ -594,19 +668,18 @@ impl<const R: usize> RobotChain<R> {
         count
     }
 
-    fn down(
-        &mut self,
-        depth: usize,
-        moves: Vec<DirectionalKeypadTile>,
-    ) -> usize 
-    {
-        if depth > 0 {            
+    fn down(&mut self, depth: usize, moves: Vec<DirectionalKeypadTile>) -> usize {
+        if depth > 0 {
             let mut total = 0;
             for next_level_move in moves {
                 let robot = &self.directional[depth - 1];
                 let robot_current_pos = robot.current().clone();
 
-                if let Some(cached) = self.move_cache.get(&(depth, robot_current_pos.clone(), next_level_move.clone())) {
+                if let Some(cached) = self.move_cache.get(&(
+                    depth,
+                    robot_current_pos.clone(),
+                    next_level_move.clone(),
+                )) {
                     // seen move before
                     total += cached;
                 } else {
@@ -614,14 +687,18 @@ impl<const R: usize> RobotChain<R> {
 
                     // try cols first moves
                     let cols_first_count = {
-                        let mut cols_first_moves = ColumnsFirst::moves_to(robot_current_pos.clone(), next_level_move.clone());
+                        let mut cols_first_moves = ColumnsFirst::moves_to(
+                            robot_current_pos.clone(),
+                            next_level_move.clone(),
+                        );
                         cols_first_moves.push(DirectionalKeypadTile::A);
                         self.down(depth - 1, cols_first_moves.clone())
                     };
 
                     // then rows first moves
                     let rows_first_count = {
-                        let mut rows_first_moves = RowsFirst::moves_to(robot_current_pos.clone(), next_level_move.clone());
+                        let mut rows_first_moves =
+                            RowsFirst::moves_to(robot_current_pos.clone(), next_level_move.clone());
                         rows_first_moves.push(DirectionalKeypadTile::A);
                         self.down(depth - 1, rows_first_moves)
                     };
@@ -633,7 +710,10 @@ impl<const R: usize> RobotChain<R> {
                     // next_level_moves_required.push(DirectionalKeypadTile::A);
                     // let child_count = self.down::<N>(depth - 1, next_level_moves_required);
                     total += child_count;
-                    self.move_cache.insert((depth, robot_current_pos.clone(), next_level_move.clone()), child_count);
+                    self.move_cache.insert(
+                        (depth, robot_current_pos.clone(), next_level_move.clone()),
+                        child_count,
+                    );
                 }
                 self.directional[depth - 1].position = next_level_move.position();
                 assert!(self.directional[depth - 1].current() != &DirectionalKeypadTile::Blank);
@@ -771,7 +851,7 @@ mod tests {
     }
 
     // #[test]
-    // fn part1_reverse() {        
+    // fn part1_reverse() {
     //     debug_reverse_moves("v<A<AA>>^AvA^<A>AAAvA^Av<A<A>>^AAA<Av>A^Av<A^>A<Av<A>>^AvA^Av<A<A>>^A<Av>A^A");
     //     debug_reverse_moves("v<A<AA>>^AvA^<A>AAvA^Av<A<A>>^A<Av>A^Av<<A>>^AAvA^Av<A^>Av<<A>>^AAA<Av>A^A");
     //     debug_reverse_moves("v<A<AA>>^AvA^<A>AAvA^Av<<A>>^AvA^Av<A^>Av<<A>>^A<Av>A^Av<A<A>>^AA<Av>A^A");
