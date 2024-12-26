@@ -6,6 +6,7 @@ use aoclib::{
     timing,
 };
 
+use hashbrown::HashMap;
 use rayon::prelude::*;
 
 fn main() {
@@ -18,16 +19,16 @@ fn main() {
 
 fn part1(txt: &str) -> usize {
     let input: Input = txt.parse().unwrap();
-    input.0.into_par_iter().map(|item| {
-        let mut chain: RobotChain<2> = RobotChain::default();
+    let mut chain: RobotChain<2> = RobotChain::default();
+    input.0.into_iter().map(|item| {        
         item.complexity(&mut chain)
     }).sum()
 }
 
 fn part2(txt: &str) -> usize {
     let input: Input = txt.parse().unwrap();
-    input.0.into_par_iter().map(|item| {
-        let mut chain: RobotChain<25> = RobotChain::default();
+    let mut chain: RobotChain<25> = RobotChain::default();
+    input.0.into_iter().map(|item| {        
         item.complexity(&mut chain)
     }).sum()
 }
@@ -68,24 +69,10 @@ impl FromStr for Input {
 impl NumericSequence {
     fn complexity<const N: usize>(&self, chain: &mut RobotChain<N>) -> usize {
         let mut count = 0;
-        let mut mut_chain = chain.clone();
         for code in &self.0 {
-            let mut rows = mut_chain.clone();
-            let mut cols = mut_chain.clone();
-
-            let rows_chain = rows.press::<RowsFirst>(code.clone());
-            let cols_chain = cols.press::<ColumnsFirst>(code.clone());
-            if rows_chain < cols_chain {
-                count += rows_chain;
-                mut_chain = rows;
-            } else {
-                count += cols_chain;
-                mut_chain = cols;
-            }
+            count += chain.press(code.clone());
         }
         let seq_num: usize = format!("{}{}{}", self.0[0], self.0[1], self.0[2]).parse().expect("number");
-        // println!("Complexity: {} * {}", keypad_input.len(), seq_num);
-        // debug_moves(&keypad_input);
         seq_num * count
     }
 }
@@ -254,6 +241,7 @@ impl Default for DirectionalKeypadRobot {
 #[derive(Clone)]
 struct RobotChain<const N: usize> {
     directional: [DirectionalKeypadRobot; N],
+    move_cache: HashMap<(usize, DirectionalKeypadTile, DirectionalKeypadTile), usize>,
     numeric: NumericKeypadRobot,
 }
 
@@ -261,6 +249,7 @@ impl<const N: usize> Default for RobotChain<N> {
     fn default() -> Self {
         Self {
             directional: array::from_fn(|_| Default::default()),
+            move_cache: Default::default(),
             numeric: Default::default(),
         }
     }
@@ -568,12 +557,10 @@ impl MovesBetween<NumericKeypadTile, DirectionalKeypadTile> for RowsFirst {
 }
 
 impl<const R: usize> RobotChain<R> {
-    fn press<N>(
+    fn press(
         &mut self, 
         to: NumericKeypadTile,
     ) -> usize 
-        where N: MovesBetween<NumericKeypadTile, DirectionalKeypadTile>,
-            N: MovesBetween<DirectionalKeypadTile, DirectionalKeypadTile>
     {
         // for each numeric keypad move
         // calculate the moves required by the inner robot
@@ -584,47 +571,77 @@ impl<const R: usize> RobotChain<R> {
 
         let current_numeric_pos = self.numeric.current().clone();
 
-        let mut moves_required_for_number_change = N::moves_to(current_numeric_pos, to.clone());
-        moves_required_for_number_change.push(DirectionalKeypadTile::A);
+        // try cols first moves
+        let cols_first_count = {
+            let mut cols_first_moves = ColumnsFirst::moves_to(current_numeric_pos.clone(), to.clone());
+            cols_first_moves.push(DirectionalKeypadTile::A);
+            self.down(R, cols_first_moves.clone())
+        };
+
+        // then rows first moves
+        let rows_first_count = {
+            let mut rows_first_moves = RowsFirst::moves_to(current_numeric_pos.clone(), to.clone());
+            rows_first_moves.push(DirectionalKeypadTile::A);
+            self.down(R, rows_first_moves)
+        };
+
+        // take the min from both
+        count += cols_first_count.min(rows_first_count);
 
         self.numeric.position = to.position();
         assert!(self.numeric.current() != &NumericKeypadTile::Blank);
 
-        self.down::<N>(R, moves_required_for_number_change, &mut count);
-
-        // debug_moves(&level1);
-        // debug_moves(&level2);
-        // debug_moves(&level3);
-        // println!("{:?}", _level4);
-
         count
     }
 
-    fn down<N>(
+    fn down(
         &mut self,
         depth: usize,
         moves: Vec<DirectionalKeypadTile>,
-        count: &mut usize,
-    ) 
-        where N: MovesBetween<NumericKeypadTile, DirectionalKeypadTile>,
-            N: MovesBetween<DirectionalKeypadTile, DirectionalKeypadTile>
+    ) -> usize 
     {
-        if depth > 0 {
+        if depth > 0 {            
+            let mut total = 0;
             for next_level_move in moves {
                 let robot = &self.directional[depth - 1];
-                let robot_current_pos = robot.current();
-                let mut next_level_moves_required =
-                    N::moves_to(robot_current_pos.clone(), next_level_move.clone());
-                next_level_moves_required.push(DirectionalKeypadTile::A);
+                let robot_current_pos = robot.current().clone();
 
+                if let Some(cached) = self.move_cache.get(&(depth, robot_current_pos.clone(), next_level_move.clone())) {
+                    // seen move before
+                    total += cached;
+                } else {
+                    // make move and store
+
+                    // try cols first moves
+                    let cols_first_count = {
+                        let mut cols_first_moves = ColumnsFirst::moves_to(robot_current_pos.clone(), next_level_move.clone());
+                        cols_first_moves.push(DirectionalKeypadTile::A);
+                        self.down(depth - 1, cols_first_moves.clone())
+                    };
+
+                    // then rows first moves
+                    let rows_first_count = {
+                        let mut rows_first_moves = RowsFirst::moves_to(robot_current_pos.clone(), next_level_move.clone());
+                        rows_first_moves.push(DirectionalKeypadTile::A);
+                        self.down(depth - 1, rows_first_moves)
+                    };
+
+                    // take the min from both
+                    let child_count = cols_first_count.min(rows_first_count);
+
+                    // let mut next_level_moves_required = N::moves_to(robot_current_pos.clone(), next_level_move.clone());
+                    // next_level_moves_required.push(DirectionalKeypadTile::A);
+                    // let child_count = self.down::<N>(depth - 1, next_level_moves_required);
+                    total += child_count;
+                    self.move_cache.insert((depth, robot_current_pos.clone(), next_level_move.clone()), child_count);
+                }
                 self.directional[depth - 1].position = next_level_move.position();
                 assert!(self.directional[depth - 1].current() != &DirectionalKeypadTile::Blank);
-
-                self.down::<N>(depth - 1, next_level_moves_required, count);
             }
+            total
         } else {
             // we're at the bottom - these are the moves we want
-            *count += moves.len()
+            moves.len()
         }
     }
 
@@ -719,11 +736,11 @@ mod tests {
     fn test_numeric_press_379a() {
         let mut chain: RobotChain<2> = RobotChain::default();
         let mut count = 0;
-        count += chain.press::<RowsFirst>(NumericKeypadTile::Number(3));
-        count += chain.press::<RowsFirst>(NumericKeypadTile::Number(7));
-        count += chain.press::<RowsFirst>(NumericKeypadTile::Number(9));
-        count += chain.press::<RowsFirst>(NumericKeypadTile::A);
-        assert_eq!(68, count);
+        count += chain.press(NumericKeypadTile::Number(3));
+        count += chain.press(NumericKeypadTile::Number(7));
+        count += chain.press(NumericKeypadTile::Number(9));
+        count += chain.press(NumericKeypadTile::A);
+        assert_eq!(64, count);
         // debug_moves(&all);
     }
 
@@ -749,7 +766,7 @@ mod tests {
     fn input_pt1() {
         let test_input = include_str!("input.txt");
         let pt1 = part1(test_input);
-        assert!(pt1 < 189174, "{:?} > 189174", pt1);
+        // assert!(pt1 < 189174, "{:?} > 189174", pt1);
         assert_eq!(184718, pt1);
     }
 
@@ -771,6 +788,10 @@ mod tests {
     #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
+        let result = part2(test_input);
+        // too high
+        assert!(result < 261109466494272);
+        assert!(result < 235624901119705);
         assert_eq!(0, part2(test_input));
     }
 }
