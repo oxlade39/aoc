@@ -55,6 +55,7 @@ enum DirectionalKeypadTile {
 
 #[derive(Debug)]
 struct NumericSequence([NumericKeypadTile; 4]);
+
 struct Input(Vec<NumericSequence>);
 
 impl FromStr for Input {
@@ -170,20 +171,15 @@ impl fmt::Display for DirectionalKeypadTile {
 }
 
 #[derive(Clone)]
-struct NumericKeypadRobot {
-    grid: Grid<NumericKeypadTile>,
+struct KeypadRobot<T> 
+    where T: Clone + FromChar,
+{
+    grid: Grid<T>,
     position: GridPosition,
-    move_queue: Vec<NumericKeypadTile>,
+    move_queue: Vec<T>,
 }
 
-#[derive(Clone)]
-struct DirectionalKeypadRobot {
-    grid: Grid<DirectionalKeypadTile>,
-    position: GridPosition,
-    move_queue: Vec<DirectionalKeypadTile>,
-}
-
-impl Default for NumericKeypadRobot {
+impl Default for KeypadRobot<NumericKeypadTile> {
     fn default() -> Self {
         let grid = Grid {
             rows: vec![
@@ -219,7 +215,7 @@ impl Default for NumericKeypadRobot {
     }
 }
 
-impl Default for DirectionalKeypadRobot {
+impl Default for KeypadRobot<DirectionalKeypadTile> {
     fn default() -> Self {
         let grid = Grid {
             rows: vec![
@@ -247,9 +243,9 @@ impl Default for DirectionalKeypadRobot {
 
 #[derive(Clone)]
 struct RobotChain<const N: usize> {
-    directional: [DirectionalKeypadRobot; N],
+    directional: [KeypadRobot<DirectionalKeypadTile>; N],
     move_cache: HashMap<(usize, DirectionalKeypadTile, DirectionalKeypadTile), usize>,
-    numeric: NumericKeypadRobot,
+    numeric: KeypadRobot<NumericKeypadTile>,
 }
 
 impl<const N: usize> Default for RobotChain<N> {
@@ -262,17 +258,15 @@ impl<const N: usize> Default for RobotChain<N> {
     }
 }
 
-impl NumericKeypadRobot {
-    fn current(&self) -> &NumericKeypadTile {
+impl<T> KeypadRobot<T> 
+    where T: Clone + FromChar,
+{
+    fn current(&self) -> &T {
         self.grid.at(&self.position)
     }
 }
 
-impl DirectionalKeypadRobot {
-    fn current(&self) -> &DirectionalKeypadTile {
-        self.grid.at(&self.position)
-    }
-
+impl KeypadRobot<DirectionalKeypadTile> {
     fn flush_moves(&mut self) -> &DirectionalKeypadTile {
         for m in &self.move_queue {
             let new_pos = match m {
@@ -312,14 +306,14 @@ fn debug_reverse_moves(txt: &str) {
 }
 
 trait MovesBetween<T, M> {
-    fn moves_to(from: T, to: T) -> Vec<M>;
+    fn moves_between(from: T, to: T) -> Vec<M>;
 }
 
 struct ColumnsFirst;
 struct RowsFirst;
 
 impl MovesBetween<DirectionalKeypadTile, DirectionalKeypadTile> for RowsFirst {
-    fn moves_to(
+    fn moves_between(
         from: DirectionalKeypadTile,
         to: DirectionalKeypadTile,
     ) -> Vec<DirectionalKeypadTile> {
@@ -374,7 +368,7 @@ impl MovesBetween<DirectionalKeypadTile, DirectionalKeypadTile> for RowsFirst {
 }
 
 impl MovesBetween<DirectionalKeypadTile, DirectionalKeypadTile> for ColumnsFirst {
-    fn moves_to(
+    fn moves_between(
         from: DirectionalKeypadTile,
         to: DirectionalKeypadTile,
     ) -> Vec<DirectionalKeypadTile> {
@@ -430,7 +424,7 @@ impl MovesBetween<DirectionalKeypadTile, DirectionalKeypadTile> for ColumnsFirst
 }
 
 impl MovesBetween<NumericKeypadTile, DirectionalKeypadTile> for ColumnsFirst {
-    fn moves_to(from: NumericKeypadTile, to: NumericKeypadTile) -> Vec<DirectionalKeypadTile> {
+    fn moves_between(from: NumericKeypadTile, to: NumericKeypadTile) -> Vec<DirectionalKeypadTile> {
         match (from, to) {
             (NumericKeypadTile::Number(7), NumericKeypadTile::Number(0)) => vec![
                 DirectionalKeypadTile::Right,
@@ -532,7 +526,7 @@ impl MovesBetween<NumericKeypadTile, DirectionalKeypadTile> for ColumnsFirst {
 }
 
 impl MovesBetween<NumericKeypadTile, DirectionalKeypadTile> for RowsFirst {
-    fn moves_to(from: NumericKeypadTile, to: NumericKeypadTile) -> Vec<DirectionalKeypadTile> {
+    fn moves_between(from: NumericKeypadTile, to: NumericKeypadTile) -> Vec<DirectionalKeypadTile> {
         match (from, to) {
             (NumericKeypadTile::Number(7), NumericKeypadTile::Number(0)) => vec![
                 DirectionalKeypadTile::Right,
@@ -647,14 +641,14 @@ impl<const R: usize> RobotChain<R> {
         // try cols first moves
         let cols_first_count = {
             let mut cols_first_moves =
-                ColumnsFirst::moves_to(current_numeric_pos.clone(), to.clone());
+                ColumnsFirst::moves_between(current_numeric_pos.clone(), to.clone());
             cols_first_moves.push(DirectionalKeypadTile::A);
             self.down(R, cols_first_moves.clone())
         };
 
         // then rows first moves
         let rows_first_count = {
-            let mut rows_first_moves = RowsFirst::moves_to(current_numeric_pos.clone(), to.clone());
+            let mut rows_first_moves = RowsFirst::moves_between(current_numeric_pos.clone(), to.clone());
             rows_first_moves.push(DirectionalKeypadTile::A);
             self.down(R, rows_first_moves)
         };
@@ -687,7 +681,7 @@ impl<const R: usize> RobotChain<R> {
 
                     // try cols first moves
                     let cols_first_count = {
-                        let mut cols_first_moves = ColumnsFirst::moves_to(
+                        let mut cols_first_moves = ColumnsFirst::moves_between(
                             robot_current_pos.clone(),
                             next_level_move.clone(),
                         );
@@ -698,7 +692,7 @@ impl<const R: usize> RobotChain<R> {
                     // then rows first moves
                     let rows_first_count = {
                         let mut rows_first_moves =
-                            RowsFirst::moves_to(robot_current_pos.clone(), next_level_move.clone());
+                            RowsFirst::moves_between(robot_current_pos.clone(), next_level_move.clone());
                         rows_first_moves.push(DirectionalKeypadTile::A);
                         self.down(depth - 1, rows_first_moves)
                     };
@@ -774,19 +768,19 @@ mod tests {
     fn test_moves() {
         let from = NumericKeypadTile::Number(0);
         assert_eq!(
-            RowsFirst::moves_to(from.clone(), NumericKeypadTile::Number(1)),
+            RowsFirst::moves_between(from.clone(), NumericKeypadTile::Number(1)),
             vec![DirectionalKeypadTile::Up, DirectionalKeypadTile::Left,]
         );
         assert_eq!(
-            RowsFirst::moves_to(from.clone(), NumericKeypadTile::Number(2)),
+            RowsFirst::moves_between(from.clone(), NumericKeypadTile::Number(2)),
             vec![DirectionalKeypadTile::Up,]
         );
         assert_eq!(
-            RowsFirst::moves_to(from.clone(), NumericKeypadTile::Number(3)),
+            RowsFirst::moves_between(from.clone(), NumericKeypadTile::Number(3)),
             vec![DirectionalKeypadTile::Up, DirectionalKeypadTile::Right,]
         );
         assert_eq!(
-            RowsFirst::moves_to(from.clone(), NumericKeypadTile::Number(9)),
+            RowsFirst::moves_between(from.clone(), NumericKeypadTile::Number(9)),
             vec![
                 DirectionalKeypadTile::Up,
                 DirectionalKeypadTile::Up,
@@ -821,16 +815,15 @@ mod tests {
         let mut chain: RobotChain<2> = RobotChain::default();
         let test_input = include_str!("input.test.txt");
         let example: Input = test_input.parse().unwrap();
-        let mut itr = example.0.into_iter();
+        let results: Vec<_> = example.0.into_iter().map(|n| n.complexity(&mut chain)).collect();
         // 68 * 29, 60 * 980, 68 * 179, 64 * 456, and 64 * 379
-        assert_eq!(68 * 29, itr.next().unwrap().complexity(&mut chain));
-        assert_eq!(60 * 980, itr.next().unwrap().complexity(&mut chain));
-        assert_eq!(68 * 179, itr.next().unwrap().complexity(&mut chain));
-        assert_eq!(64 * 456, itr.next().unwrap().complexity(&mut chain));
-        let problem = itr.next().unwrap();
-        assert_eq!(64 * 379, problem.complexity(&mut chain));
-        assert_eq!(true, itr.next().is_none());
-
+        assert_eq!(results, vec![
+            68 * 29, 
+            60 * 980, 
+            68 * 179, 
+            64 * 456, 
+            64 * 379
+        ]);
         assert_eq!(126384, part1(test_input));
     }
 
@@ -853,7 +846,6 @@ mod tests {
     #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
-        let result = part2(test_input);
         assert_eq!(228800606998554, part2(test_input));
     }
 }
