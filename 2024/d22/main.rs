@@ -46,13 +46,7 @@ fn part2(txt: &str) -> i64 {
         }
     }
 
-    let (_, v) = items
-        .iter()
-        .sorted_by_key(|(_, &v)| Reverse(v))
-        .take(1)
-        .next()
-        .unwrap();
-    *v
+    *items.values().max().unwrap()
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
