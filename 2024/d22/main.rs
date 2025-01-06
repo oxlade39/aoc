@@ -1,6 +1,9 @@
 use core::str;
 use std::{
-    cmp::Reverse, i64, iter::{self, Sum}, ops::Add, time::Instant
+    i64,
+    iter::{self, Sum},
+    ops::Add,
+    time::Instant,
 };
 
 use aoclib::timing;
