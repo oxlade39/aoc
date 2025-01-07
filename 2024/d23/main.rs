@@ -140,7 +140,7 @@ where
     let mut key_set: HashSet<T> = graph.keys().cloned().collect();
     bron_kerbosch(
         graph,
-        &HashSet::new(),
+        HashSet::new(),
         &mut key_set,
         HashSet::new(),
         &mut cliques,
@@ -155,7 +155,7 @@ where
 /// and https://en.wikipedia.org/wiki/Clique_(graph_theory)
 fn bron_kerbosch<T>(
     graph: &HashMap<T, HashSet<T>>,
-    r: &HashSet<T>,
+    r: HashSet<T>,
     p: &mut HashSet<T>,
     x: HashSet<T>,
     cliques: &mut Vec<HashSet<T>>,
@@ -174,7 +174,7 @@ fn bron_kerbosch<T>(
         let v_connections = graph.get(&v).unwrap();
         let mut p_inter: HashSet<_> = p.intersection(v_connections).cloned().collect();
         let x_inter: HashSet<_> = x.intersection(v_connections).cloned().collect();
-        bron_kerbosch(graph, &union, &mut p_inter, x_inter, cliques);
+        bron_kerbosch(graph, union, &mut p_inter, x_inter, cliques);
     }
 }
 
