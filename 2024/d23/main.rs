@@ -1,7 +1,13 @@
 use core::str;
-use std::{i64, str::FromStr, time::Instant, usize};
+use std::{
+    fmt::{Display, Write},
+    hash::Hash,
+    str::FromStr,
+    time::Instant,
+    usize,
+};
 
-use aoclib::{input, timing};
+use aoclib::timing;
 use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
 
@@ -51,11 +57,7 @@ fn part1(txt: &str) -> usize {
                 if let Some(child_connection) = all_connections.get(child) {
                     let inter: HashSet<_> = connections.intersection(child_connection).collect();
                     for item in inter {
-                        threes.insert(LanParty::new([
-                            ch.clone(),
-                            child.clone(),
-                            item.clone()
-                        ]));
+                        threes.insert(LanParty::new([ch.clone(), child.clone(), item.clone()]));
                     }
                 }
             }
@@ -65,13 +67,40 @@ fn part1(txt: &str) -> usize {
     threes.len()
 }
 
+fn part2(txt: &str) -> String {
+    let mut all_connections: HashMap<Computer, HashSet<Computer>> = HashMap::new();
 
-fn part2(txt: &str) -> i64 {
-    0
+    for Connection([left, right]) in txt.lines().map(|l| l.parse::<Connection>().unwrap()) {
+        // left to right
+        if let Some(existing) = all_connections.get_mut(&left) {
+            existing.insert(right.clone());
+        } else {
+            all_connections.insert(left.clone(), HashSet::from_iter(vec![right.clone()]));
+        }
+
+        // right to left
+        if let Some(existing) = all_connections.get_mut(&right) {
+            existing.insert(left.clone());
+        } else {
+            all_connections.insert(right.clone(), HashSet::from_iter(vec![left.clone()]));
+        }
+    }
+
+    largest_clique(&all_connections)
+        .into_iter()
+        .sorted()
+        .join(",")
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 struct Computer([char; 2]);
+
+impl Display for Computer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_char(self.0[0])
+            .and_then(|_| f.write_char(self.0[1]))
+    }
+}
 
 impl Computer {
     fn maybe_chief_historian(&self) -> bool {
@@ -103,6 +132,52 @@ impl FromStr for Connection {
     }
 }
 
+fn largest_clique<T>(graph: &HashMap<T, HashSet<T>>) -> HashSet<T>
+where
+    T: Clone + Hash + Eq,
+{
+    let mut cliques = Vec::new();
+    let mut key_set: HashSet<T> = graph.keys().cloned().collect();
+    bron_kerbosch(
+        graph,
+        &HashSet::new(),
+        &mut key_set,
+        HashSet::new(),
+        &mut cliques,
+    );
+
+    cliques.sort_by_key(|clique| clique.len());
+    cliques.pop().unwrap()
+}
+
+/// The bron_kerbosch algo, for finding all maximal cliques
+/// See https://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm
+/// and https://en.wikipedia.org/wiki/Clique_(graph_theory)
+fn bron_kerbosch<T>(
+    graph: &HashMap<T, HashSet<T>>,
+    r: &HashSet<T>,
+    p: &mut HashSet<T>,
+    x: HashSet<T>,
+    cliques: &mut Vec<HashSet<T>>,
+) where
+    T: Clone + Hash + Eq,
+{
+    if p.is_empty() && x.is_empty() {
+        cliques.push(r.clone());
+    }
+
+    while let Some(v) = p.iter().next().cloned().and_then(|item| p.take(&item)) {
+        let union: HashSet<_> = r
+            .union(&HashSet::from_iter(vec![v.clone()]))
+            .cloned()
+            .collect();
+        let v_connections = graph.get(&v).unwrap();
+        let mut p_inter: HashSet<_> = p.intersection(v_connections).cloned().collect();
+        let x_inter: HashSet<_> = x.intersection(v_connections).cloned().collect();
+        bron_kerbosch(graph, &union, &mut p_inter, x_inter, cliques);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::*;
@@ -122,12 +197,12 @@ mod tests {
     #[test]
     fn test_input_pt2() {
         let test_input = include_str!("input.test.txt");
-        assert_eq!(0, part2(test_input));
+        assert_eq!("co,de,ka,ta", part2(test_input));
     }
 
     #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part2(test_input));
+        assert_eq!("hf,hz,lb,lm,ls,my,ps,qu,ra,uc,vi,xz,yv", part2(test_input));
     }
 }
