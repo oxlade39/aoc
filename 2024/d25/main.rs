@@ -67,29 +67,6 @@ impl Schematic {
 
         true
     }
-
-    fn invert(&self) -> Schematic {
-        match self {
-            Schematic::Lock(heights) => {
-                Schematic::Key([
-                    7 - heights[0],
-                    7 - heights[1],
-                    7 - heights[2],
-                    7 - heights[3],
-                    7 - heights[4],
-                ])
-            },
-            Schematic::Key(heights) => {
-                Schematic::Lock([
-                    7 - heights[0],
-                    7 - heights[1],
-                    7 - heights[2],
-                    7 - heights[3],
-                    7 - heights[4],
-                ])
-            },
-        }
-    }
 }
 
 impl FromStr for Schematic {
@@ -137,16 +114,7 @@ mod tests {
             Schematic::Key([4, 1, 3, 1, 2]),
         ])
     }
-
-    #[test]
-    fn test_invert() {
-        let lock = Schematic::Lock([1, 6, 4, 5, 4]);
-        let key = lock.invert();
-        assert_eq!(key, Schematic::Key([
-            6, 1, 3, 2, 3
-        ]));
-    }
-
+    
     #[test]
     fn test_fits() {
         let lock = Schematic::Lock([1, 6, 4, 5, 4]);
