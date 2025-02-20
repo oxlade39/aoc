@@ -106,7 +106,7 @@ impl ModuleConfig {
                         inbox.push_back((BROADCASTER.to_owned(), c.clone(), pulse));
                     }
                 }
-                Module::FlipFlop(name, ref mut state, children) => {
+                Module::FlipFlop(name, state, children) => {
                     // Flip-flop modules (prefix %) are either on or off;
                     // they are initially off.
                     // If a flip-flop module receives a high pulse, it is ignored and nothing happens.

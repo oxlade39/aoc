@@ -117,7 +117,7 @@ impl Grid {
         }
         let mut flashed: HashSet<(i32, i32)> = HashSet::new();
         loop {
-            if let Some(item) = to_flash.clone().iter().next() {
+            match to_flash.clone().iter().next() { Some(item) => {
                 let row = item.0;
                 let col = item.1;
                 to_flash.remove(item);
@@ -132,9 +132,9 @@ impl Grid {
                         }
                     }
                 }
-            } else {
+            } _ => {
                 break;
-            }
+            }}
         }
 
         for flasher in &flashed {
