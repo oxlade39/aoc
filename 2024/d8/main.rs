@@ -65,11 +65,11 @@ fn antenna_positions(
             match t {
                 Tile::Antenna(c) => {
                     antenna_position_set.insert(p.clone());
-                    if let Some(existing) = antenna_positions.get_mut(c) {
+                    match antenna_positions.get_mut(c) { Some(existing) => {
                         existing.insert(p);
-                    } else {
+                    } _ => {
                         antenna_positions.insert(*c, HashSet::from_iter(vec![p]));
-                    }
+                    }}
                 }
                 Tile::Space => {
                     // noop

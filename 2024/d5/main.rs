@@ -96,17 +96,17 @@ impl FromStr for PageOrdering {
             let left = order[0];
             let right = order[1];
             
-            if let Some(existing) = befores.get_mut(&right) {
+            match befores.get_mut(&right) { Some(existing) => {
                 existing.insert(left);
-            } else {
+            } _ => {
                 befores.insert(right, HashSet::from_iter([left]));
-            }
+            }}
 
-            if let Some(existing) = afters.get_mut(&left) {
+            match afters.get_mut(&left) { Some(existing) => {
                 existing.insert(right);
-            } else {
+            } _ => {
                 afters.insert(left, HashSet::from_iter([right]));
-            }
+            }}
         }
         Ok(Self{ befores, afters })
     }

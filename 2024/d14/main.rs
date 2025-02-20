@@ -71,11 +71,11 @@ impl Bathroom {
     fn place(&self, robots: &Vec<Robot>) -> HashMap<Point, HashSet<Robot>> {
         let mut robot_positions: HashMap<Point, HashSet<Robot>> = HashMap::new();
         for robot in robots {
-            if let Some(existing) = robot_positions.get_mut(&robot.pos) {
+            match robot_positions.get_mut(&robot.pos) { Some(existing) => {
                 existing.insert(robot.clone());
-            } else {
+            } _ => {
                 robot_positions.insert(robot.pos.clone(), HashSet::from_iter(vec![robot.clone()]));
-            }
+            }}
         }
         robot_positions
     }
@@ -153,11 +153,11 @@ fn print_bathroom(b: &Bathroom, r: &Vec<Robot>) {
     for y in 0..b.0.height() {
         for x in 0..b.0.width() {
             let p = Point::new(x, y);
-            if let Some(here) = placed.get(&p) {
+            match placed.get(&p) { Some(here) => {
                 print!("{}", here.len());
-            } else {
+            } _ => {
                 print!(".");
-            }
+            }}
         }
         println!("");
     }

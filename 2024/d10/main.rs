@@ -30,11 +30,11 @@ fn part1(txt: &str) -> usize {
         let trailhead = next(start, &g, &mut vec![]);
         if !trailhead.is_empty() {
             let ends = trailhead.iter().map(|path| path.last().unwrap().clone()).collect();
-            if let Some(existing) = unique.get_mut(&start) {
+            match unique.get_mut(&start) { Some(existing) => {
                 existing.extend(ends);
-            } else {
+            } _ => {
                 unique.insert(start, ends);
-            }
+            }}
         }
     }
     unique.values().map(|p| p.len()).sum()

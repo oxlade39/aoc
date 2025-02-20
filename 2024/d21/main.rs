@@ -669,14 +669,14 @@ impl<const R: usize> RobotChain<R> {
                 let robot = &self.directional[depth - 1];
                 let robot_current_pos = robot.current().clone();
 
-                if let Some(cached) = self.move_cache.get(&(
+                match self.move_cache.get(&(
                     depth,
                     robot_current_pos.clone(),
                     next_level_move.clone(),
-                )) {
+                )) { Some(cached) => {
                     // seen move before
                     total += cached;
-                } else {
+                } _ => {
                     // make move and store
 
                     // try cols first moves
@@ -705,7 +705,7 @@ impl<const R: usize> RobotChain<R> {
                         (depth, robot_current_pos.clone(), next_level_move.clone()),
                         child_count,
                     );
-                }
+                }}
                 self.directional[depth - 1].position = next_level_move.position();
                 assert!(self.directional[depth - 1].current() != &DirectionalKeypadTile::Blank);
             }

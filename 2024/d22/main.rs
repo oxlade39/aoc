@@ -40,11 +40,11 @@ fn part2(txt: &str) -> i64 {
 
         for ps in sn.price_sequence().take(2000) {
             if seen.insert(ps.deltas.clone()) {
-                if let Some(existing) = items.get_mut(&ps.deltas) {
+                match items.get_mut(&ps.deltas) { Some(existing) => {
                     *existing += ps.price() as i64;
-                } else {
+                } _ => {
                     items.insert(ps.deltas.clone(), ps.price() as i64);
-                }
+                }}
             }
         }
     }
@@ -69,12 +69,12 @@ impl SecretNumber {
         (*n % 10) as i8
     }
 
-    fn prices(&self) -> impl Iterator<Item = i8> {
+    fn prices(&self) -> impl Iterator<Item = i8> + use<> {
         itertools::chain(iter::repeat_n(self.clone(), 1), self.clone().into_iter())
             .map(|n| n.ones_digit())
     }
 
-    fn price_sequence(&self) -> impl Iterator<Item = PriceSequence> {
+    fn price_sequence(&self) -> impl Iterator<Item = PriceSequence> + use<> {
         self.prices().tuple_windows().map(|seq| PriceSequence {
             prices: seq,
             deltas: (seq.1 - seq.0, seq.2 - seq.1, seq.3 - seq.2, seq.4 - seq.3),

@@ -95,19 +95,19 @@ fn first_blockage(
         if upper - lower <= 1 {
             return format!("{},{}", points[bytes_pos].x, points[bytes_pos].y);
         }
-        if let Some(_) = astar(
+        match astar(
             &state, 
             &cost, 
             &Position(end.clone()), 
             Position(start.clone()), 
             |p| p.0 == end
-        ) {
+        ) { Some(_) => {
             // if we find a path - update the lower bound to the tested point
             lower = bytes_pos;
-        } else {
+        } _ => {
             // if we don't find a path - update the upper bound to the tested point
             upper = bytes_pos;
-        }
+        }}
     }
 }
 

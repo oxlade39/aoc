@@ -166,19 +166,19 @@ impl Plot {
 
         let mut tops: HashMap<usize, Vec<GridPosition>> = HashMap::new();
         for p in top_sides {
-            if let Some(existing) = tops.get_mut(&p.row) {
+            match tops.get_mut(&p.row) { Some(existing) => {
                 existing.push(p.clone());
-            } else {
+            } _ => {
                 tops.insert(p.row, vec![p.clone()]);
-            }
+            }}
         }
         let mut bottoms: HashMap<usize, Vec<GridPosition>> = HashMap::new();
         for p in bottom_sides {
-            if let Some(existing) = bottoms.get_mut(&p.row) {
+            match bottoms.get_mut(&p.row) { Some(existing) => {
                 existing.push(p.clone());
-            } else {
+            } _ => {
                 bottoms.insert(p.row, vec![p.clone()]);
-            }
+            }}
         }
 
         let mut hs = 0;
@@ -204,19 +204,19 @@ impl Plot {
 
         let mut lefts: HashMap<usize, Vec<GridPosition>> = HashMap::new();
         for p in left_sides {
-            if let Some(existing) = lefts.get_mut(&p.col) {
+            match lefts.get_mut(&p.col) { Some(existing) => {
                 existing.push(p.clone());
-            } else {
+            } _ => {
                 lefts.insert(p.col, vec![p.clone()]);
-            }
+            }}
         }
         let mut rights: HashMap<usize, Vec<GridPosition>> = HashMap::new();
         for p in right_sides {
-            if let Some(existing) = rights.get_mut(&p.col) {
+            match rights.get_mut(&p.col) { Some(existing) => {
                 existing.push(p.clone());
-            } else {
+            } _ => {
                 rights.insert(p.col, vec![p.clone()]);
-            }
+            }}
         }
         
         let mut vs = 0;

@@ -45,13 +45,13 @@ fn parse(txt: &str) -> (HashMap<char, Vec<TowelPattern>>, Vec<&str>) {
 
     for t in towels {
         let fc = t.0.chars().next().unwrap();
-        if let Some(existing) = patterns.get_mut(&fc) {
+        match patterns.get_mut(&fc) { Some(existing) => {
             existing.push(t);
-        } else {
+        } _ => {
             let mut bh = Vec::new();
             bh.push(t);
             patterns.insert(fc, bh);
-        }
+        }}
     }
     let to_check: Vec<_> = to_check.lines().collect();
 
