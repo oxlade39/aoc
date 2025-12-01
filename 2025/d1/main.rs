@@ -1,8 +1,7 @@
 use core::str;
-use std::{i64, str::FromStr, time::Instant, usize};
+use std::{str::FromStr, time::Instant};
 
-use aoclib::{input, timing};
-use itertools::Itertools;
+use aoclib::timing;
 
 fn main() {
     let input = include_str!("input.txt");
@@ -103,15 +102,8 @@ impl Counter2 {
         let next_signum = next.signum();
 
         let sign_change = match (prev_signum, next_signum) {
-            (0, 0) => 0,
-            (0, 1) => 0,
-            (0, -1) => 0,
             (1, 0) => 1,
-            (1, 1) => 0,
             (1, -1) => 1,
-            (-1, 0) => 1,
-            (-1, 1) => 1,
-            (-1, -1) => 0,
             (_, _) => 0,
         };
 
@@ -152,8 +144,7 @@ mod tests {
     fn test_input_pt1() {
         let mut counter = Counter(Dial(50), 0);
         let test_input = include_str!("input.test.txt");
-        let turns = test_input.lines().map(|l| l.parse::<Turn>().unwrap()).collect_vec();
-        for turn in turns {
+        for turn in test_input.lines().map(|l| l.parse::<Turn>().unwrap()) {
             // dbg!("{:?} turning {:?}", &counter, &turn);
             counter = counter.step(turn);
             // dbg!("{:?}", &counter);
@@ -171,8 +162,7 @@ mod tests {
     fn test_input_pt2() {
         let mut counter = Counter2(Dial(50), 0);
         let test_input = include_str!("input.test.txt");
-        let turns = test_input.lines().map(|l| l.parse::<Turn>().unwrap()).collect_vec();
-        for turn in turns {
+        for turn in test_input.lines().map(|l| l.parse::<Turn>().unwrap()) {
             // println!("{:?} turning {:?}", &counter, &turn);
             counter = counter.step(turn);
             // println!("{:?}", &counter);
