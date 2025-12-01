@@ -13,7 +13,6 @@ fn main() {
 }
 
 fn part1(txt: &str) -> i64 {
-    let mut counter = Counter(Dial(50), 0);
     let counter: Counter = txt.lines().map(|l| l.parse::<Turn>().unwrap())
         .fold(Counter(Dial(50), 0), |accum, item| accum.step(item));
 
@@ -21,7 +20,10 @@ fn part1(txt: &str) -> i64 {
 }
 
 fn part2(txt: &str) -> i64 {
-    0
+    let counter: Counter2 = txt.lines().map(|l| l.parse::<Turn>().unwrap())
+        .fold(Counter2(Dial(50), 0), |accum, item| accum.step(item));
+
+    counter.1
 }
 
 #[derive(Debug, PartialEq)]
@@ -83,6 +85,41 @@ impl Counter {
     }
 }
 
+#[derive(Debug, PartialEq)]
+struct Counter2(Dial, i64);
+
+impl Counter2 {
+    fn step(&self, turn: Turn) -> Counter2 {
+        let dial = &self.0;
+        let count = self.1;
+
+        let next = match turn {
+            Turn::Left(n) => (dial.0 as i64) - n as i64,
+            Turn::Right(n) => (dial.0 as i64) + n as i64,
+        };
+        let passes = next / 100;
+
+        let prev_signum = (dial.0 as i64).signum();
+        let next_signum = next.signum();
+
+        let sign_change = match (prev_signum, next_signum) {
+            (0, 0) => 0,
+            (0, 1) => 0,
+            (0, -1) => 0,
+            (1, 0) => 1,
+            (1, 1) => 0,
+            (1, -1) => 1,
+            (-1, 0) => 1,
+            (-1, 1) => 1,
+            (-1, -1) => 0,
+            (_, _) => 0,
+        };
+
+        // println!("next: {}, passes: {}, sign change {}", next, passes, sign_change);
+        Counter2(Dial(next.rem_euclid(100) as u64), count + passes.abs() + sign_change)
+    }
+}
+
 #[cfg(test)]
 mod tests {    
     use crate::*;
@@ -95,6 +132,20 @@ mod tests {
         assert_eq!(Dial(0), d.left(19));
         assert_eq!(Dial(99), Dial(0).left(1));
         assert_eq!(Dial(0), Dial(52).right(48));   
+    }
+
+    #[test]
+    fn test_big_turn() {
+        let c = Counter2(Dial(50), 0);
+        let c1 = c.step(Turn::Right(1000));
+        assert_eq!(10, c1.1);   
+    }
+
+    #[test]
+    fn test_land_zero() {
+        let c = Counter2(Dial(0), 0);
+        let c1 = c.step(Turn::Left(1));
+        assert_eq!(0, c1.1);   
     }
 
     #[test]
@@ -118,13 +169,20 @@ mod tests {
 
     #[test]
     fn test_input_pt2() {
+        let mut counter = Counter2(Dial(50), 0);
         let test_input = include_str!("input.test.txt");
-        assert_eq!(0, part1(test_input));
+        let turns = test_input.lines().map(|l| l.parse::<Turn>().unwrap()).collect_vec();
+        for turn in turns {
+            // println!("{:?} turning {:?}", &counter, &turn);
+            counter = counter.step(turn);
+            // println!("{:?}", &counter);
+        }
+        assert_eq!(6, counter.1);
     }
 
     #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part2(test_input));
+        assert_eq!(6412, part2(test_input));
     }
 }
