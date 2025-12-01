@@ -12,14 +12,18 @@ fn main() {
 }
 
 fn part1(txt: &str) -> i64 {
-    let counter: Counter = txt.lines().map(|l| l.parse::<Turn>().unwrap())
+    let counter: Counter = txt
+        .lines()
+        .map(|l| l.parse::<Turn>().unwrap())
         .fold(Counter(Dial(50), 0), |accum, item| accum.step(item));
 
     counter.1
 }
 
 fn part2(txt: &str) -> i64 {
-    let counter: Counter2 = txt.lines().map(|l| l.parse::<Turn>().unwrap())
+    let counter: Counter2 = txt
+        .lines()
+        .map(|l| l.parse::<Turn>().unwrap())
         .fold(Counter2(Dial(50), 0), |accum, item| accum.step(item));
 
     counter.1
@@ -49,7 +53,6 @@ impl FromStr for Turn {
 }
 
 impl Dial {
-    
     fn left(&self, amount: u64) -> Dial {
         let current = self.0 as i64;
         let amount = amount as i64;
@@ -75,11 +78,7 @@ impl Counter {
             Turn::Left(n) => dial.left(n),
             Turn::Right(n) => dial.right(n),
         };
-        let increment = if after == Dial(0) {
-            count + 1
-        } else {
-            count
-        };
+        let increment = if after == Dial(0) { count + 1 } else { count };
         Counter(after, increment)
     }
 }
@@ -108,12 +107,15 @@ impl Counter2 {
         };
 
         // println!("next: {}, passes: {}, sign change {}", next, passes, sign_change);
-        Counter2(Dial(next.rem_euclid(100) as u64), count + passes.abs() + sign_change)
+        Counter2(
+            Dial(next.rem_euclid(100) as u64),
+            count + passes.abs() + sign_change,
+        )
     }
 }
 
 #[cfg(test)]
-mod tests {    
+mod tests {
     use crate::*;
 
     #[test]
@@ -123,21 +125,21 @@ mod tests {
         assert_eq!(Dial(19), d);
         assert_eq!(Dial(0), d.left(19));
         assert_eq!(Dial(99), Dial(0).left(1));
-        assert_eq!(Dial(0), Dial(52).right(48));   
+        assert_eq!(Dial(0), Dial(52).right(48));
     }
 
     #[test]
     fn test_big_turn() {
         let c = Counter2(Dial(50), 0);
         let c1 = c.step(Turn::Right(1000));
-        assert_eq!(10, c1.1);   
+        assert_eq!(10, c1.1);
     }
 
     #[test]
     fn test_land_zero() {
         let c = Counter2(Dial(0), 0);
         let c1 = c.step(Turn::Left(1));
-        assert_eq!(0, c1.1);   
+        assert_eq!(0, c1.1);
     }
 
     #[test]
