@@ -12,3 +12,8 @@ hashbrown = { version = "0.15.2", features = ["rayon"] }
 [[bin]]
 name = "d1"
 path = "d1/main.rs"
+
+
+[[bin]]
+name = "d2"
+path = "d2/main.rs"
