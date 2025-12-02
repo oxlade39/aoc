@@ -1,7 +1,4 @@
-use std::{
-    iter::zip,
-    time::Instant,
-};
+use std::{iter::zip, time::Instant};
 
 use itertools::Itertools;
 

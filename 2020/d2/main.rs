@@ -61,12 +61,8 @@ impl PasswordValidator for Part2 {
         let mut password_chars = policy.password.chars();
         let lower_offset = (policy.lower - 1) as usize;
         let upper_offset = ((policy.upper - policy.lower) - 1) as usize;
-        let lower_char = password_chars
-            .nth(lower_offset)
-            .filter(|c| *c == policy.c);
-        let upper_char = password_chars
-            .nth(upper_offset)
-            .filter(|c| *c == policy.c);
+        let lower_char = password_chars.nth(lower_offset).filter(|c| *c == policy.c);
+        let upper_char = password_chars.nth(upper_offset).filter(|c| *c == policy.c);
 
         match (lower_char, upper_char) {
             (Some(_), None) => true,

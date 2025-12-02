@@ -40,11 +40,14 @@ fn part2(txt: &str) -> i64 {
 
         for ps in sn.price_sequence().take(2000) {
             if seen.insert(ps.deltas.clone()) {
-                match items.get_mut(&ps.deltas) { Some(existing) => {
-                    *existing += ps.price() as i64;
-                } _ => {
-                    items.insert(ps.deltas.clone(), ps.price() as i64);
-                }}
+                match items.get_mut(&ps.deltas) {
+                    Some(existing) => {
+                        *existing += ps.price() as i64;
+                    }
+                    _ => {
+                        items.insert(ps.deltas.clone(), ps.price() as i64);
+                    }
+                }
             }
         }
     }

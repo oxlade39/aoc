@@ -1,7 +1,12 @@
 use core::str;
 use std::{i64, time::Instant, usize};
 
-use aoclib::{cartesian::{Plane, Point, Transform, Vector}, distance::{Distance, ManhattenDistance}, shortest_path::{astar, Cost, Heuristic, Neighbours}, timing};
+use aoclib::{
+    cartesian::{Plane, Point, Transform, Vector},
+    distance::{Distance, ManhattenDistance},
+    shortest_path::{Cost, Heuristic, Neighbours, astar},
+    timing,
+};
 use hashbrown::HashSet;
 
 fn main() {
@@ -20,15 +25,12 @@ fn part2(txt: &str) -> String {
     first_blockage(txt, Point::new(70, 70))
 }
 
-fn min_steps(
-    txt: &str,
-    bytes: usize,
-    end: Point
-) -> i64 {
+fn min_steps(txt: &str, bytes: usize, end: Point) -> i64 {
     // invert y axis
     let end = Point::new(end.x, end.y * -1);
 
-    let points: HashSet<_> = txt.lines()
+    let points: HashSet<_> = txt
+        .lines()
         .take(bytes)
         .map(|l| {
             let (x, y) = l.split_once(",").unwrap();
@@ -39,9 +41,12 @@ fn min_steps(
         .collect();
 
     let start = Point::new(0, 0);
-    let memory_space = Plane { top_left: start.clone(), bottom_right: end.clone() };    
+    let memory_space = Plane {
+        top_left: start.clone(),
+        bottom_right: end.clone(),
+    };
 
-    let state = Part1State { 
+    let state = Part1State {
         memory_space,
         corrupted: points,
     };
@@ -49,24 +54,22 @@ fn min_steps(
     let cost = UnitCost;
 
     let path = astar(
-        &state, 
-        &cost, 
-        &Position(end.clone()), 
-        Position(start.clone()), 
-        |p| p.0 == end
+        &state,
+        &cost,
+        &Position(end.clone()),
+        Position(start.clone()),
+        |p| p.0 == end,
     );
 
     path.unwrap().total_cost
 }
 
-fn first_blockage(
-    txt: &str,
-    end: Point
-) -> String {
+fn first_blockage(txt: &str, end: Point) -> String {
     // invert y axis
     let end = Point::new(end.x, end.y * -1);
 
-    let points: Vec<_> = txt.lines()
+    let points: Vec<_> = txt
+        .lines()
         .map(|l| {
             let (x, y) = l.split_once(",").unwrap();
             let y: i64 = y.parse().unwrap();
@@ -76,7 +79,10 @@ fn first_blockage(
         .collect();
 
     let start = Point::new(0, 0);
-    let memory_space = Plane { top_left: start.clone(), bottom_right: end.clone() };    
+    let memory_space = Plane {
+        top_left: start.clone(),
+        bottom_right: end.clone(),
+    };
 
     let cost = UnitCost;
     // we could start at 1024 here but it makes the test harder and saving not significant
@@ -87,7 +93,7 @@ fn first_blockage(
         // binary search starting from the mid point
         let bytes_pos = lower + (upper - lower) / 2;
         let corrupted: HashSet<_> = points[0..bytes_pos].iter().cloned().collect();
-        let state = Part1State { 
+        let state = Part1State {
             memory_space: memory_space.clone(),
             corrupted: corrupted.clone(),
         };
@@ -96,18 +102,21 @@ fn first_blockage(
             return format!("{},{}", points[bytes_pos].x, points[bytes_pos].y);
         }
         match astar(
-            &state, 
-            &cost, 
-            &Position(end.clone()), 
-            Position(start.clone()), 
-            |p| p.0 == end
-        ) { Some(_) => {
-            // if we find a path - update the lower bound to the tested point
-            lower = bytes_pos;
-        } _ => {
-            // if we don't find a path - update the upper bound to the tested point
-            upper = bytes_pos;
-        }}
+            &state,
+            &cost,
+            &Position(end.clone()),
+            Position(start.clone()),
+            |p| p.0 == end,
+        ) {
+            Some(_) => {
+                // if we find a path - update the lower bound to the tested point
+                lower = bytes_pos;
+            }
+            _ => {
+                // if we don't find a path - update the upper bound to the tested point
+                upper = bytes_pos;
+            }
+        }
     }
 }
 
@@ -161,7 +170,7 @@ impl Heuristic<Position, i64> for Position {
 }
 
 #[cfg(test)]
-mod tests {    
+mod tests {
     use crate::*;
 
     #[test]

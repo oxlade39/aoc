@@ -66,7 +66,7 @@ impl Operation {
                 // format!("{}{}", x.0, x.1).parse().unwrap()
                 let right_digits = (x.1 as f64).log10().floor() as u32 + 1;
                 x.0 * 10_i64.pow(right_digits) + x.1
-            },
+            }
         }
     }
 }

@@ -25,18 +25,24 @@ fn part1(txt: &str) -> usize {
 
     for Connection([left, right]) in txt.lines().map(|l| l.parse::<Connection>().unwrap()) {
         // left to right
-        match all_connections.get_mut(&left) { Some(existing) => {
-            existing.insert(right.clone());
-        } _ => {
-            all_connections.insert(left.clone(), HashSet::from_iter(vec![right.clone()]));
-        }}
+        match all_connections.get_mut(&left) {
+            Some(existing) => {
+                existing.insert(right.clone());
+            }
+            _ => {
+                all_connections.insert(left.clone(), HashSet::from_iter(vec![right.clone()]));
+            }
+        }
 
         // right to left
-        match all_connections.get_mut(&right) { Some(existing) => {
-            existing.insert(left.clone());
-        } _ => {
-            all_connections.insert(right.clone(), HashSet::from_iter(vec![left.clone()]));
-        }}
+        match all_connections.get_mut(&right) {
+            Some(existing) => {
+                existing.insert(left.clone());
+            }
+            _ => {
+                all_connections.insert(right.clone(), HashSet::from_iter(vec![left.clone()]));
+            }
+        }
 
         // left may be Chief Historian
         if left.maybe_chief_historian() {
@@ -72,18 +78,24 @@ fn part2(txt: &str) -> String {
 
     for Connection([left, right]) in txt.lines().map(|l| l.parse::<Connection>().unwrap()) {
         // left to right
-        match all_connections.get_mut(&left) { Some(existing) => {
-            existing.insert(right.clone());
-        } _ => {
-            all_connections.insert(left.clone(), HashSet::from_iter(vec![right.clone()]));
-        }}
+        match all_connections.get_mut(&left) {
+            Some(existing) => {
+                existing.insert(right.clone());
+            }
+            _ => {
+                all_connections.insert(left.clone(), HashSet::from_iter(vec![right.clone()]));
+            }
+        }
 
         // right to left
-        match all_connections.get_mut(&right) { Some(existing) => {
-            existing.insert(left.clone());
-        } _ => {
-            all_connections.insert(right.clone(), HashSet::from_iter(vec![left.clone()]));
-        }}
+        match all_connections.get_mut(&right) {
+            Some(existing) => {
+                existing.insert(left.clone());
+            }
+            _ => {
+                all_connections.insert(right.clone(), HashSet::from_iter(vec![left.clone()]));
+            }
+        }
     }
 
     largest_clique(&all_connections)

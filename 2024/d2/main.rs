@@ -21,10 +21,11 @@ fn part2(txt: &str) -> usize {
     solve::<Part2>(txt)
 }
 
-fn solve<T>(txt: &str) -> usize 
-    where T: SafetyReport,
-        T: Sized,
-        T: From<Report>,
+fn solve<T>(txt: &str) -> usize
+where
+    T: SafetyReport,
+    T: Sized,
+    T: From<Report>,
 {
     txt.lines()
         .map(|l| l.parse::<Report>().unwrap())
@@ -85,15 +86,19 @@ impl From<Report> for Part2 {
 }
 
 fn all_safe(r: &Vec<usize>) -> bool {
-    let all_increasing = r.iter().copied()
+    let all_increasing = r
+        .iter()
+        .copied()
         .tuple_windows()
         .all(|(left, right)| (right as i64 - left as i64).signum() == 1);
-    let all_decreasing = r.iter().copied()
+    let all_decreasing = r
+        .iter()
+        .copied()
         .tuple_windows()
         .all(|(left, right)| (right as i64 - left as i64).signum() == -1);
-    let all_in_range = r.iter().copied()
-        .tuple_windows()
-        .all(|(left, right)| (left as i64).abs_diff(right as i64) > 0 && (left as i64).abs_diff(right as i64) <= 3);
+    let all_in_range = r.iter().copied().tuple_windows().all(|(left, right)| {
+        (left as i64).abs_diff(right as i64) > 0 && (left as i64).abs_diff(right as i64) <= 3
+    });
 
     (all_increasing || all_decreasing) && all_in_range
 }

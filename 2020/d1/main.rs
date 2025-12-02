@@ -7,7 +7,10 @@ fn main() {
     let now = Instant::now();
     println!("part1: {}", part1(input));
     println!("part2: {}", part2(input));
-    println!("{:.2}ms", (now.elapsed().subsec_nanos() as f32) / 1_000_000 as f32);
+    println!(
+        "{:.2}ms",
+        (now.elapsed().subsec_nanos() as f32) / 1_000_000 as f32
+    );
 }
 
 fn part1(txt: &str) -> i32 {
@@ -17,7 +20,7 @@ fn part1(txt: &str) -> i32 {
         .lines()
         .map(|l| l.parse::<i32>().expect(&format!("integer but was '{l}'")))
         .collect_vec();
-        
+
     if let Some(i) = find_pair(target, &expenses) {
         i
     } else {

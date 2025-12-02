@@ -1,7 +1,5 @@
 use core::str;
-use std::{
-    fmt::Display, str::FromStr, time::Instant, usize
-};
+use std::{fmt::Display, str::FromStr, time::Instant, usize};
 
 use aoclib::{
     grid::{FromChar, Grid, GridPosition},
@@ -34,12 +32,10 @@ struct Puzzle {
     directions: Vec<Direction>,
 }
 
-fn find_one<T>(
-    needle: T, 
-    haystack: &Grid<T>
-) -> GridPosition 
-where T: Eq,
-    T: Display
+fn find_one<T>(needle: T, haystack: &Grid<T>) -> GridPosition
+where
+    T: Eq,
+    T: Display,
 {
     for row in 0..haystack.height() {
         for col in 0..haystack.width() {
@@ -52,11 +48,9 @@ where T: Eq,
     panic!("{needle} not found")
 }
 
-fn sum_of_gps<T>(
-    box_type: &T,
-    grid: &Grid<T>,
-) -> usize 
-where T: Eq,
+fn sum_of_gps<T>(box_type: &T, grid: &Grid<T>) -> usize
+where
+    T: Eq,
 {
     let mut sum = 0;
     for row in 0..grid.height() {
@@ -73,23 +67,19 @@ where T: Eq,
 impl Puzzle {
     fn apply_moves(&mut self) {
         let mut robot = find_one(Tile::Robot, &self.map);
-        for i in 0..self.directions.len() {            
+        for i in 0..self.directions.len() {
             let d = self.directions[i].clone();
             // println!("Move {}:", d);
             let moved = self.apply_move(&robot, &d);
             if let Some(m) = moved {
                 robot = m;
-            }            
+            }
             // println!("{}", self.map);
             // println!("robot at {:?}\n\n", robot);
         }
     }
 
-    fn apply_move(
-        &mut self, 
-        p: &GridPosition, 
-        d: &Direction
-    ) -> Option<GridPosition> {
+    fn apply_move(&mut self, p: &GridPosition, d: &Direction) -> Option<GridPosition> {
         let next_pos = d.apply(p);
         let next_tile = self.map.at(&next_pos);
 
@@ -97,14 +87,11 @@ impl Puzzle {
 
         let was_moved = match next_tile {
             Tile::Wall | Tile::Robot => return None,
-            Tile::Box => {
-                self.apply_move(&next_pos, d)
-            },
+            Tile::Box => self.apply_move(&next_pos, d),
             Tile::Space => {
                 // can move
                 Some(next_pos)
-
-            },
+            }
         };
         if let Some(_moved) = was_moved {
             // move current into freed space
@@ -241,23 +228,33 @@ struct Puzzle2 {
 
 impl From<Puzzle> for Puzzle2 {
     fn from(value: Puzzle) -> Self {
-        let rows = value.map.rows.into_iter()
-            .map(|row| row.into_iter().flat_map(|col| match col {
-                Tile::Wall => vec![Tile2::Wall, Tile2::Wall].into_iter(),
-                Tile::Box => vec![Tile2::LeftBox, Tile2::RightBox].into_iter(),
-                Tile::Space => vec![Tile2::Space, Tile2::Space].into_iter(),
-                Tile::Robot => vec![Tile2::Robot, Tile2::Space].into_iter(),
-            }).collect())
+        let rows = value
+            .map
+            .rows
+            .into_iter()
+            .map(|row| {
+                row.into_iter()
+                    .flat_map(|col| match col {
+                        Tile::Wall => vec![Tile2::Wall, Tile2::Wall].into_iter(),
+                        Tile::Box => vec![Tile2::LeftBox, Tile2::RightBox].into_iter(),
+                        Tile::Space => vec![Tile2::Space, Tile2::Space].into_iter(),
+                        Tile::Robot => vec![Tile2::Robot, Tile2::Space].into_iter(),
+                    })
+                    .collect()
+            })
             .collect();
 
-        Puzzle2 { map: Grid { rows }, directions: value.directions }
+        Puzzle2 {
+            map: Grid { rows },
+            directions: value.directions,
+        }
     }
 }
 
 impl Puzzle2 {
     fn apply_moves(&mut self) {
         let mut robot = find_one(Tile2::Robot, &self.map);
-        for i in 0..self.directions.len() {            
+        for i in 0..self.directions.len() {
             let d = &self.directions[i].clone();
             // println!("Move {}:", d);
 
@@ -266,27 +263,23 @@ impl Puzzle2 {
                     let moved = self.apply_horizontal_move(&robot, d);
                     if let Some(moved) = moved {
                         robot = moved;
-                    }            
+                    }
                     // println!("{}", self.map);
-                    // println!("robot at {:?}\n\n", robot);                
-                },
+                    // println!("robot at {:?}\n\n", robot);
+                }
                 Direction::Up | Direction::Down => {
                     if self.can_move_vertically(robot, d.clone()) {
                         self.move_vertically(robot, d.clone());
                         robot = d.apply(&robot);
                         // println!("{}", self.map);
-                        // println!("robot at {:?}\n\n", robot);                
-                    }                    
-                },
-            }            
+                        // println!("robot at {:?}\n\n", robot);
+                    }
+                }
+            }
         }
     }
 
-    fn apply_horizontal_move(
-        &mut self, 
-        p: &GridPosition, 
-        d: &Direction
-    ) -> Option<GridPosition> {
+    fn apply_horizontal_move(&mut self, p: &GridPosition, d: &Direction) -> Option<GridPosition> {
         let next_pos = d.apply(p);
         let next_tile = self.map.at(&next_pos);
 
@@ -294,14 +287,11 @@ impl Puzzle2 {
 
         let was_moved = match next_tile {
             Tile2::Wall | Tile2::Robot => return None,
-            Tile2::LeftBox | Tile2::RightBox => {
-                self.apply_horizontal_move(&next_pos, d)
-            },
+            Tile2::LeftBox | Tile2::RightBox => self.apply_horizontal_move(&next_pos, d),
             Tile2::Space => {
                 // can move
                 Some(next_pos)
-
-            },
+            }
         };
         if let Some(_moved) = was_moved {
             // move current into freed space
@@ -323,11 +313,13 @@ impl Puzzle2 {
             Tile2::Space => true,
             Tile2::Robot => true,
             Tile2::LeftBox => {
-                self.can_move_vertically(next_pos, d.clone()) && self.can_move_vertically(next_pos.right(), d.clone())
-            },
+                self.can_move_vertically(next_pos, d.clone())
+                    && self.can_move_vertically(next_pos.right(), d.clone())
+            }
             Tile2::RightBox => {
-                self.can_move_vertically(next_pos, d.clone()) && self.can_move_vertically(next_pos.left(), d.clone())
-            },                        
+                self.can_move_vertically(next_pos, d.clone())
+                    && self.can_move_vertically(next_pos.left(), d.clone())
+            }
         }
     }
 
@@ -335,20 +327,20 @@ impl Puzzle2 {
         let next_pos = d.apply(&p);
         let next_tile = self.map.at(&next_pos);
 
-        match next_tile {            
+        match next_tile {
             Tile2::LeftBox => {
                 self.move_vertically(next_pos, d.clone());
                 self.move_vertically(next_pos.right(), d.clone());
-            },
+            }
             Tile2::RightBox => {
                 self.move_vertically(next_pos.left(), d.clone());
-                self.move_vertically(next_pos, d.clone()); 
-            },
+                self.move_vertically(next_pos, d.clone());
+            }
             Tile2::Space | Tile2::Robot => {
                 // let tile_at_p = self.map.at(&p);
                 // self.map.rows[next_pos.row][next_pos.col] = tile_at_p.clone();
                 // self.map.rows[p.row][p.col] = Tile2::Space;
-            },
+            }
             Tile2::Wall => panic!("next tile is wall"),
         }
         let tile_at_p = self.map.at(&p);

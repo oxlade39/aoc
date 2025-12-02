@@ -171,8 +171,9 @@ impl fmt::Display for DirectionalKeypadTile {
 }
 
 #[derive(Clone)]
-struct KeypadRobot<T> 
-    where T: Clone + FromChar,
+struct KeypadRobot<T>
+where
+    T: Clone + FromChar,
 {
     grid: Grid<T>,
     position: GridPosition,
@@ -258,8 +259,9 @@ impl<const N: usize> Default for RobotChain<N> {
     }
 }
 
-impl<T> KeypadRobot<T> 
-    where T: Clone + FromChar,
+impl<T> KeypadRobot<T>
+where
+    T: Clone + FromChar,
 {
     fn current(&self) -> &T {
         self.grid.at(&self.position)
@@ -648,7 +650,8 @@ impl<const R: usize> RobotChain<R> {
 
         // then rows first moves
         let rows_first_count = {
-            let mut rows_first_moves = RowsFirst::moves_between(current_numeric_pos.clone(), to.clone());
+            let mut rows_first_moves =
+                RowsFirst::moves_between(current_numeric_pos.clone(), to.clone());
             rows_first_moves.push(DirectionalKeypadTile::A);
             self.down(R, rows_first_moves)
         };
@@ -673,39 +676,44 @@ impl<const R: usize> RobotChain<R> {
                     depth,
                     robot_current_pos.clone(),
                     next_level_move.clone(),
-                )) { Some(cached) => {
-                    // seen move before
-                    total += cached;
-                } _ => {
-                    // make move and store
+                )) {
+                    Some(cached) => {
+                        // seen move before
+                        total += cached;
+                    }
+                    _ => {
+                        // make move and store
 
-                    // try cols first moves
-                    let cols_first_count = {
-                        let mut cols_first_moves = ColumnsFirst::moves_between(
-                            robot_current_pos.clone(),
-                            next_level_move.clone(),
+                        // try cols first moves
+                        let cols_first_count = {
+                            let mut cols_first_moves = ColumnsFirst::moves_between(
+                                robot_current_pos.clone(),
+                                next_level_move.clone(),
+                            );
+                            cols_first_moves.push(DirectionalKeypadTile::A);
+                            self.down(depth - 1, cols_first_moves.clone())
+                        };
+
+                        // then rows first moves
+                        let rows_first_count = {
+                            let mut rows_first_moves = RowsFirst::moves_between(
+                                robot_current_pos.clone(),
+                                next_level_move.clone(),
+                            );
+                            rows_first_moves.push(DirectionalKeypadTile::A);
+                            self.down(depth - 1, rows_first_moves)
+                        };
+
+                        // take the min from both
+                        let child_count = cols_first_count.min(rows_first_count);
+
+                        total += child_count;
+                        self.move_cache.insert(
+                            (depth, robot_current_pos.clone(), next_level_move.clone()),
+                            child_count,
                         );
-                        cols_first_moves.push(DirectionalKeypadTile::A);
-                        self.down(depth - 1, cols_first_moves.clone())
-                    };
-
-                    // then rows first moves
-                    let rows_first_count = {
-                        let mut rows_first_moves =
-                            RowsFirst::moves_between(robot_current_pos.clone(), next_level_move.clone());
-                        rows_first_moves.push(DirectionalKeypadTile::A);
-                        self.down(depth - 1, rows_first_moves)
-                    };
-
-                    // take the min from both
-                    let child_count = cols_first_count.min(rows_first_count);
-
-                    total += child_count;
-                    self.move_cache.insert(
-                        (depth, robot_current_pos.clone(), next_level_move.clone()),
-                        child_count,
-                    );
-                }}
+                    }
+                }
                 self.directional[depth - 1].position = next_level_move.position();
                 assert!(self.directional[depth - 1].current() != &DirectionalKeypadTile::Blank);
             }
@@ -815,15 +823,16 @@ mod tests {
         let mut chain: RobotChain<2> = RobotChain::default();
         let test_input = include_str!("input.test.txt");
         let example: Input = test_input.parse().unwrap();
-        let results: Vec<_> = example.0.into_iter().map(|n| n.complexity(&mut chain)).collect();
+        let results: Vec<_> = example
+            .0
+            .into_iter()
+            .map(|n| n.complexity(&mut chain))
+            .collect();
         // 68 * 29, 60 * 980, 68 * 179, 64 * 456, and 64 * 379
-        assert_eq!(results, vec![
-            68 * 29, 
-            60 * 980, 
-            68 * 179, 
-            64 * 456, 
-            64 * 379
-        ]);
+        assert_eq!(
+            results,
+            vec![68 * 29, 60 * 980, 68 * 179, 64 * 456, 64 * 379]
+        );
         assert_eq!(126384, part1(test_input));
     }
 

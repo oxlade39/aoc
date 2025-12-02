@@ -1,7 +1,10 @@
 use core::str;
 use std::{time::Instant, usize};
 
-use aoclib::{grid::{Grid, GridPosition}, timing};
+use aoclib::{
+    grid::{Grid, GridPosition},
+    timing,
+};
 use hashbrown::{HashMap, HashSet};
 
 fn main() {
@@ -24,21 +27,25 @@ fn part1(txt: &str) -> usize {
         }
     }
 
-
     let mut unique: HashMap<GridPosition, HashSet<GridPosition>> = HashMap::new();
     for start in starts {
         let trailhead = next(start, &g, &mut vec![]);
         if !trailhead.is_empty() {
-            let ends = trailhead.iter().map(|path| path.last().unwrap().clone()).collect();
-            match unique.get_mut(&start) { Some(existing) => {
-                existing.extend(ends);
-            } _ => {
-                unique.insert(start, ends);
-            }}
+            let ends = trailhead
+                .iter()
+                .map(|path| path.last().unwrap().clone())
+                .collect();
+            match unique.get_mut(&start) {
+                Some(existing) => {
+                    existing.extend(ends);
+                }
+                _ => {
+                    unique.insert(start, ends);
+                }
+            }
         }
     }
     unique.values().map(|p| p.len()).sum()
-    
 }
 
 fn part2(txt: &str) -> usize {
@@ -65,12 +72,7 @@ fn part2(txt: &str) -> usize {
     paths.values().map(|trailhead| trailhead.len()).sum()
 }
 
-fn next(
-    p: GridPosition,
-    g: &Grid<usize>,
-    path: &mut Vec<GridPosition>,
-) -> Vec<Vec<GridPosition>> {
-
+fn next(p: GridPosition, g: &Grid<usize>, path: &mut Vec<GridPosition>) -> Vec<Vec<GridPosition>> {
     let height = *g.at(&p) as i64;
 
     if let Some(prev) = path.last() {
@@ -78,10 +80,10 @@ fn next(
             return vec![];
         }
     }
-    
+
     path.push(p.clone());
 
-    if height == 9 {        
+    if height == 9 {
         return vec![path.clone()];
     }
 

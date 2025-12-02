@@ -1,7 +1,10 @@
 use core::str;
 use std::{i64, str::FromStr, time::Instant, usize};
 
-use aoclib::{cartesian::{Plane, Point, Transform}, timing};
+use aoclib::{
+    cartesian::{Plane, Point, Transform},
+    timing,
+};
 use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
 
@@ -21,37 +24,45 @@ fn part1(txt: &str) -> i64 {
 }
 
 fn part2(txt: &str) -> i64 {
-    let robots = txt.lines().map(|l| l.parse::<Robot>().unwrap()).collect_vec();
-        let b = Bathroom::new(101, 103);
+    let robots = txt
+        .lines()
+        .map(|l| l.parse::<Robot>().unwrap())
+        .collect_vec();
+    let b = Bathroom::new(101, 103);
 
-        let centre: HashSet<Point> = (25..75).flat_map(|y| (25..75).map(move |x| Point::new(x, y))).collect();
+    let centre: HashSet<Point> = (25..75)
+        .flat_map(|y| (25..75).map(move |x| Point::new(x, y)))
+        .collect();
 
-        fn intersections(
-            seconds: i64,
-            centre: &HashSet<Point>,
-            b: &Bathroom,
-            robots: &Vec<Robot>,
-        ) -> usize {
-            let sim = robots.iter().map(|robot| robot.simulate(seconds, &b)).collect_vec();
-            let placed = b.place(&sim);
-            let mut intersection_count = 0;
-            for p in centre {
-                if placed.contains_key(p) {
-                    intersection_count += 1;
-                }
+    fn intersections(
+        seconds: i64,
+        centre: &HashSet<Point>,
+        b: &Bathroom,
+        robots: &Vec<Robot>,
+    ) -> usize {
+        let sim = robots
+            .iter()
+            .map(|robot| robot.simulate(seconds, &b))
+            .collect_vec();
+        let placed = b.place(&sim);
+        let mut intersection_count = 0;
+        for p in centre {
+            if placed.contains_key(p) {
+                intersection_count += 1;
             }
-            intersection_count
         }
+        intersection_count
+    }
 
-        // artificially reduced the range to get runtime down
-        // I was using a much higher number in practice
-        let (seconds, _most_intersections) = (1..10000)
-            .map(|i| (i, intersections(i, &centre, &b, &robots)))
-            .max_by(|(left_s, left),(right_s, right)| left.cmp(right).then(right_s.cmp(left_s)))
-            .unwrap();
+    // artificially reduced the range to get runtime down
+    // I was using a much higher number in practice
+    let (seconds, _most_intersections) = (1..10000)
+        .map(|i| (i, intersections(i, &centre, &b, &robots)))
+        .max_by(|(left_s, left), (right_s, right)| left.cmp(right).then(right_s.cmp(left_s)))
+        .unwrap();
 
-        // println!("{} at {}s", most_intersections, seconds);
-        // print_bathroom(&b, &robots.iter().map(|robot| robot.simulate(seconds, &b)).collect());
+    // println!("{} at {}s", most_intersections, seconds);
+    // print_bathroom(&b, &robots.iter().map(|robot| robot.simulate(seconds, &b)).collect());
     seconds
 }
 
@@ -65,17 +76,24 @@ struct Bathroom(Plane);
 
 impl Bathroom {
     fn new(width: i64, height: i64) -> Bathroom {
-        Bathroom(Plane { top_left: (0, 0).into(), bottom_right: (width - 1, height - 1).into() })
+        Bathroom(Plane {
+            top_left: (0, 0).into(),
+            bottom_right: (width - 1, height - 1).into(),
+        })
     }
 
     fn place(&self, robots: &Vec<Robot>) -> HashMap<Point, HashSet<Robot>> {
         let mut robot_positions: HashMap<Point, HashSet<Robot>> = HashMap::new();
         for robot in robots {
-            match robot_positions.get_mut(&robot.pos) { Some(existing) => {
-                existing.insert(robot.clone());
-            } _ => {
-                robot_positions.insert(robot.pos.clone(), HashSet::from_iter(vec![robot.clone()]));
-            }}
+            match robot_positions.get_mut(&robot.pos) {
+                Some(existing) => {
+                    existing.insert(robot.clone());
+                }
+                _ => {
+                    robot_positions
+                        .insert(robot.pos.clone(), HashSet::from_iter(vec![robot.clone()]));
+                }
+            }
         }
         robot_positions
     }
@@ -88,11 +106,9 @@ impl Bathroom {
 
         let mut quadrants = [[0_i64; 2]; 2];
 
-
         for y in 0..self.0.height() {
-            for x in 0..self.0.width() {                
+            for x in 0..self.0.width() {
                 if y != ignore_y && x != ignore_x {
-
                     let x_quandrant = (x / ((self.0.width() + 1) / 2)) as usize;
                     let y_quandrant = (y / ((self.0.height() + 1) / 2)) as usize;
                     // let quadrant = (x_quandrant + y_quandrant) as usize;
@@ -125,7 +141,10 @@ impl Robot {
             y: new_pos.y.rem_euclid(b.0.height()),
         };
 
-        Robot { pos: scaled_pos, velocity: self.velocity.clone() }
+        Robot {
+            pos: scaled_pos,
+            velocity: self.velocity.clone(),
+        }
     }
 }
 
@@ -139,9 +158,9 @@ impl FromStr for Robot {
         let (_, pair) = right.split_once("=").unwrap();
         let (dx, dy) = pair.split_once(",").unwrap();
 
-        Ok(Robot { 
-            pos: (x.parse().unwrap(), y.parse().unwrap()).into(), 
-            velocity: (dx.parse().unwrap(), dy.parse().unwrap()).into() 
+        Ok(Robot {
+            pos: (x.parse().unwrap(), y.parse().unwrap()).into(),
+            velocity: (dx.parse().unwrap(), dy.parse().unwrap()).into(),
         })
     }
 }
@@ -149,39 +168,51 @@ impl FromStr for Robot {
 #[allow(dead_code)]
 fn print_bathroom(b: &Bathroom, r: &Vec<Robot>) {
     let placed = b.place(r);
-    
+
     for y in 0..b.0.height() {
         for x in 0..b.0.width() {
             let p = Point::new(x, y);
-            match placed.get(&p) { Some(here) => {
-                print!("{}", here.len());
-            } _ => {
-                print!(".");
-            }}
+            match placed.get(&p) {
+                Some(here) => {
+                    print!("{}", here.len());
+                }
+                _ => {
+                    print!(".");
+                }
+            }
         }
         println!("");
     }
 }
 
 #[cfg(test)]
-mod tests {    
+mod tests {
     use crate::*;
 
     #[test]
     fn test_robot_movement() {
-        let robots: Vec<Robot> = vec!["p=2,4 v=2,-3".parse().unwrap()];        
+        let robots: Vec<Robot> = vec!["p=2,4 v=2,-3".parse().unwrap()];
         let b = Bathroom::new(11, 7);
-        let sim_five = robots.iter().map(|robot| robot.simulate(5, &b)).collect_vec();
+        let sim_five = robots
+            .iter()
+            .map(|robot| robot.simulate(5, &b))
+            .collect_vec();
         assert_eq!(Point::new(1, 3), sim_five[0].pos);
     }
 
     #[test]
     fn test_input_pt1() {
         let test_input = include_str!("input.test.txt");
-        let robots = test_input.lines().map(|l| l.parse::<Robot>().unwrap()).collect_vec();
+        let robots = test_input
+            .lines()
+            .map(|l| l.parse::<Robot>().unwrap())
+            .collect_vec();
         let b = Bathroom::new(11, 7);
-        
-        let sim_part1 = robots.iter().map(|robot| robot.simulate(100, &b)).collect_vec();
+
+        let sim_part1 = robots
+            .iter()
+            .map(|robot| robot.simulate(100, &b))
+            .collect_vec();
         print_bathroom(&b, &sim_part1);
         assert_eq!(12, b.safety_factor(&sim_part1));
     }

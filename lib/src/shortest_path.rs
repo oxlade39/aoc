@@ -183,7 +183,7 @@ where
                 g_scores.insert(neighbour.clone(), tentative_g_score);
 
                 // distance to target
-                let h = heuristic.predict(&neighbour);                
+                let h = heuristic.predict(&neighbour);
                 f_scores.insert(neighbour.clone(), tentative_g_score + h);
                 open_set.push(Candidate::new(neighbour.clone(), tentative_g_score + h));
             }

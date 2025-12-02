@@ -1,8 +1,7 @@
 use core::str;
-use std::{fmt::format, i64, str::FromStr, time::Instant, usize};
+use std::{i64, str::FromStr, time::Instant, usize};
 
-use aoclib::{input, timing};
-use itertools::Itertools;
+use aoclib::timing;
 
 fn main() {
     let input = include_str!("input.txt");
@@ -20,7 +19,11 @@ fn part1(txt: &str) -> i64 {
 }
 
 fn part2(txt: &str) -> i64 {
-    0
+    txt.split(",")
+        .map(|r| r.parse::<ProductRange>().unwrap())
+        .flat_map(|r| r.0..=r.1)
+        .filter(|n| repeats(&format!("{n}")))
+        .sum()
 }
 
 #[derive(Debug, PartialEq, Hash)]
@@ -53,29 +56,6 @@ impl ProductRange {
     }
 }
 
-fn is_palendrome(s: &str) -> bool {
-    if s.len() % 2 != 0 {
-        // println!("len not even");
-        return false;
-    }
-
-    if s.len() == 2 && &s[0..1] == &s[1..2] {
-        return true;
-    }
-
-    let first = &s[0..1];
-    let last = &s[(s.len() - 1)..(s.len())];
-
-    // println!("? {first} == {last} ?");
-
-    if first == last {
-        // try in one char either end
-        return is_palendrome(&s[1..s.len() - 1]);
-    }
-
-    return false;
-}
-
 fn is_symetric_around_half(s: &str, offset: usize) -> bool {
     if s.len() % 2 != 0 {
         return false;
@@ -100,25 +80,49 @@ fn is_symetric_around_half(s: &str, offset: usize) -> bool {
     false
 }
 
+fn repeats(s: &str) -> bool {
+    for size in 0..(s.len() / 2) {
+        let seq = &s[0..size + 1];
+        if s.len() % (size + 1) != 0 {
+            continue;
+        }
+        let max_num_possible_reps = s.len() / (size + 1);
+        let mut offsets = 1..max_num_possible_reps;
+        // println!(
+        //     "looking for {:?} in offsets for size {} with max reps {}: {:?}",
+        //     seq,
+        //     size + 1,
+        //     max_num_possible_reps,
+        //     offsets
+        // );
+
+        // let chunks = offsets
+        //     .clone()
+        //     .map(|offset| (offset * (size + 1))..((offset * (size + 1)) + size + 1))
+        //     .collect_vec();
+        // println!("chunk ranges for size {}: {:?}", size + 1, chunks);
+
+        // let chunks = offsets
+        //     .clone()
+        //     .map(|offset| &s[(offset * (size + 1))..((offset * (size + 1)) + size + 1)])
+        //     .collect_vec();
+        // println!("chunks for size {}: {:?}", size + 1, chunks);
+
+        if offsets
+            .any(|offset| &s[(offset * (size + 1))..((offset * (size + 1)) + size + 1)] != seq)
+        {
+            continue;
+        }
+
+        return true;
+    }
+
+    false
+}
+
 #[cfg(test)]
 mod tests {
     use crate::*;
-
-    #[test]
-    fn test_is_palendrome() {
-        assert_eq!(true, is_palendrome("11"));
-        assert_eq!(true, is_palendrome("22"));
-        assert_eq!(true, is_palendrome("99"));
-        assert_eq!(true, is_palendrome("222222"));
-    }
-
-    #[test]
-    fn test_is_palendrome_false() {
-        assert_eq!(false, is_palendrome("1010"));
-        assert_eq!(false, is_palendrome("1188511885"));
-        assert_eq!(false, is_palendrome("446446"));
-        assert_eq!(false, is_palendrome("38593859"));
-    }
 
     #[test]
     fn test_is_symetric_around_half() {
@@ -126,6 +130,14 @@ mod tests {
         assert_eq!(true, is_symetric_around_half("1188511885", 0));
         assert_eq!(true, is_symetric_around_half("446446", 0));
         assert_eq!(true, is_symetric_around_half("38593859", 0));
+    }
+
+    #[test]
+    fn test_repeats() {
+        assert_eq!(true, repeats("1010"));
+        assert_eq!(true, repeats("1188511885"));
+        assert_eq!(true, repeats("446446"));
+        assert_eq!(true, repeats("38593859"));
     }
 
     #[test]
@@ -143,12 +155,12 @@ mod tests {
     #[test]
     fn test_input_pt2() {
         let test_input = include_str!("input.test.txt");
-        assert_eq!(0, part1(test_input));
+        assert_eq!(4174379265, part2(test_input));
     }
 
     #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part2(test_input));
+        assert_eq!(43287141963, part2(test_input));
     }
 }

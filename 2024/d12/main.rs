@@ -1,7 +1,10 @@
 use core::str;
 use std::{str::FromStr, time::Instant, usize};
 
-use aoclib::{grid::{FromChar, Grid, GridPosition}, timing};
+use aoclib::{
+    grid::{FromChar, Grid, GridPosition},
+    timing,
+};
 use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
 
@@ -62,9 +65,11 @@ impl FromStr for Garden {
             let mut grouping = HashSet::new();
             flood_fill(p, &pos, &g, &mut grouping);
             seen.extend(grouping.clone());
-            plots.push(Plot { positions: grouping });
+            plots.push(Plot {
+                positions: grouping,
+            });
         }
-        
+
         Ok(Garden(g, plots))
     }
 }
@@ -100,7 +105,7 @@ impl Plot {
                 let down = g.at(&p.down());
                 if down != plant {
                     total += 1;
-                }                
+                }
             }
 
             // left
@@ -127,7 +132,6 @@ impl Plot {
     }
 
     fn sides(&self, g: &Grid<Plant>) -> usize {
-
         let mut left_sides = HashSet::new();
         let mut top_sides = HashSet::new();
         let mut bottom_sides = HashSet::new();
@@ -149,7 +153,7 @@ impl Plot {
                 }
             }
             if p.row == g.height() - 1 {
-                bottom_sides.insert(p.clone());                
+                bottom_sides.insert(p.clone());
             } else {
                 if !&self.positions.contains(&p.down()) {
                     bottom_sides.insert(p.clone());
@@ -166,25 +170,31 @@ impl Plot {
 
         let mut tops: HashMap<usize, Vec<GridPosition>> = HashMap::new();
         for p in top_sides {
-            match tops.get_mut(&p.row) { Some(existing) => {
-                existing.push(p.clone());
-            } _ => {
-                tops.insert(p.row, vec![p.clone()]);
-            }}
+            match tops.get_mut(&p.row) {
+                Some(existing) => {
+                    existing.push(p.clone());
+                }
+                _ => {
+                    tops.insert(p.row, vec![p.clone()]);
+                }
+            }
         }
         let mut bottoms: HashMap<usize, Vec<GridPosition>> = HashMap::new();
         for p in bottom_sides {
-            match bottoms.get_mut(&p.row) { Some(existing) => {
-                existing.push(p.clone());
-            } _ => {
-                bottoms.insert(p.row, vec![p.clone()]);
-            }}
+            match bottoms.get_mut(&p.row) {
+                Some(existing) => {
+                    existing.push(p.clone());
+                }
+                _ => {
+                    bottoms.insert(p.row, vec![p.clone()]);
+                }
+            }
         }
 
         let mut hs = 0;
         let mut h_gaps = 0;
         for (_k, mut v) in tops {
-            v.sort_by(|a,b| a.col.cmp(&b.col));
+            v.sort_by(|a, b| a.col.cmp(&b.col));
             hs += 1;
             for (left, right) in v.iter().tuple_windows() {
                 if &left.right() != right {
@@ -193,7 +203,7 @@ impl Plot {
             }
         }
         for (_k, mut v) in bottoms {
-            v.sort_by(|a,b| a.col.cmp(&b.col));
+            v.sort_by(|a, b| a.col.cmp(&b.col));
             hs += 1;
             for (left, right) in v.iter().tuple_windows() {
                 if &left.right() != right {
@@ -204,25 +214,31 @@ impl Plot {
 
         let mut lefts: HashMap<usize, Vec<GridPosition>> = HashMap::new();
         for p in left_sides {
-            match lefts.get_mut(&p.col) { Some(existing) => {
-                existing.push(p.clone());
-            } _ => {
-                lefts.insert(p.col, vec![p.clone()]);
-            }}
+            match lefts.get_mut(&p.col) {
+                Some(existing) => {
+                    existing.push(p.clone());
+                }
+                _ => {
+                    lefts.insert(p.col, vec![p.clone()]);
+                }
+            }
         }
         let mut rights: HashMap<usize, Vec<GridPosition>> = HashMap::new();
         for p in right_sides {
-            match rights.get_mut(&p.col) { Some(existing) => {
-                existing.push(p.clone());
-            } _ => {
-                rights.insert(p.col, vec![p.clone()]);
-            }}
+            match rights.get_mut(&p.col) {
+                Some(existing) => {
+                    existing.push(p.clone());
+                }
+                _ => {
+                    rights.insert(p.col, vec![p.clone()]);
+                }
+            }
         }
-        
+
         let mut vs = 0;
         let mut v_gaps = 0;
         for (_k, mut v) in lefts {
-            v.sort_by(|a,b| a.row.cmp(&b.row));
+            v.sort_by(|a, b| a.row.cmp(&b.row));
             vs += 1;
             for (top, bottom) in v.iter().tuple_windows() {
                 if &top.down() != bottom {
@@ -231,7 +247,7 @@ impl Plot {
             }
         }
         for (_k, mut v) in rights {
-            v.sort_by(|a,b| a.row.cmp(&b.row));
+            v.sort_by(|a, b| a.row.cmp(&b.row));
             vs += 1;
             for (top, bottom) in v.iter().tuple_windows() {
                 if &top.down() != bottom {
@@ -299,9 +315,8 @@ fn flood_fill(
 }
 
 #[cfg(test)]
-mod tests {    
+mod tests {
     use crate::*;
-
 
     #[test]
     fn test_input_pt1() {

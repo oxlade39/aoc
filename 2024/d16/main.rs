@@ -1,7 +1,11 @@
 use core::str;
 use std::{str::FromStr, time::Instant, usize};
 
-use aoclib::{grid::{FromChar, Grid, GridPosition}, shortest_path::{astar, Cost, Heuristic, ManhattenDistanceTo, Neighbours}, timing};
+use aoclib::{
+    grid::{FromChar, Grid, GridPosition},
+    shortest_path::{Cost, Heuristic, ManhattenDistanceTo, Neighbours, astar},
+    timing,
+};
 use hashbrown::HashSet;
 
 fn main() {
@@ -15,28 +19,25 @@ fn main() {
 fn part1(txt: &str) -> usize {
     let map: Map = txt.parse().unwrap();
 
-    let initial_state = Reindeer { 
+    let initial_state = Reindeer {
         direction: Direction::Right,
         position: map.start,
     };
     let end_state = |r: &Reindeer| r.position == map.end;
 
-    let path = astar(
-        &map, 
-        &map, 
-        &map.end, 
-        initial_state, 
-        end_state
-    );
+    let path = astar(&map, &map, &map.end, initial_state, end_state);
 
     path.unwrap().total_cost
 }
 
 fn part2(txt: &str) -> usize {
     let map: Map = txt.parse().unwrap();
-    let mut visited_map = VisitedMap { map, visited: HashSet::new() };
+    let mut visited_map = VisitedMap {
+        map,
+        visited: HashSet::new(),
+    };
 
-    let initial_state = Reindeer { 
+    let initial_state = Reindeer {
         direction: Direction::Right,
         position: visited_map.map.start,
     };
@@ -46,15 +47,11 @@ fn part2(txt: &str) -> usize {
 
     let mut best_cost = 10000000000000;
 
-    while let Some(path) = astar(
-        &visited_map, 
-        &visited_map, 
-        &end, 
-        initial_state, 
-        end_state
-    ) {
-        let this_path_points: HashSet<GridPosition> = path.path.iter()
-            .map(|(p, _c)|&p.position)
+    while let Some(path) = astar(&visited_map, &visited_map, &end, initial_state, end_state) {
+        let this_path_points: HashSet<GridPosition> = path
+            .path
+            .iter()
+            .map(|(p, _c)| &p.position)
             .copied()
             .collect();
 
@@ -72,7 +69,6 @@ fn part2(txt: &str) -> usize {
         best_cost = original_cost;
 
         visited_map.visit_all(this_path_points);
-
     }
 
     visited_map.visited.len() + 1
@@ -81,45 +77,45 @@ fn part2(txt: &str) -> usize {
 impl Neighbours<Reindeer> for Map {
     fn neighbours(&self, state: &Reindeer) -> Vec<Reindeer> {
         let mut n: Vec<Reindeer> = Vec::with_capacity(4);
-        
+
         if state.position.col > 0 {
             let left = state.position.left();
             if *self.g.at(&left) != Tile::Wall {
-                n.push(Reindeer { 
-                    direction: Direction::Left, 
-                    position: left, 
+                n.push(Reindeer {
+                    direction: Direction::Left,
+                    position: left,
                 });
-            }            
+            }
         }
 
         if state.position.col < self.g.width() - 1 {
             let right = state.position.right();
             if *self.g.at(&right) != Tile::Wall {
-                n.push(Reindeer { 
-                    direction: Direction::Right, 
-                    position: right, 
+                n.push(Reindeer {
+                    direction: Direction::Right,
+                    position: right,
                 });
-            }            
+            }
         }
 
         if state.position.row > 0 {
             let up = state.position.up();
             if *self.g.at(&up) != Tile::Wall {
-                n.push(Reindeer { 
-                    direction: Direction::Up, 
-                    position: up, 
+                n.push(Reindeer {
+                    direction: Direction::Up,
+                    position: up,
                 });
-            }            
+            }
         }
 
         if state.position.row < self.g.height() - 1 {
             let down = state.position.down();
             if *self.g.at(&down) != Tile::Wall {
-                n.push(Reindeer { 
-                    direction: Direction::Down, 
-                    position: down, 
+                n.push(Reindeer {
+                    direction: Direction::Down,
+                    position: down,
                 });
-            }            
+            }
         }
         n
     }
@@ -176,10 +172,10 @@ impl Neighbours<Reindeer> for VisitedMap {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct Reindeer {
     direction: Direction,
-    position: GridPosition, 
+    position: GridPosition,
 }
 
-struct Map { 
+struct Map {
     g: Grid<Tile>,
     start: GridPosition,
     end: GridPosition,
@@ -206,7 +202,11 @@ impl FromStr for Map {
             }
         }
 
-        Ok(Map { g, start: start.expect("start"), end: end.expect("end") })
+        Ok(Map {
+            g,
+            start: start.expect("start"),
+            end: end.expect("end"),
+        })
     }
 }
 
@@ -227,7 +227,7 @@ impl FromChar for Tile {
             '.' => Ok(Tile::Space),
             'S' => Ok(Tile::Start),
             'E' => Ok(Tile::End),
-            other => Err(format!("bad tile '{other}'"))
+            other => Err(format!("bad tile '{other}'")),
         }
     }
 }
@@ -241,7 +241,7 @@ enum Direction {
 }
 
 #[cfg(test)]
-mod tests {    
+mod tests {
     use crate::*;
 
     #[test]

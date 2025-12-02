@@ -17,10 +17,10 @@ fn part1(txt: &str) -> i64 {
         match block.parse::<Schematic>().unwrap() {
             l @ Schematic::Lock(_) => {
                 locks.push(l);
-            },
+            }
             k @ Schematic::Key(_) => {
                 keys.push(k);
-            },
+            }
         }
     }
 
@@ -38,7 +38,7 @@ fn part1(txt: &str) -> i64 {
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 enum Schematic {
     Lock([usize; 5]),
-    Key([usize; 5])
+    Key([usize; 5]),
 }
 
 impl Schematic {
@@ -85,7 +85,7 @@ impl FromStr for Schematic {
                 if !is_lock && is_hash {
                     counts[i] += 1;
                 }
-            }            
+            }
         }
 
         if is_lock {
@@ -97,7 +97,7 @@ impl FromStr for Schematic {
 }
 
 #[cfg(test)]
-mod tests {    
+mod tests {
     use crate::*;
 
     #[test]
@@ -106,15 +106,18 @@ mod tests {
         let parsed: Vec<Schematic> = input::empty_line_chunks(test_input)
             .map(|block| block.parse().unwrap())
             .collect();
-        assert_eq!(parsed, vec![
-            Schematic::Lock([1, 6, 4, 5, 4]),
-            Schematic::Lock([2, 3, 1, 6, 4]),
-            Schematic::Key([6, 1, 3, 2, 4]),
-            Schematic::Key([5, 4, 5, 1, 3]),
-            Schematic::Key([4, 1, 3, 1, 2]),
-        ])
+        assert_eq!(
+            parsed,
+            vec![
+                Schematic::Lock([1, 6, 4, 5, 4]),
+                Schematic::Lock([2, 3, 1, 6, 4]),
+                Schematic::Key([6, 1, 3, 2, 4]),
+                Schematic::Key([5, 4, 5, 1, 3]),
+                Schematic::Key([4, 1, 3, 1, 2]),
+            ]
+        )
     }
-    
+
     #[test]
     fn test_fits() {
         let lock = Schematic::Lock([1, 6, 4, 5, 4]);

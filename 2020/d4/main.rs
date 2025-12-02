@@ -4,7 +4,7 @@ use std::{
     time::Instant,
 };
 
-use aoclib::input::{empty_line_chunks, NEW_LINE};
+use aoclib::input::{NEW_LINE, empty_line_chunks};
 use itertools::Itertools;
 
 fn main() {
@@ -299,20 +299,23 @@ mod tests {
     #[test]
     fn part2_invalid() {
         let invalid_txt = include_str!("invalid.test.txt");
-        let parsed =
-            empty_line_chunks(&invalid_txt).filter_map(|chunk| chunk.parse::<Passport>().ok())
+        let parsed = empty_line_chunks(&invalid_txt)
+            .filter_map(|chunk| chunk.parse::<Passport>().ok())
             .collect_vec();
         assert_eq!(false, parsed.is_empty());
         let empty: Vec<Passport> = vec![];
-        assert_eq!(empty, parsed.into_iter().filter(|p| p.is_valid()).collect_vec());
+        assert_eq!(
+            empty,
+            parsed.into_iter().filter(|p| p.is_valid()).collect_vec()
+        );
     }
 
     #[test]
     fn part2_valid() {
         let invalid_txt = include_str!("valid.test.txt");
-        let parsed =
-            empty_line_chunks(&invalid_txt).filter_map(|chunk| chunk.parse::<Passport>().ok())
-            .collect_vec();        
+        let parsed = empty_line_chunks(&invalid_txt)
+            .filter_map(|chunk| chunk.parse::<Passport>().ok())
+            .collect_vec();
         assert_eq!(4, parsed.into_iter().filter(|p| p.is_valid()).count());
     }
 

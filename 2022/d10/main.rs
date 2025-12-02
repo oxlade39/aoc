@@ -143,7 +143,7 @@ fn print_crt(crt: &[[char; 40]; 6]) {
 
 #[cfg(test)]
 mod test {
-    use crate::{part1, part2, print_crt, process_instructions, Instruction, Register};
+    use crate::{Instruction, Register, part1, part2, print_crt, process_instructions};
 
     #[test]
     fn test_parse() {

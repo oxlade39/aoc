@@ -1,7 +1,10 @@
 use core::str;
 use std::{i64, time::Instant, usize};
 
-use aoclib::{grid::{FromChar, Grid, GridPosition}, timing};
+use aoclib::{
+    grid::{FromChar, Grid, GridPosition},
+    timing,
+};
 use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
 
@@ -65,11 +68,14 @@ fn antenna_positions(
             match t {
                 Tile::Antenna(c) => {
                     antenna_position_set.insert(p.clone());
-                    match antenna_positions.get_mut(c) { Some(existing) => {
-                        existing.insert(p);
-                    } _ => {
-                        antenna_positions.insert(*c, HashSet::from_iter(vec![p]));
-                    }}
+                    match antenna_positions.get_mut(c) {
+                        Some(existing) => {
+                            existing.insert(p);
+                        }
+                        _ => {
+                            antenna_positions.insert(*c, HashSet::from_iter(vec![p]));
+                        }
+                    }
                 }
                 Tile::Space => {
                     // noop

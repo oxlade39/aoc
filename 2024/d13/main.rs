@@ -24,7 +24,14 @@ fn part2(txt: &str) -> i64 {
     input::empty_line_chunks(txt)
         .map(|chunk| chunk.parse::<ClawMachine>().unwrap())
         .map(|claw| {
-            ClawMachine(claw.0, claw.1, Prize { x: claw.2.x + 10000000000000, y: claw.2.y + 10000000000000 })
+            ClawMachine(
+                claw.0,
+                claw.1,
+                Prize {
+                    x: claw.2.x + 10000000000000,
+                    y: claw.2.y + 10000000000000,
+                },
+            )
         })
         .filter_map(|claw_machine| claw_machine.solve())
         .map(|(x, y)| 3 * x + y)
@@ -35,13 +42,13 @@ fn part2(txt: &str) -> i64 {
 struct Button {
     name: char,
     x: i64,
-    y: i64
+    y: i64,
 }
 
 #[derive(Debug, Hash, Clone, Copy, PartialEq, Eq)]
 struct Prize {
     x: i64,
-    y: i64
+    y: i64,
 }
 
 #[derive(Debug, Hash, Clone, Copy, PartialEq, Eq)]
@@ -56,19 +63,19 @@ impl ClawMachine {
         // rearrange simultaneous equation
 
         let determinant = a.x * b.y - a.y * b.x;
-    
+
         if determinant == 0 {
-            return None
+            return None;
         }
-        
+
         let x = (prize.x * b.y - prize.y * b.x) / determinant;
-        let y = (a.x * prize.y - a.y * prize.x) / determinant;        
+        let y = (a.x * prize.y - a.y * prize.x) / determinant;
 
         if (a.x * x) + (b.x * y) == prize.x && (a.y * x) + (b.y * y) == prize.y {
             Some((x, y))
         } else {
             None
-        }        
+        }
     }
 }
 
@@ -92,7 +99,6 @@ impl FromStr for Prize {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-
         let (_, right) = s.split_once(": ").unwrap();
         let (x_part, y_part) = right.split_once(", ").unwrap();
         let x = x_part.split_once("=").unwrap().1.parse().unwrap();
@@ -115,15 +121,23 @@ impl FromStr for ClawMachine {
 }
 
 #[cfg(test)]
-mod tests {    
+mod tests {
     use crate::*;
 
     #[test]
     fn test_multiples() {
         let c = ClawMachine(
-            Button { name: 'A', x: 94, y: 34 },
-            Button { name: 'B', x: 22, y: 67 },
-            Prize { x: 8400, y: 5400 }
+            Button {
+                name: 'A',
+                x: 94,
+                y: 34,
+            },
+            Button {
+                name: 'B',
+                x: 22,
+                y: 67,
+            },
+            Prize { x: 8400, y: 5400 },
         );
         let result = c.solve();
         println!("result: {:?}", result);

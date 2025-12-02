@@ -49,13 +49,13 @@ impl<T> Grid<T> {
     }
 
     pub fn up_from(&self, p: GridPosition) -> impl Iterator<Item = (GridPosition, &T)> {
-        std::iter::successors(Some(p), move |&prev| {
-            if prev.row == 0 {
-                None
-            } else {
-                Some(prev.up())
-            }
-        }).map(move |p| (p, self.at(&p)))
+        std::iter::successors(
+            Some(p),
+            move |&prev| {
+                if prev.row == 0 { None } else { Some(prev.up()) }
+            },
+        )
+        .map(move |p| (p, self.at(&p)))
     }
 
     pub fn down_from(&self, p: GridPosition) -> impl Iterator<Item = (GridPosition, &T)> {
@@ -65,7 +65,8 @@ impl<T> Grid<T> {
             } else {
                 None
             }
-        }).map(move |p| (p, self.at(&p)))
+        })
+        .map(move |p| (p, self.at(&p)))
     }
 
     pub fn left_from(&self, p: GridPosition) -> impl Iterator<Item = (GridPosition, &T)> {
@@ -75,7 +76,8 @@ impl<T> Grid<T> {
             } else {
                 Some(prev.left())
             }
-        }).map(move |p| (p, self.at(&p)))
+        })
+        .map(move |p| (p, self.at(&p)))
     }
 
     pub fn right_from(&self, p: GridPosition) -> impl Iterator<Item = (GridPosition, &T)> {
@@ -83,19 +85,19 @@ impl<T> Grid<T> {
             if prev.col < self.width() - 1 {
                 Some(prev.right())
             } else {
-                None                
+                None
             }
-        }).map(move |p| (p, self.at(&p)))
+        })
+        .map(move |p| (p, self.at(&p)))
     }
 
     pub fn position_itr(&self) -> impl Iterator<Item = (GridPosition, &T)> {
-        (0..self.height())
-            .flat_map(move |row| (0..self.width())
-            .map(move |col| {
+        (0..self.height()).flat_map(move |row| {
+            (0..self.width()).map(move |col| {
                 let p = GridPosition::new(col, row);
                 (p, self.at(&p))
             })
-        )
+        })
     }
 }
 
@@ -359,64 +361,52 @@ mod tests {
     #[test]
     fn test_iter_right() {
         let g = Grid {
-            rows: vec![
-                vec![1,2,3],
-                vec![4,5,6],
-                vec![7,8,9],
-            ]
+            rows: vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]],
         };
-        let right: Vec<_> = g.right_from(GridPosition::new(0, 0))
+        let right: Vec<_> = g
+            .right_from(GridPosition::new(0, 0))
             .map(|(_, b)| b)
             .copied()
             .collect();
-        assert_eq!(vec![1,2,3], right);
+        assert_eq!(vec![1, 2, 3], right);
     }
 
     #[test]
     fn test_iter_left() {
         let g = Grid {
-            rows: vec![
-                vec![1,2,3],
-                vec![4,5,6],
-                vec![7,8,9],
-            ]
+            rows: vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]],
         };
-        let right: Vec<_> = g.left_from(GridPosition::new(2, 0))
+        let right: Vec<_> = g
+            .left_from(GridPosition::new(2, 0))
             .map(|(_, b)| b)
             .copied()
             .collect();
-        assert_eq!(vec![3,2,1], right);
+        assert_eq!(vec![3, 2, 1], right);
     }
 
     #[test]
     fn test_iter_up() {
         let g = Grid {
-            rows: vec![
-                vec![1,2,3],
-                vec![4,5,6],
-                vec![7,8,9],
-            ]
+            rows: vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]],
         };
-        let right: Vec<_> = g.up_from(GridPosition::new(0, 2))
+        let right: Vec<_> = g
+            .up_from(GridPosition::new(0, 2))
             .map(|(_, b)| b)
             .copied()
             .collect();
-        assert_eq!(vec![7,4,1], right);
+        assert_eq!(vec![7, 4, 1], right);
     }
 
     #[test]
     fn test_iter_down() {
         let g = Grid {
-            rows: vec![
-                vec![1,2,3],
-                vec![4,5,6],
-                vec![7,8,9],
-            ]
+            rows: vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]],
         };
-        let right: Vec<_> = g.down_from(GridPosition::new(1, 0))
+        let right: Vec<_> = g
+            .down_from(GridPosition::new(1, 0))
             .map(|(_, b)| b)
             .copied()
             .collect();
-        assert_eq!(vec![2,5,8], right);
+        assert_eq!(vec![2, 5, 8], right);
     }
 }

@@ -1,5 +1,10 @@
 use core::str;
-use std::{cmp::Ordering, collections::{HashMap, HashSet}, str::FromStr, time::Instant};
+use std::{
+    cmp::Ordering,
+    collections::{HashMap, HashSet},
+    str::FromStr,
+    time::Instant,
+};
 
 use aoclib::input;
 use itertools::Itertools;
@@ -21,10 +26,11 @@ fn part1(txt: &str) -> i64 {
 
     let mut count = 0;
 
-    for list in parts[1]
-        .lines()
-        .map(|l| l.split(",").map(|i| i.parse::<i64>().unwrap()).collect_vec()) {
-
+    for list in parts[1].lines().map(|l| {
+        l.split(",")
+            .map(|i| i.parse::<i64>().unwrap())
+            .collect_vec()
+    }) {
         let copy = ord.sorted(&list);
 
         if list == copy {
@@ -41,10 +47,11 @@ fn part2(txt: &str) -> i64 {
 
     let mut count = 0;
 
-    for list in parts[1]
-        .lines()
-        .map(|l| l.split(",").map(|i| i.parse::<i64>().unwrap()).collect_vec()) {
-
+    for list in parts[1].lines().map(|l| {
+        l.split(",")
+            .map(|i| i.parse::<i64>().unwrap())
+            .collect_vec()
+    }) {
         let copy = ord.sorted(&list);
 
         if list != copy {
@@ -65,7 +72,7 @@ struct PageOrdering {
 impl PageOrdering {
     fn sorted(&self, pages: &Vec<i64>) -> Vec<i64> {
         let mut copy = pages.clone();
-        copy.sort_by(|l,r| {
+        copy.sort_by(|l, r| {
             if let Some(mapping) = self.befores.get(r) {
                 if mapping.contains(l) {
                     return Ordering::Less;
@@ -89,26 +96,33 @@ impl FromStr for PageOrdering {
         let mut befores: HashMap<i64, HashSet<i64>> = HashMap::new();
         let mut afters: HashMap<i64, HashSet<i64>> = HashMap::new();
 
-        for order in s
-            .lines()
-            .map(|l| l.split("|").map(|n| n.parse::<i64>().unwrap()).collect_vec()) {
-
+        for order in s.lines().map(|l| {
+            l.split("|")
+                .map(|n| n.parse::<i64>().unwrap())
+                .collect_vec()
+        }) {
             let left = order[0];
             let right = order[1];
-            
-            match befores.get_mut(&right) { Some(existing) => {
-                existing.insert(left);
-            } _ => {
-                befores.insert(right, HashSet::from_iter([left]));
-            }}
 
-            match afters.get_mut(&left) { Some(existing) => {
-                existing.insert(right);
-            } _ => {
-                afters.insert(left, HashSet::from_iter([right]));
-            }}
+            match befores.get_mut(&right) {
+                Some(existing) => {
+                    existing.insert(left);
+                }
+                _ => {
+                    befores.insert(right, HashSet::from_iter([left]));
+                }
+            }
+
+            match afters.get_mut(&left) {
+                Some(existing) => {
+                    existing.insert(right);
+                }
+                _ => {
+                    afters.insert(left, HashSet::from_iter([right]));
+                }
+            }
         }
-        Ok(Self{ befores, afters })
+        Ok(Self { befores, afters })
     }
 }
 

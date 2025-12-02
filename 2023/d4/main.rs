@@ -50,11 +50,7 @@ impl Card {
 
     fn points(&self) -> i64 {
         let count = *&self.matches();
-        if count == 0 {
-            0
-        } else {
-            2_i64.pow(count - 1)
-        }
+        if count == 0 { 0 } else { 2_i64.pow(count - 1) }
     }
 }
 

@@ -10,10 +10,7 @@ fn main() {
     let now = Instant::now();
     println!("part1: {}", part1(input));
     println!("part2: {}", part2(input));
-    println!(
-        "{:.2}s",
-        now.elapsed().as_secs_f64()
-    );
+    println!("{:.2}s", now.elapsed().as_secs_f64());
 }
 
 fn part1(txt: &str) -> i64 {
@@ -51,7 +48,8 @@ fn part2(txt: &str) -> i64 {
     let path = path(&g, &guard_position);
 
     let direction = Direction::Up;
-    let visited: HashSet<(GridPosition, Direction)> = HashSet::from_iter(vec![(guard_position, direction)]);
+    let visited: HashSet<(GridPosition, Direction)> =
+        HashSet::from_iter(vec![(guard_position, direction)]);
     let mut count = 0;
 
     for test_pos in path {
@@ -65,7 +63,6 @@ fn part2(txt: &str) -> i64 {
         g.rows[test_pos.row][test_pos.col] = Tile::Space;
     }
     count
-    
 }
 
 fn path(g: &Grid<Tile>, guard_position: &GridPosition) -> HashSet<GridPosition> {
@@ -80,11 +77,11 @@ fn path(g: &Grid<Tile>, guard_position: &GridPosition) -> HashSet<GridPosition> 
         match g.at(&next_pos) {
             Tile::Obstruction => {
                 direction = direction.turn_right();
-            },
+            }
             Tile::Guard | Tile::Space => {
                 guard_position = next_pos;
                 visited.insert(guard_position);
-            },
+            }
         }
     }
     visited
@@ -94,7 +91,7 @@ fn loops(
     direction: Direction,
     visited: &HashSet<(GridPosition, Direction)>,
     guard_position: &GridPosition,
-    g: &Grid<Tile>
+    g: &Grid<Tile>,
 ) -> bool {
     let mut guard_position = guard_position.clone();
     let mut direction = direction;
@@ -107,13 +104,13 @@ fn loops(
         match g.at(&next_pos) {
             Tile::Obstruction => {
                 direction = direction.turn_right();
-            },
+            }
             Tile::Guard | Tile::Space => {
                 guard_position = next_pos;
                 if !visited.insert((guard_position, direction)) {
                     return true;
                 }
-            },
+            }
         }
     }
     false
@@ -151,18 +148,16 @@ impl Direction {
                     None
                 } else {
                     Some(p.up())
-                }                
-            },
-            Direction::Down => {
-                Some(p.down())
-            },
+                }
+            }
+            Direction::Down => Some(p.down()),
             Direction::Left => {
                 if p.col == 0 {
                     None
                 } else {
                     Some(p.left())
-                }                
-            },
+                }
+            }
             Direction::Right => Some(p.right()),
         }
     }

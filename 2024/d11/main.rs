@@ -14,7 +14,8 @@ fn main() {
 }
 
 fn part1(txt: &str) -> usize {
-    let stones = txt.split_whitespace()
+    let stones = txt
+        .split_whitespace()
         .map(|n| n.parse::<usize>().unwrap())
         .map(Stone)
         .collect_vec();
@@ -22,7 +23,8 @@ fn part1(txt: &str) -> usize {
 }
 
 fn part2(txt: &str) -> usize {
-    let stones = txt.split_whitespace()
+    let stones = txt
+        .split_whitespace()
         .map(|n| n.parse::<usize>().unwrap())
         .map(Stone)
         .collect_vec();
@@ -38,7 +40,7 @@ impl Stone {
         if n == 0 {
             return 1; // Special case: 0 has 1 digit
         }
-    
+
         let mut digits = 0;
         while n > 0 {
             n /= 10;
@@ -47,17 +49,17 @@ impl Stone {
         digits
     }
 
-    fn split(&self) -> (Stone, Stone) {        
+    fn split(&self) -> (Stone, Stone) {
         let digits = self.n_digits();
 
         // Compute the divisor for splitting
         let half_digits = digits / 2;
         let divisor = 10_u64.pow(half_digits as u32);
-    
+
         // Split the number
         let first_half = self.0 as u64 / divisor;
         let second_half = self.0 as u64 % divisor;
-    
+
         (Self(first_half as usize), Self(second_half as usize))
     }
 
@@ -84,10 +86,10 @@ fn count_all(n: usize, stones: Vec<Stone>) -> usize {
 }
 
 fn count_n(
-    s: Stone, 
+    s: Stone,
     count: usize,
     depth: usize,
-    memo: &mut HashMap<(Stone, usize), usize>
+    memo: &mut HashMap<(Stone, usize), usize>,
 ) -> usize {
     if let Some(&mem) = memo.get(&(s, depth)) {
         return mem;
@@ -99,14 +101,16 @@ fn count_n(
 
     let sum = match s.next() {
         Split::Stone(stone) => count_n(stone, count, depth - 1, memo),
-        Split::Pair(left, right) => count_n(left, count, depth - 1, memo) + count_n(right, count, depth - 1, memo),
+        Split::Pair(left, right) => {
+            count_n(left, count, depth - 1, memo) + count_n(right, count, depth - 1, memo)
+        }
     };
     memo.insert((s, depth), sum);
     sum
 }
 
 #[cfg(test)]
-mod tests {    
+mod tests {
     use itertools::Itertools;
 
     use crate::*;
@@ -126,7 +130,8 @@ mod tests {
     #[test]
     fn input_pt1() {
         let test_input = include_str!("input.txt");
-        let stones = test_input.split_whitespace()
+        let stones = test_input
+            .split_whitespace()
             .map(|n| n.parse::<usize>().unwrap())
             .map(Stone)
             .collect_vec();
@@ -138,7 +143,8 @@ mod tests {
     #[test]
     fn input_test_pt2() {
         let test_input = include_str!("input.test.txt");
-        let stones = test_input.split_whitespace()
+        let stones = test_input
+            .split_whitespace()
             .map(|n| n.parse::<usize>().unwrap())
             .map(Stone)
             .collect_vec();
@@ -150,7 +156,8 @@ mod tests {
     #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
-        let stones = test_input.split_whitespace()
+        let stones = test_input
+            .split_whitespace()
             .map(|n| n.parse::<usize>().unwrap())
             .map(Stone)
             .collect_vec();

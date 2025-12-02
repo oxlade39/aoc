@@ -1,6 +1,10 @@
 use core::str;
 use std::{
-    collections::BTreeMap, fmt::{Display, Write}, iter, str::FromStr, time::Instant
+    collections::BTreeMap,
+    fmt::{Display, Write},
+    iter,
+    str::FromStr,
+    time::Instant,
 };
 
 use aoclib::{input, timing};
@@ -38,7 +42,16 @@ fn part1(txt: &str) -> u64 {
 
     for i in 0..zs.len() {
         let z = &zs[i];
-        found_z.push(wire_value(z.clone(), &mut known_wires, &connection_by_output, &mut HashSet::new()).unwrap().value);
+        found_z.push(
+            wire_value(
+                z.clone(),
+                &mut known_wires,
+                &connection_by_output,
+                &mut HashSet::new(),
+            )
+            .unwrap()
+            .value,
+        );
     }
 
     return found_z.iter().fold(0, |acc, &b| (acc << 1) | b as u64);
@@ -48,38 +61,56 @@ fn part2(txt: &str) -> String {
     let chunks: Vec<_> = input::empty_line_chunks(txt).collect();
     let connections: Vec<Connection> = chunks[1].lines().map(|l| l.parse().unwrap()).collect();
 
-    let initial_connection_by_output: HashMap<_, _> =
-        connections.clone()
+    let initial_connection_by_output: HashMap<_, _> = connections
+        .clone()
         .into_iter()
         .map(|c| (c.to.clone(), c))
         .collect();
 
-    let mut connections_by_input: BTreeMap<String, BTreeMap<Gate, String>> = BTreeMap::new();    
+    let mut connections_by_input: BTreeMap<String, BTreeMap<Gate, String>> = BTreeMap::new();
 
     let mut input_xor_output = BTreeMap::new();
     let mut input_and_outputs = BTreeMap::new();
     for c in &connections {
-
         // map lefts
         if let Some(existing) = connections_by_input.get_mut(&c.from_left) {
             if let Some(out) = existing.insert(c.gate.clone(), c.to.clone()) {
-                panic!("replaced existing gate {:?} {:?} to: {:?}", c.gate, c.from_left, out);
+                panic!(
+                    "replaced existing gate {:?} {:?} to: {:?}",
+                    c.gate, c.from_left, out
+                );
             }
         } else {
-            connections_by_input.insert(c.from_left.clone(), BTreeMap::from_iter(iter::once((c.gate.clone(), c.to.clone()))));
+            connections_by_input.insert(
+                c.from_left.clone(),
+                BTreeMap::from_iter(iter::once((c.gate.clone(), c.to.clone()))),
+            );
         }
 
         // map rights
         if let Some(existing) = connections_by_input.get_mut(&c.from_right) {
             if let Some(out) = existing.insert(c.gate.clone(), c.to.clone()) {
-                panic!("replaced existing gate {:?} {:?} to: {:?}", c.gate, c.from_right, out);
+                panic!(
+                    "replaced existing gate {:?} {:?} to: {:?}",
+                    c.gate, c.from_right, out
+                );
             }
         } else {
-            connections_by_input.insert(c.from_right.clone(), BTreeMap::from_iter(iter::once((c.gate.clone(), c.to.clone()))));
+            connections_by_input.insert(
+                c.from_right.clone(),
+                BTreeMap::from_iter(iter::once((c.gate.clone(), c.to.clone()))),
+            );
         }
 
-        if c.from_left.replace("x", "").replace("y", "") == c.from_right.replace("y", "").replace("x", "") {
-            let index: u64 = c.from_left.replace("x", "").replace("y", "").parse().unwrap();
+        if c.from_left.replace("x", "").replace("y", "")
+            == c.from_right.replace("y", "").replace("x", "")
+        {
+            let index: u64 = c
+                .from_left
+                .replace("x", "")
+                .replace("y", "")
+                .parse()
+                .unwrap();
             if c.gate == Gate::XOR {
                 input_xor_output.insert(index, c.to.clone());
             } else if c.gate == Gate::AND {
@@ -90,7 +121,6 @@ fn part2(txt: &str) -> String {
         }
     }
 
-
     let mut rule_breaks = HashSet::new();
 
     for c in &connections {
@@ -100,8 +130,15 @@ fn part2(txt: &str) -> String {
 
         if c.to.starts_with("z") && c.to != "z00" {
             if c.to != "z00" {
-                if c.from_left.starts_with("x") || c.from_left.starts_with("y") || c.from_right.starts_with("x") || c.from_right.starts_with("y") {
-                    println!("[{}] A gate with Zxx as its output cannot directly use Xn or Yn as inputs exept the first bit Z00", &c.to);
+                if c.from_left.starts_with("x")
+                    || c.from_left.starts_with("y")
+                    || c.from_right.starts_with("x")
+                    || c.from_right.starts_with("y")
+                {
+                    println!(
+                        "[{}] A gate with Zxx as its output cannot directly use Xn or Yn as inputs exept the first bit Z00",
+                        &c.to
+                    );
                     rule_breaks.insert(c.clone());
                 }
             }
@@ -112,7 +149,7 @@ fn part2(txt: &str) -> String {
                     rule_breaks.insert(c.clone());
                 }
             }
-        }        
+        }
 
         match c.gate {
             Gate::AND => {
@@ -122,27 +159,41 @@ fn part2(txt: &str) -> String {
                         rule_breaks.insert(c.clone());
                     }
                 }
-        
+
                 if let Some(input_left) = initial_connection_by_output.get(&c.from_left) {
-                    if input_left.from_left != "x00" && input_left.from_right != "x00" && input_left.gate == Gate::AND {
-                        println!("[{}] AND gate cannot take other AND gate as input", input_left.to);
+                    if input_left.from_left != "x00"
+                        && input_left.from_right != "x00"
+                        && input_left.gate == Gate::AND
+                    {
+                        println!(
+                            "[{}] AND gate cannot take other AND gate as input",
+                            input_left.to
+                        );
                         rule_breaks.insert(input_left.clone());
                     }
                 }
                 if let Some(input_right) = initial_connection_by_output.get(&c.from_right) {
-                    if input_right.from_left != "x00" && input_right.from_right != "x00" && input_right.gate == Gate::AND {
-                        println!("[{}] AND gate cannot take other AND gate as input", input_right.to);
+                    if input_right.from_left != "x00"
+                        && input_right.from_right != "x00"
+                        && input_right.gate == Gate::AND
+                    {
+                        println!(
+                            "[{}] AND gate cannot take other AND gate as input",
+                            input_right.to
+                        );
                         rule_breaks.insert(input_right.clone());
                     }
                 }
-            },
+            }
             Gate::XOR => {
                 if !c.from_left.starts_with("x") && !c.from_left.starts_with("y") {
                     if !c.to.starts_with("z") {
-                        println!("[{}] XOR gate must output to z if non input {} XOR {} -> {}", 
-                            c.to, c.from_left, c.from_right, c.to);
+                        println!(
+                            "[{}] XOR gate must output to z if non input {} XOR {} -> {}",
+                            c.to, c.from_left, c.from_right, c.to
+                        );
                         rule_breaks.insert(c.clone());
-                    }                    
+                    }
                 }
 
                 if let Some(input_to) = connections_by_input.get(&c.to) {
@@ -159,11 +210,14 @@ fn part2(txt: &str) -> String {
                 }
                 if let Some(input_right) = initial_connection_by_output.get(&c.from_right) {
                     if c.to != "z01" && input_right.gate == Gate::AND {
-                        println!("[{}] XOR gate cannot take AND gate as input", input_right.to);
+                        println!(
+                            "[{}] XOR gate cannot take AND gate as input",
+                            input_right.to
+                        );
                         rule_breaks.insert(input_right.clone());
                     }
                 }
-            },
+            }
             Gate::OR => {
                 if let Some(input_to) = connections_by_input.get(&c.to) {
                     if input_to.contains_key(&Gate::OR) {
@@ -173,22 +227,32 @@ fn part2(txt: &str) -> String {
                 }
                 if let Some(input_left) = initial_connection_by_output.get(&c.from_left) {
                     if input_left.gate != Gate::AND {
-                        println!("[{}] OR gate can only take AND gate as input", input_left.to);
+                        println!(
+                            "[{}] OR gate can only take AND gate as input",
+                            input_left.to
+                        );
                         rule_breaks.insert(input_left.clone());
                     }
                 }
                 if let Some(input_right) = initial_connection_by_output.get(&c.from_right) {
                     if input_right.gate != Gate::AND {
-                        println!("[{}] OR gate can only take AND gate as input", input_right.to);
+                        println!(
+                            "[{}] OR gate can only take AND gate as input",
+                            input_right.to
+                        );
                         rule_breaks.insert(input_right.clone());
                     }
                 }
-            },
+            }
         }
     }
 
-    rule_breaks.iter().map(|c| &c.to).cloned().sorted().join(",")
-
+    rule_breaks
+        .iter()
+        .map(|c| &c.to)
+        .cloned()
+        .sorted()
+        .join(",")
 }
 
 fn wire_value(
@@ -197,13 +261,12 @@ fn wire_value(
     connection_by_output: &HashMap<String, Connection>,
     seen: &mut HashSet<String>,
 ) -> Option<Wire> {
-    
     if let Some(wire) = known_wires.get(&name) {
         // println!("wire value: {} = {}", name, wire.value);
         return Some(wire.clone());
     }
     if !seen.insert(name.clone()) {
-        return None
+        return None;
     }
 
     let connection = connection_by_output
@@ -219,7 +282,7 @@ fn wire_value(
         connection.from_right.clone(),
         known_wires,
         connection_by_output,
-        seen
+        seen,
     );
     if left.is_none() || right.is_none() {
         return None;

@@ -15,10 +15,10 @@ fn main() {
 fn part1(txt: &str) -> usize {
     let mut disk: Vec<Block> = Vec::new();
     for (i, c) in txt.chars().enumerate() {
-        let block =  if i % 2 == 0 {
+        let block = if i % 2 == 0 {
             Block::File(i / 2)
         } else {
-            Block::Space    
+            Block::Space
         };
         let size = c.to_digit(10).unwrap();
         disk.extend(std::iter::repeat_n(block, size as usize));
@@ -42,11 +42,11 @@ fn part1(txt: &str) -> usize {
                 disk[space_pos] = back_block;
                 disk[back_position] = Block::Space;
                 // print_disk(&disk);
-            },
+            }
             Block::Space => {
                 // noop
-            },
-        }        
+            }
+        }
     }
     // print_disk(&disk);
 
@@ -54,10 +54,13 @@ fn part1(txt: &str) -> usize {
 }
 
 fn next_space(disk: &Vec<Block>) -> usize {
-    let (left, _block) = disk.iter().find_position(|b| match b  {
-        Block::File(_) => false,
-        Block::Space => true,
-    }).unwrap();
+    let (left, _block) = disk
+        .iter()
+        .find_position(|b| match b {
+            Block::File(_) => false,
+            Block::Space => true,
+        })
+        .unwrap();
     left
 }
 
@@ -67,24 +70,26 @@ fn print_disk(d: &Vec<Block>) {
         match b {
             Block::File(id) => {
                 print!("{id}");
-            },
+            }
             Block::Space => {
                 print!(".");
-            },
+            }
         }
     }
     println!("");
 }
 
 fn checksum(disk: &Vec<Block>) -> usize {
-    disk.iter().enumerate()
+    disk.iter()
+        .enumerate()
         .map(|(pos, block)| {
-        // position multiplied by its file ID number
-        match block {
-            Block::File(id) => pos * id,
-            Block::Space => 0,
-        }
-    }).sum()
+            // position multiplied by its file ID number
+            match block {
+                Block::File(id) => pos * id,
+                Block::Space => 0,
+            }
+        })
+        .sum()
 }
 
 fn part2(txt: &str) -> usize {
@@ -98,18 +103,18 @@ fn part2(txt: &str) -> usize {
         if i % 2 == 0 {
             let block = Block::File(i / 2);
             disk.extend(std::iter::repeat_n(block, size as usize));
-            let contiguous_block = ContiguousBlock::File(File { 
+            let contiguous_block = ContiguousBlock::File(File {
                 position: pos,
                 size,
-                id: i / 2 
+                id: i / 2,
             });
             blocks.push(contiguous_block);
         } else {
             let block = Block::Space;
             disk.extend(std::iter::repeat_n(block, size as usize));
-            let contiguous_block = ContiguousBlock::Space(Space { 
+            let contiguous_block = ContiguousBlock::Space(Space {
                 position: pos,
-                size 
+                size,
             });
             blocks.push(contiguous_block);
         };
@@ -144,11 +149,11 @@ fn part2(txt: &str) -> usize {
                     }
                     // print_disk(&disk);
                     // println!("blocks: {:?}", blocks[free_pos]);
-                }                
-            },
+                }
+            }
             ContiguousBlock::Space(_) => {
                 // noop
-            },
+            }
         }
     }
 
@@ -162,9 +167,11 @@ fn find_free_size(size: usize, blocks: &mut [ContiguousBlock]) -> Option<&mut Sp
         match b {
             ContiguousBlock::File(_file) => {
                 // no match
-            },
-            ContiguousBlock::Space(space) => if space.size >= size {
-                return Some(space);
+            }
+            ContiguousBlock::Space(space) => {
+                if space.size >= size {
+                    return Some(space);
+                }
             }
         }
     }
@@ -193,7 +200,7 @@ struct File {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Space {
     position: usize,
-    size: usize
+    size: usize,
 }
 
 #[cfg(test)]
