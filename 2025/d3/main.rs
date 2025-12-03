@@ -1,7 +1,7 @@
 use core::str;
-use std::{cmp::Reverse, fmt::format, i64, ops::Index, str::FromStr, time::Instant, usize};
+use std::{str::FromStr, time::Instant};
 
-use aoclib::{input, timing};
+use aoclib::timing;
 use itertools::Itertools;
 
 fn main() {
@@ -38,7 +38,7 @@ impl FromStr for Batery {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.parse::<usize>() {
             Ok(i) => Ok(Batery(i)),
-            Err(e) => Err(format!("bad input '{}'", s)),
+            Err(_) => Err(format!("bad input '{}'", s)),
         }
     }
 }
