@@ -15,23 +15,9 @@ fn main() {
     println!("{}", timing::format_elapsed_time(now.elapsed()));
 }
 
-fn part1(txt: &str) -> i64 {
+fn part1(txt: &str) -> usize {
     let g: Grid<Tile> = txt.parse().unwrap();
-    let mut count = 0;
-    for row in 0..g.height() {
-        for col in 0..g.width() {
-            let pos = GridPosition::new(col, row);
-            let tile = g.at(&pos);
-            if tile == &Tile::Space {
-                continue;
-            }
-            let neighbours = paper_neighbours(&g, pos);
-            if neighbours.len() < 4 {
-                count += 1;
-            }
-        }
-    }
-    count
+    accessible(&g).len()
 }
 
 fn part2(txt: &str) -> usize {
@@ -161,6 +147,6 @@ mod tests {
     #[test]
     fn input_pt2() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part2(test_input));
+        assert_eq!(9243, part2(test_input));
     }
 }
