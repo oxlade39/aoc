@@ -48,8 +48,8 @@ impl<T> Grid<T> {
         &self.rows[pos.row][pos.col]
     }
 
-    pub fn set_at(&mut self, pos: &GridPosition, value: T) {
-        self.rows[pos.row][pos.col] = value
+    pub fn at_mut(&mut self, pos: &GridPosition) -> &mut T {
+        &mut self.rows[pos.row][pos.col]
     }
 
     pub fn up_from(&self, p: GridPosition) -> impl Iterator<Item = (GridPosition, &T)> {

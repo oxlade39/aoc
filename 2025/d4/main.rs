@@ -28,8 +28,8 @@ fn part2(txt: &str) -> usize {
     while !next.is_empty() {
         count += next.len();
 
-        for item in next.clone() {
-            g.set_at(&item, Tile::Space);
+        for item in next.drain() {
+            *g.at_mut(&item) = Tile::Space;
         }
         next = accessible(&g);
     }
