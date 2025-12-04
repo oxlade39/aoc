@@ -147,18 +147,3 @@ impl Grid {
         flashed
     }
 }
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-struct Position {
-    row: i32,
-    col: i32,
-}
-
-impl From<(i32, i32)> for Position {
-    fn from(pair: (i32, i32)) -> Self {
-        Position {
-            row: pair.0,
-            col: pair.1,
-        }
-    }
-}

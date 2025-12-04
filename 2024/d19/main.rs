@@ -37,7 +37,7 @@ fn part2(txt: &str) -> usize {
     c
 }
 
-fn parse(txt: &str) -> (HashMap<char, Vec<TowelPattern>>, Vec<&str>) {
+fn parse(txt: &str) -> (HashMap<char, Vec<TowelPattern<'_>>>, Vec<&str>) {
     let (towels, to_check) = input::empty_line_chunks(txt).tuples().next().unwrap();
     let towels = towels.split(", ").map(|p| TowelPattern(p));
 
