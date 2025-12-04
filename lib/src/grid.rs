@@ -48,6 +48,10 @@ impl<T> Grid<T> {
         &self.rows[pos.row][pos.col]
     }
 
+    pub fn set_at(&mut self, pos: &GridPosition, value: T) {
+        self.rows[pos.row][pos.col] = value
+    }
+
     pub fn up_from(&self, p: GridPosition) -> impl Iterator<Item = (GridPosition, &T)> {
         std::iter::successors(
             Some(p),
