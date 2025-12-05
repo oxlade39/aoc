@@ -62,14 +62,14 @@ fn flatten_all(ranges: Vec<FreshRange>) -> Vec<FreshRange> {
 
 fn flatten(i: usize, items: &Vec<FreshRange>) -> Vec<FreshRange> {
     let mut current = items[i];
-    let mut copy: Vec<FreshRange> = items[i..].iter().cloned().collect();
-    let mut result = Vec::new();
+    let mut subsequent = items[i..].iter();
+    let mut result = Vec::with_capacity(items.len());
     
-    while let Some(next) = copy.pop() {
-        if let Some(extended) = current.extend(&next) {
+    while let Some(next) = subsequent.next() {
+        if let Some(extended) = current.extend(next) {
             current = extended;
         } else {
-            result.push(next);
+            result.push(next.clone());
         }
     }
     result.push(current);
@@ -122,7 +122,7 @@ impl FreshRange {
 
 #[cfg(test)]
 mod tests {
-    use crate::{flatten_all, *};
+    use crate::*;
 
     #[test]
     fn test_input_pt1() {
