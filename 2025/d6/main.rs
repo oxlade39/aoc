@@ -80,22 +80,20 @@ fn part2(txt: &str) -> i64 {
                 if skip_space {
                     skip_space = false;
                 } else {
-                    numbers.push(to_n(&g, p));
+                    numbers.push(sum_up(&g, p));
                 }
             }
             Col2::Mul => {
-                numbers.push(to_n(&g, p));
+                numbers.push(sum_up(&g, p));
                 skip_space = true;
                 let prod: i64 = numbers.iter().product();
-                // println!("{:?} = {}", numbers, prod);
                 total += prod;
                 numbers.clear();
             }
             Col2::Add => {
-                numbers.push(to_n(&g, p));
+                numbers.push(sum_up(&g, p));
                 skip_space = true;
                 let sum: i64 = numbers.iter().sum();
-                // println!("{:?} = {}", numbers, sum);
                 total += sum;
                 numbers.clear();
             }
@@ -106,9 +104,8 @@ fn part2(txt: &str) -> i64 {
     total
 }
 
-fn to_n(g: &Grid<Col2>, p: GridPosition) -> i64 {
-    let mut num = 0;
-    for (units, value) in g
+fn sum_up(g: &Grid<Col2>, p: GridPosition) -> i64 {
+    g
         .up_from(p)
         .skip(1)
         .filter_map(|(_, up_col)| match up_col {
@@ -116,13 +113,8 @@ fn to_n(g: &Grid<Col2>, p: GridPosition) -> i64 {
             _ => None,
         })
         .enumerate()
-    {
-        let n = 10_i64.pow(units as u32) * value;
-        // println!("up col {:?} value {}, n {}", up_col, value, n);
-        num += n;
-    }
-    // println!("adding {}", num);
-    num
+        .map(|(units, value)| 10_i64.pow(units as u32) * value)
+        .sum()
 }
 
 #[derive(Debug, Hash, Clone, Copy, PartialEq, Eq)]
