@@ -2,7 +2,7 @@ use core::str;
 use std::{i64, str::FromStr, time::Instant};
 
 use aoclib::{
-    grid::{Grid, GridPosition},
+    grid::{FromChar, Grid, GridPosition},
     timing,
 };
 
@@ -53,21 +53,8 @@ fn part1(txt: &str) -> i64 {
     sum
 }
 
-fn part2(txt: &str) -> i64 {
-    let grid: Vec<Vec<Col2>> = txt
-        .lines()
-        .map(|l| {
-            l.chars()
-                .map(|c| match c {
-                    ' ' => Col2::Space,
-                    '*' => Col2::Mul,
-                    '+' => Col2::Add,
-                    other => Col2::Number(other.to_digit(10).unwrap() as i64),
-                })
-                .collect()
-        })
-        .collect();
-    let g = Grid { rows: grid };
+fn part2(txt: &str) -> i64 {    
+    let g: Grid<Col2> = txt.parse().unwrap();
 
     let bottom_right_number = GridPosition::new(g.width() - 1, g.height() - 1);
     let mut total: i64 = 0;
@@ -105,8 +92,7 @@ fn part2(txt: &str) -> i64 {
 }
 
 fn sum_up(g: &Grid<Col2>, p: GridPosition) -> i64 {
-    g
-        .up_from(p)
+    g.up_from(p)
         .skip(1)
         .filter_map(|(_, up_col)| match up_col {
             Col2::Number(n) => Some(*n),
@@ -144,15 +130,15 @@ enum Col2 {
     Space,
 }
 
-impl FromStr for Col2 {
+impl FromChar for Col2 {
     type Err = String;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "*" => Ok(Col2::Mul),
-            "+" => Ok(Col2::Add),
-            " " => Ok(Col2::Space),
-            other => Ok(Col2::Number(other.parse().unwrap())),
+    fn from_char(c: char) -> Result<Self, Self::Err> {
+        match c {
+            ' ' => Ok(Col2::Space),
+            '*' => Ok(Col2::Mul),
+            '+' => Ok(Col2::Add),
+            other => Ok(Col2::Number(other.to_digit(10).unwrap() as i64)),
         }
     }
 }
