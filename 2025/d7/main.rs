@@ -16,14 +16,14 @@ fn main() {
 
 fn part1(txt: &str) -> i64 {
     let g: Grid<Tile> = txt.parse().unwrap();
-    let (p, _start) = g.position_itr().find(|(p, t)| t == &&Tile::Start).unwrap();
+    let (p, _start) = g.position_itr().find(|(_, t)| t == &&Tile::Start).unwrap();
     let mut memo = HashSet::new();
     count_beams(p, &g, 0, &mut memo)
 }
 
 fn part2(txt: &str) -> i64 {
     let g: Grid<Tile> = txt.parse().unwrap();
-    let (p, _start) = g.position_itr().find(|(p, t)| t == &&Tile::Start).unwrap();
+    let (p, _start) = g.position_itr().find(|(_, t)| t == &&Tile::Start).unwrap();
     let mut memo: HashMap<GridPosition, i64> = HashMap::new();
     count_timelines(p, &g, &mut memo)
 }
