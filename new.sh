@@ -70,7 +70,7 @@ mod tests {
     #[test]
     fn test_input_pt2() {
         let test_input = include_str!("input.test.txt");
-        assert_eq!(0, part1(test_input));
+        assert_eq!(0, part2(test_input));
     }
 
     #[test]

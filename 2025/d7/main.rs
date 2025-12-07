@@ -1,12 +1,10 @@
 use core::str;
-use std::{i64, str::FromStr, time::Instant, usize};
+use std::{i64, time::Instant};
 
 use aoclib::{
-    grid::{FromChar, Grid, GridPosition},
-    input, timing,
+    grid::{FromChar, Grid, GridPosition}, timing,
 };
 use hashbrown::{HashMap, HashSet};
-use itertools::Itertools;
 
 fn main() {
     let input = include_str!("input.txt");
