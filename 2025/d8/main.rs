@@ -130,7 +130,6 @@ fn merge(closest_pair: Distance, all_circuits: &mut Vec<Circuit>) -> (Position, 
         all_circuits.push(rr);
     } else {
         // doesn't exist so create new
-        // println!("add new -> {:?} - {:?}", left, right);
         all_circuits.push(Circuit::new(left.clone(), right.clone()));
     }
 
@@ -145,10 +144,6 @@ struct Position {
 }
 
 impl Position {
-    // fn in_basis(&self, other: &Self) -> Self {
-    //     Translation::in_basis(other).transform(self)
-    // }
-
     fn distance(&self, other: &Self) -> Distance {
         Distance {
             positions: (self.clone(), other.clone()),
