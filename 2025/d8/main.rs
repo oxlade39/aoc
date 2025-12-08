@@ -18,168 +18,34 @@ fn part1(txt: &str) -> usize {
 }
 
 fn part2(txt: &str) -> i64 {
-    let all_points: Vec<_> = txt
-        .lines()
-        .map(|l| {
-            let mut points = l.split(",");
-            let x = points.next().expect("x").parse().unwrap();
-            let y = points.next().expect("y").parse().unwrap();
-            let z = points.next().expect("z").parse().unwrap();
-            Position { x: x, y, z }
-        })
-        .collect();
-
-    let ordered_distances: Vec<_> = all_points
-        .iter()
-        .combinations(2)
-        .map(|combo| {
-            let left = combo[0];
-            let right = combo[1];
-            left.distance(right)
-        })
-        .sorted_by(|a, b| a.squared_euclidean.cmp(&b.squared_euclidean))
-        .collect();
-
+    let all_points = all_points(txt);
+    let ordered_distances = distances(&all_points);
     let mut all_circuits: Vec<Circuit> = Vec::new();
 
-    for closest_pair in ordered_distances.into_iter() {
-        let (left, right) = &closest_pair.positions;
-        let removed_left = {
-            if let Some((p, _)) = all_circuits
-                .iter()
-                .find_position(|c| c.junction_boxes.contains(left))
-            {
-                Some(all_circuits.remove(p))
+    ordered_distances
+        .into_iter()
+        .find_map(|closest_pair| {
+            let (left, right) = merge(closest_pair, &mut all_circuits);
+            if all_circuits[0].junction_boxes.len() == all_points.len() {
+                Some(left.x * right.x)
             } else {
                 None
             }
-        };
-        let removed_right = {
-            if let Some((p, _)) = all_circuits
-                .iter()
-                .find_position(|c| c.junction_boxes.contains(right))
-            {
-                Some(all_circuits.remove(p))
-            } else {
-                None
-            }
-        };
-
-        if removed_left.is_some() && removed_right.is_some() {
-            // merge
-            let mut rl = removed_left.unwrap();
-            let rr = removed_right.unwrap();
-            // println!("merge -> {:?} - {:?}\n{:?} - \n{:?}", left, right, rl, rr);
-            rl.junction_boxes.extend(rr.junction_boxes);
-            all_circuits.push(rl);
-        } else if removed_left.is_some() {
-            // add right to left circuit
-            let mut rl = removed_left.unwrap();
-            if rl.junction_boxes.insert(right.clone()) {
-                // new connection
-                // println!("found new left -> {:?} - {:?}", left, right);
-            } else {
-                // println!("found existing left -> {:?} - {:?}", left, right);
-            }
-            all_circuits.push(rl);
-        } else if removed_right.is_some() {
-            // add left to right circuit
-            // println!("found new right -> {:?} - {:?}", left, right);
-            let mut rr = removed_right.unwrap();
-            rr.junction_boxes.insert(left.clone());
-            all_circuits.push(rr);
-        } else {
-            // doesn't exist so create new
-            // println!("add new -> {:?} - {:?}", left, right);
-            all_circuits.push(Circuit::new(left.clone(), right.clone()));
-        }
-
-        if all_circuits[0].junction_boxes.len() == all_points.len() {
-            return left.x * right.x;
-        }
-    }
-
-    0
+        })
+        .unwrap()
 }
 
 fn connections(txt: &str, pairs: usize) -> usize {
-    let all_points: Vec<_> = txt
-        .lines()
-        .map(|l| {
-            let mut points = l.split(",");
-            let x = points.next().expect("x").parse().unwrap();
-            let y = points.next().expect("y").parse().unwrap();
-            let z = points.next().expect("z").parse().unwrap();
-            Position { x: x, y, z }
-        })
-        .collect();
-
-    let ordered_distances: Vec<_> = all_points
-        .iter()
-        .combinations(2)
-        .map(|combo| {
-            let left = combo[0];
-            let right = combo[1];
-            left.distance(right)
-        })
-        .sorted_by(|a, b| a.squared_euclidean.cmp(&b.squared_euclidean))
-        .collect();
+    let ordered_distances = distances(&all_points(txt));
 
     let mut all_circuits: Vec<Circuit> = Vec::new();
 
-    let mut connected_count = 0;
-    for closest_pair in ordered_distances.into_iter() {
-        let (left, right) = &closest_pair.positions;
-        let removed_left = {
-            if let Some((p, _)) = all_circuits
-                .iter()
-                .find_position(|c| c.junction_boxes.contains(left))
-            {
-                Some(all_circuits.remove(p))
-            } else {
-                None
-            }
-        };
-        let removed_right = {
-            if let Some((p, _)) = all_circuits
-                .iter()
-                .find_position(|c| c.junction_boxes.contains(right))
-            {
-                Some(all_circuits.remove(p))
-            } else {
-                None
-            }
-        };
-
-        if removed_left.is_some() && removed_right.is_some() {
-            // merge
-            let mut rl = removed_left.unwrap();
-            let rr = removed_right.unwrap();
-            rl.junction_boxes.extend(rr.junction_boxes);
-            all_circuits.push(rl);
-        } else if removed_left.is_some() {
-            // add right to left circuit
-            let mut rl = removed_left.unwrap();
-            if rl.junction_boxes.insert(right.clone()) {
-                // new connection
-            }
-            all_circuits.push(rl);
-        } else if removed_right.is_some() {
-            // add left to right circuit
-            let mut rr = removed_right.unwrap();
-            rr.junction_boxes.insert(left.clone());
-            all_circuits.push(rr);
-        } else {
-            // doesn't exist so create new
-            all_circuits.push(Circuit::new(left.clone(), right.clone()));
-        }
-
-        connected_count += 1;
-
-        if connected_count == pairs {
-            break;
-        }
-    }
+    ordered_distances
+        .into_iter()
+        .take(pairs)
+        .for_each(|closest_pair| {
+            merge(closest_pair, &mut all_circuits);
+        });
 
     report(&all_circuits)
 }
@@ -196,6 +62,79 @@ fn report(all_circuits: &Vec<Circuit>) -> usize {
         .collect();
 
     chosen.iter().map(|c| c.junction_boxes.len()).product()
+}
+
+fn distances(all_points: &Vec<Position>) -> Vec<Distance> {
+    all_points
+        .iter()
+        .combinations(2)
+        .map(|combo| {
+            let left = combo[0];
+            let right = combo[1];
+            left.distance(right)
+        })
+        .sorted_by(|a, b| a.squared_euclidean.cmp(&b.squared_euclidean))
+        .collect()
+}
+
+fn all_points(txt: &str) -> Vec<Position> {
+    txt.lines()
+        .map(|l| {
+            let mut points = l.split(",");
+            let x = points.next().expect("x").parse().unwrap();
+            let y = points.next().expect("y").parse().unwrap();
+            let z = points.next().expect("z").parse().unwrap();
+            Position { x: x, y, z }
+        })
+        .collect()
+}
+
+fn merge(closest_pair: Distance, all_circuits: &mut Vec<Circuit>) -> (Position, Position) {
+    let (left, right) = closest_pair.positions;
+    let removed_left = {
+        if let Some((p, _)) = all_circuits
+            .iter()
+            .find_position(|c| c.junction_boxes.contains(&left))
+        {
+            Some(all_circuits.remove(p))
+        } else {
+            None
+        }
+    };
+    let removed_right = {
+        if let Some((p, _)) = all_circuits
+            .iter()
+            .find_position(|c| c.junction_boxes.contains(&right))
+        {
+            Some(all_circuits.remove(p))
+        } else {
+            None
+        }
+    };
+
+    if removed_left.is_some() && removed_right.is_some() {
+        // merge
+        let mut rl = removed_left.unwrap();
+        let rr = removed_right.unwrap();
+        rl.junction_boxes.extend(rr.junction_boxes);
+        all_circuits.push(rl);
+    } else if removed_left.is_some() {
+        // add right to left circuit
+        let mut rl = removed_left.unwrap();
+        rl.junction_boxes.insert(right.clone());
+        all_circuits.push(rl);
+    } else if removed_right.is_some() {
+        // add left to right circuit
+        let mut rr = removed_right.unwrap();
+        rr.junction_boxes.insert(left.clone());
+        all_circuits.push(rr);
+    } else {
+        // doesn't exist so create new
+        // println!("add new -> {:?} - {:?}", left, right);
+        all_circuits.push(Circuit::new(left.clone(), right.clone()));
+    }
+
+    (left, right)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
