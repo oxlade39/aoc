@@ -2,8 +2,9 @@ use core::str;
 use std::{i64, str::FromStr, time::Instant};
 
 use aoclib::timing;
-use hashbrown::HashSet;
+use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
+use rayon::prelude::*;
 
 fn main() {
     let input = include_str!("input.txt");
@@ -29,24 +30,50 @@ fn part1(txt: &str) -> i64 {
 
 fn part2(txt: &str) -> i64 {
     let red_tiles: Vec<Point> = txt.lines().map(|l| l.parse::<Point>().unwrap()).collect();
-    let mut red_lines: Vec<Line> = red_tiles
+    let sorted_by_x: HashMap<i64, usize> = red_tiles
+        .iter()
+        .map(|p| p.x)
+        .unique()
+        .sorted()
+        .enumerate()
+        .map(|(i, x)| (x, i))
+        .collect();
+    let sorted_by_y: HashMap<i64, usize> = red_tiles
+        .iter()
+        .map(|p| p.y)
+        .unique()
+        .sorted()
+        .enumerate()
+        .map(|(i, y)| (y, i))
+        .collect();
+    let compressed_red_tiles: Vec<_> = red_tiles
+        .iter()
+        .map(|Point { x, y }| Point {
+            x: *sorted_by_x.get(x).unwrap() as i64,
+            y: *sorted_by_y.get(y).unwrap() as i64,
+        })
+        .collect();
+    
+    let mut red_lines: Vec<Line> = compressed_red_tiles
         .iter()
         .tuple_windows()
         .map(|(p, next)| p.line_between(next))
         .collect();
 
-    let first = red_tiles.first().unwrap();
-    let last = red_tiles.last().unwrap();
+    let first = compressed_red_tiles.first().unwrap();
+    let last = compressed_red_tiles.last().unwrap();
     red_lines.push(first.line_between(last));
 
     let poly = Poly::new(red_lines.clone());
 
-    red_tiles
+    compressed_red_tiles
         .iter()
+        .enumerate()
         .combinations(2)
+        .par_bridge()
         .filter_map(|comb| {
-            let a = comb[0];
-            let b = comb[1];
+            let (i, a) = comb[0];
+            let (j, b) = comb[1];
             let rect = a.to_rect(b);
 
             let top_left = Point {
@@ -75,7 +102,9 @@ fn part2(txt: &str) -> i64 {
             };
 
             if ps.iter().all(|&pt| poly.contains_point(pt)) {
-                Some(rect.area())
+                let orig_a = red_tiles[i];
+                let orig_b = red_tiles[j];
+                Some(orig_a.to_rect(&orig_b).area())
             } else {
                 None
             }
@@ -88,6 +117,11 @@ fn part2(txt: &str) -> i64 {
 fn print_green(green: &HashSet<Point>) {
     let rows = 10;
     let cols = 14;
+    print_points(green, rows, cols);
+}
+
+#[allow(dead_code)]
+fn print_points(green: &HashSet<Point>, rows: i64, cols: i64) {
     for i in 0..rows {
         for j in 0..cols {
             let p = Point { x: j, y: i };
@@ -181,12 +215,14 @@ struct Poly {
 
 impl Poly {
     fn new(lines: Vec<Line>) -> Self {
-
         let all_border_points: HashSet<_> = lines.iter().flat_map(|e| e.points()).collect();
+
+        // print_points(&all_border_points, 1000, 1000);
+        // panic!("oops");
 
         Self {
             all_border_points,
-            edges: lines 
+            edges: lines,
         }
     }
 
@@ -199,7 +235,10 @@ impl Poly {
         }
 
         for edge in &self.edges {
-            let Line { start: Point { x: x1, y: y1 }, end: Point { x: x2, y: y2 } } = edge;
+            let Line {
+                start: Point { x: x1, y: y1 },
+                end: Point { x: x2, y: y2 },
+            } = edge;
             if y1 == y2 {
                 // ignore horizontals
                 continue;
@@ -300,10 +339,9 @@ mod tests {
         assert_eq!(24, part2(test_input));
     }
 
-    // takes to long - too tired :(
-    // #[test]
-    // fn input_pt2() {
-    //     let test_input = include_str!("input.txt");
-    //     assert_eq!(1568849600, part2(test_input));
-    // }
+    #[test]
+    fn input_pt2() {
+        let test_input = include_str!("input.txt");
+        assert_eq!(1568849600, part2(test_input));
+    }
 }
