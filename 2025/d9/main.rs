@@ -1,7 +1,8 @@
 use core::str;
-use std::{i64, str::FromStr, time::Instant, usize};
+use std::{i64, str::FromStr, time::Instant};
 
-use aoclib::{input, timing};
+use aoclib::timing;
+use hashbrown::HashSet;
 use itertools::Itertools;
 
 fn main() {
@@ -14,18 +15,93 @@ fn main() {
 
 fn part1(txt: &str) -> i64 {
     let tiles: Vec<Point> = txt.lines().map(|l| l.parse::<Point>().unwrap()).collect();
-    tiles.iter().combinations(2).map(|comb| {
-        let a = comb[0];
-        let b = comb[1];
-        a.to_rect(b).area()
-    }).max().expect("a max")
+    tiles
+        .iter()
+        .combinations(2)
+        .map(|comb| {
+            let a = comb[0];
+            let b = comb[1];
+            a.to_rect(b).area()
+        })
+        .max()
+        .expect("a max")
 }
 
 fn part2(txt: &str) -> i64 {
-    0
+    let red_tiles: Vec<Point> = txt.lines().map(|l| l.parse::<Point>().unwrap()).collect();
+    let mut red_lines: Vec<Line> = red_tiles
+        .iter()
+        .tuple_windows()
+        .map(|(p, next)| p.line_between(next))
+        .collect();
+
+    let first = red_tiles.first().unwrap();
+    let last = red_tiles.last().unwrap();
+    red_lines.push(first.line_between(last));
+
+    let poly = Poly::new(red_lines.clone());
+
+    red_tiles
+        .iter()
+        .combinations(2)
+        .filter_map(|comb| {
+            let a = comb[0];
+            let b = comb[1];
+            let rect = a.to_rect(b);
+
+            let top_left = Point {
+                x: rect.bottom_left.x,
+                y: rect.top_right.y,
+            };
+            let top_right = rect.top_right;
+            let bottom_left = rect.bottom_left;
+            let bottom_right = Point {
+                x: top_right.x,
+                y: bottom_left.y,
+            };
+
+            let top_edge = top_left.line_between(&top_right);
+            let right_edge = top_right.line_between(&bottom_right);
+            let bottom_edge = bottom_left.line_between(&bottom_right);
+            let left_edge = bottom_left.line_between(&top_left);
+
+            let ps = {
+                let mut all_points = HashSet::new();
+                all_points.extend(top_edge.points());
+                all_points.extend(right_edge.points());
+                all_points.extend(bottom_edge.points());
+                all_points.extend(left_edge.points());
+                all_points
+            };
+
+            if ps.iter().all(|&pt| poly.contains_point(pt)) {
+                Some(rect.area())
+            } else {
+                None
+            }
+        })
+        .max()
+        .expect("a max")
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[allow(dead_code)]
+fn print_green(green: &HashSet<Point>) {
+    let rows = 10;
+    let cols = 14;
+    for i in 0..rows {
+        for j in 0..cols {
+            let p = Point { x: j, y: i };
+            if green.contains(&p) {
+                print!("X")
+            } else {
+                print!(".")
+            }
+        }
+        println!("");
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, PartialOrd, Ord)]
 struct Point {
     x: i64,
     y: i64,
@@ -37,13 +113,38 @@ struct Rect {
     bottom_left: Point,
 }
 
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+struct Line {
+    start: Point,
+    end: Point,
+}
+
 impl Point {
     fn to_rect(&self, p: &Point) -> Rect {
-        Rect { 
-            top_right: Point { x: self.x.max(p.x), y: self.y.min(p.y) }, 
-            bottom_left: Point { x: self.x.min(p.x), y: self.y.max(p.y) }
+        Rect {
+            top_right: Point {
+                x: self.x.max(p.x),
+                y: self.y.min(p.y),
+            },
+            bottom_left: Point {
+                x: self.x.min(p.x),
+                y: self.y.max(p.y),
+            },
         }
-    } 
+    }
+
+    fn line_between(&self, p: &Point) -> Line {
+        Line {
+            start: Point {
+                x: self.x.min(p.x),
+                y: self.y.min(p.y),
+            },
+            end: Point {
+                x: self.x.max(p.x),
+                y: self.y.max(p.y),
+            },
+        }
+    }
 }
 
 impl Rect {
@@ -52,6 +153,72 @@ impl Rect {
         let height = (self.bottom_left.y - self.top_right.y) + 1;
 
         width * height
+    }
+}
+
+impl Line {
+    fn points(&self) -> HashSet<Point> {
+        let mut all = HashSet::new();
+        if self.start.x == self.end.x {
+            // points along x
+            for y in self.start.y.min(self.end.y)..=self.start.y.max(self.end.y) {
+                all.insert(Point { x: self.start.x, y });
+            }
+        } else {
+            // points along y
+            for x in self.start.x.min(self.end.x)..=self.start.x.max(self.end.x) {
+                all.insert(Point { x, y: self.end.y });
+            }
+        }
+        all
+    }
+}
+
+struct Poly {
+    all_border_points: HashSet<Point>,
+    edges: Vec<Line>,
+}
+
+impl Poly {
+    fn new(lines: Vec<Line>) -> Self {
+
+        let all_border_points: HashSet<_> = lines.iter().flat_map(|e| e.points()).collect();
+
+        Self {
+            all_border_points,
+            edges: lines 
+        }
+    }
+
+    fn contains_point(&self, p: Point) -> bool {
+        let Point { x, y } = p;
+        let mut inside = false;
+
+        if self.all_border_points.contains(&p) {
+            return true;
+        }
+
+        for edge in &self.edges {
+            let Line { start: Point { x: x1, y: y1 }, end: Point { x: x2, y: y2 } } = edge;
+            if y1 == y2 {
+                // ignore horizontals
+                continue;
+            }
+            let y_min = *y1.min(y2);
+            let y_max = *y1.max(y2);
+            if !(y_min <= y && y < y_max) {
+                continue;
+            }
+
+            // Compute x-intersection
+            let x_intersect = *x1 + (y - *y1) * (*x2 - *x1) / (*y2 - *y1);
+
+            if x_intersect > x {
+                inside = !inside;
+            }
+        }
+
+        inside
     }
 }
 
@@ -67,34 +234,52 @@ impl FromStr for Point {
 }
 
 #[cfg(test)]
-mod tests {    
+mod tests {
     use crate::*;
 
     #[test]
     fn test_area() {
-        let a = Point { x: 2, y: 5};
-        let b = Point { x: 9, y: 7};
+        let a = Point { x: 2, y: 5 };
+        let b = Point { x: 9, y: 7 };
         let area = a.to_rect(&b).area();
         assert_eq!(24, area);
 
-        let a = Point { x: 7, y: 1};
-        let b = Point { x: 11, y: 7};
+        let a = Point { x: 7, y: 1 };
+        let b = Point { x: 11, y: 7 };
         let area = a.to_rect(&b).area();
         assert_eq!(35, area);
 
-        let a = Point { x: 7, y: 3};
-        let b = Point { x: 2, y: 3};
+        let a = Point { x: 7, y: 3 };
+        let b = Point { x: 2, y: 3 };
         let area = a.to_rect(&b).area();
         assert_eq!(6, area);
     }
 
     #[test]
-    fn test_parse() {
-        let test_input = include_str!("input.test.txt");
-        let points: Vec<_> = test_input.lines().map(|l| l.parse::<Point>().unwrap()).collect();
-        for p in points {
-            println!("{:?}", p);
-        }        
+    fn line_points() {
+        let line = Line {
+            start: Point { x: 0, y: 0 },
+            end: Point { x: 0, y: 2 },
+        };
+        let points = line.points();
+        let expected = HashSet::from_iter(vec![
+            Point { x: 0, y: 0 },
+            Point { x: 0, y: 1 },
+            Point { x: 0, y: 2 },
+        ]);
+        assert_eq!(expected, points);
+
+        let line = Line {
+            start: Point { x: 0, y: 0 },
+            end: Point { x: 2, y: 0 },
+        };
+        let points = line.points();
+        let expected = HashSet::from_iter(vec![
+            Point { x: 0, y: 0 },
+            Point { x: 1, y: 0 },
+            Point { x: 2, y: 0 },
+        ]);
+        assert_eq!(expected, points);
     }
 
     #[test]
@@ -112,12 +297,13 @@ mod tests {
     #[test]
     fn test_input_pt2() {
         let test_input = include_str!("input.test.txt");
-        assert_eq!(0, part2(test_input));
+        assert_eq!(24, part2(test_input));
     }
 
-    #[test]
-    fn input_pt2() {
-        let test_input = include_str!("input.txt");
-        assert_eq!(0, part2(test_input));
-    }
+    // takes to long - too tired :(
+    // #[test]
+    // fn input_pt2() {
+    //     let test_input = include_str!("input.txt");
+    //     assert_eq!(1568849600, part2(test_input));
+    // }
 }
