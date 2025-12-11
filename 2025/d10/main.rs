@@ -96,6 +96,7 @@ struct WireMask(u16, usize);
 #[derive(Debug, PartialEq, Eq)]
 struct Joltage(Vec<usize>);
 
+#[allow(unused)]
 #[derive(Debug, PartialEq, Eq)]
 struct Machine2 {
     wires: Vec<Wire>,
@@ -232,7 +233,7 @@ impl Machine {
             for combo in wires.iter().combinations_with_replacement(i as usize) {
                 let mut counts = vec![0; lights.len];
                 for wire in combo {
-                    let mut state = Indicator {
+                    let state = Indicator {
                         mask: 0,
                         len: lights.len,
                     };
@@ -247,7 +248,7 @@ impl Machine {
                     //     "{:?} -> {:?} | applying {:?} looking for {:?}",
                     //     state, after, wire, joltage.0
                     // );
-                    state = after;
+                    // state = after;
                 }
                 // println!("[{}] result was {:?}", i, counts);
                 if counts == joltage.0 {
@@ -259,6 +260,7 @@ impl Machine {
 }
 
 impl Machine2 {
+    #[allow(unused)]
     fn count(&self) -> i64 {
         let max = *self.wires.iter().flat_map(|w| w.0.iter()).max().unwrap();
         let buttons_by_wire_idx: Vec<Vec<Wire>> = (0..max)

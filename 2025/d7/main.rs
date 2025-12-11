@@ -2,7 +2,8 @@ use core::str;
 use std::{i64, time::Instant};
 
 use aoclib::{
-    grid::{FromChar, Grid, GridPosition}, timing,
+    grid::{FromChar, Grid, GridPosition},
+    timing,
 };
 use hashbrown::{HashMap, HashSet};
 

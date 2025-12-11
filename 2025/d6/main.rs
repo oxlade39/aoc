@@ -53,7 +53,7 @@ fn part1(txt: &str) -> i64 {
     sum
 }
 
-fn part2(txt: &str) -> i64 {    
+fn part2(txt: &str) -> i64 {
     let g: Grid<Col2> = txt.parse().unwrap();
 
     let bottom_right_number = GridPosition::new(g.width() - 1, g.height() - 1);

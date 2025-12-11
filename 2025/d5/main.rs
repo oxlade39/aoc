@@ -46,7 +46,7 @@ fn part2(txt: &str) -> i64 {
         len = result.len();
         result = flatten_all(result);
     }
-    
+
     result.into_iter().map(|r| r.len()).sum()
 }
 
@@ -64,7 +64,7 @@ fn flatten(i: usize, items: &Vec<FreshRange>) -> Vec<FreshRange> {
     let mut current = items[i];
     let mut subsequent = items[i..].iter();
     let mut result = Vec::with_capacity(items.len());
-    
+
     while let Some(next) = subsequent.next() {
         if let Some(extended) = current.extend(next) {
             current = extended;
@@ -80,7 +80,6 @@ fn flatten(i: usize, items: &Vec<FreshRange>) -> Vec<FreshRange> {
     result.reverse();
     result
 }
-
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct FreshRange(i64, i64);
@@ -104,7 +103,7 @@ impl FreshRange {
             Some(Self(self.0.max(other.0), self.1.min(other.1)))
         } else {
             None
-        }        
+        }
     }
 
     fn extend(&self, other: &Self) -> Option<Self> {

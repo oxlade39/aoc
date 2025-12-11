@@ -53,7 +53,7 @@ fn part2(txt: &str) -> i64 {
             y: *sorted_by_y.get(y).unwrap() as i64,
         })
         .collect();
-    
+
     let mut red_lines: Vec<Line> = compressed_red_tiles
         .iter()
         .tuple_windows()
