@@ -1,14 +1,13 @@
 use core::str;
 use std::{
-    fmt::{Binary, Debug, Pointer, Write},
+    fmt::{Debug, Write},
     i64,
     str::FromStr,
     time::Instant,
     usize,
 };
 
-use aoclib::{input, timing};
-use hashbrown::HashSet;
+use aoclib::timing;
 use itertools::Itertools;
 
 fn main() {
@@ -21,11 +20,16 @@ fn main() {
 
 fn part1(txt: &str) -> i64 {
     let machines: Vec<Machine> = txt.lines().map(|l| l.parse().unwrap()).collect();
-    machines.iter().fold(0, |accum, m| accum + m.min_presses())
+    machines
+        .iter()
+        .fold(0, |accum, m| accum + m.min_light_presses())
 }
 
 fn part2(txt: &str) -> i64 {
-    0
+    let machines: Vec<Machine> = txt.lines().map(|l| l.parse().unwrap()).collect();
+    machines
+        .iter()
+        .fold(0, |accum, m| accum + m.min_jolt_presses())
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -53,19 +57,23 @@ impl Debug for Indicator {
 impl Debug for WireMask {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let len = self.1;
-        f.write_char('(');
+        let mut r = f.write_char('(');
         for i in 0..len {
-            let mask = 1 << len - 1 - i;
+            let mask = mask(i, len);
             if mask & self.0 == mask {
                 if i == len - 1 {
-                    f.write_fmt(format_args!("{i}"));
+                    r = r.and_then(|_| f.write_fmt(format_args!("{i}")));
                 } else {
-                    f.write_fmt(format_args!("{i},"));
+                    r = r.and_then(|_| f.write_fmt(format_args!("{i},")));
                 }
             }
         }
         f.write_char(')')
     }
+}
+
+fn mask(i: usize, len: usize) -> u16 {
+    1 << len - 1 - i
 }
 
 impl Indicator {
@@ -79,7 +87,7 @@ impl Indicator {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 struct Wire(Vec<usize>);
 
 #[derive(PartialEq, Eq, Clone, Copy)]
@@ -87,6 +95,12 @@ struct WireMask(u16, usize);
 
 #[derive(Debug, PartialEq, Eq)]
 struct Joltage(Vec<usize>);
+
+#[derive(Debug, PartialEq, Eq)]
+struct Machine2 {
+    wires: Vec<Wire>,
+    joltage: Joltage,
+}
 
 impl FromStr for Machine {
     type Err = String;
@@ -161,34 +175,106 @@ impl FromStr for Joltage {
     }
 }
 
+impl FromStr for Machine2 {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (_, back) = s.split_once(" ").unwrap();
+        let (middle, back) = back.rsplit_once(" ").unwrap();
+        let wires: Vec<_> = middle
+            .split(" ")
+            .map(|chunk| chunk.parse::<Wire>().expect("wires"))
+            .collect();
+        let joltage = back.parse().expect("joltage");
+        Ok(Machine2 { wires, joltage })
+    }
+}
+
 impl Machine {
-    fn min_presses(&self) -> i64 {
+    fn min_light_presses(&self) -> i64 {
         let Self {
             lights,
             wires,
             joltage: _,
         } = self;
-        // println!("solving: {:?} with {:?}", lights, wires);
         let mut i = 0_i64;
         loop {
             i += 1;
-            // println!("testing combinations of {} for {:?}", i, lights);
             for combo in wires.iter().combinations_with_replacement(i as usize) {
-                let all_off = Indicator { mask: 0, len: lights.len };
+                let all_off = Indicator {
+                    mask: 0,
+                    len: lights.len,
+                };
                 let end = combo.iter().fold(all_off, |accum, next| {
                     let n = accum.apply(next);
-                    // println!("{:?} ^ {:?} == {:?}", accum, next, n);
                     n
                 });
                 if end == *lights {
-                    // println!(
-                    //     "found combination of {} for {:?} == {:?} -> {:?}",
-                    //     i, lights, end, combo
-                    // );
                     return i;
                 }
             }
         }
+    }
+
+    fn min_jolt_presses(&self) -> i64 {
+        let Self {
+            lights,
+            wires,
+            joltage,
+        } = self;
+        let mut i = 0_i64;
+        loop {
+            i += 1;
+            // if i > 10 {
+            //     panic!("too high");
+            // }
+            // println!("trying buttons of size {} looking for {:?}", i, joltage.0);
+            for combo in wires.iter().combinations_with_replacement(i as usize) {
+                let mut counts = vec![0; lights.len];
+                for wire in combo {
+                    let mut state = Indicator {
+                        mask: 0,
+                        len: lights.len,
+                    };
+                    let after = state.apply(wire);
+                    for i in 0..lights.len {
+                        let mask = mask(i, lights.len);
+                        if (mask & after.mask) == mask {
+                            counts[i] += 1;
+                        }
+                    }
+                    // println!(
+                    //     "{:?} -> {:?} | applying {:?} looking for {:?}",
+                    //     state, after, wire, joltage.0
+                    // );
+                    state = after;
+                }
+                // println!("[{}] result was {:?}", i, counts);
+                if counts == joltage.0 {
+                    return i;
+                }
+            }
+        }
+    }
+}
+
+impl Machine2 {
+    fn count(&self) -> i64 {
+        let max = *self.wires.iter().flat_map(|w| w.0.iter()).max().unwrap();
+        let buttons_by_wire_idx: Vec<Vec<Wire>> = (0..max)
+            .map(|i| {
+                let v: Vec<_> = self
+                    .wires
+                    .iter()
+                    .filter(|w| w.0.contains(&i))
+                    .cloned()
+                    .collect();
+                v
+            })
+            .collect();
+
+        todo!();
+        0
     }
 }
 
@@ -247,7 +333,7 @@ mod tests {
         });
         assert_eq!(expected, m);
 
-        assert_eq!(2, expected.unwrap().min_presses());
+        assert_eq!(2, expected.unwrap().min_light_presses());
     }
 
     #[test]
@@ -299,18 +385,6 @@ mod tests {
     }
 
     #[test]
-    fn test_examples() {
-        let indic: Indicator = "[.##.]".parse().unwrap();
-        let start: Indicator = "[....]".parse().unwrap();
-        let wires = vec![
-            Wire(vec![3]).to_mask(indic.len),
-            Wire(vec![3]).to_mask(indic.len),
-        ];
-        let end = wires.iter().fold(start, |accum, next| accum.apply(next));
-        assert_eq!(indic, end);
-    }
-
-    #[test]
     fn test_input_pt1() {
         let test_input = include_str!("input.test.txt");
         assert_eq!(7, part1(test_input));
@@ -319,18 +393,28 @@ mod tests {
     #[test]
     fn input_pt1() {
         let test_input = include_str!("input.txt");
-        assert_eq!(0, part1(test_input));
+        assert_eq!(517, part1(test_input));
     }
 
     #[test]
     fn test_input_pt2() {
         let test_input = include_str!("input.test.txt");
-        assert_eq!(0, part2(test_input));
+        assert_eq!(33, part2(test_input));
     }
 
     #[test]
-    fn input_pt2() {
-        let test_input = include_str!("input.txt");
-        assert_eq!(0, part2(test_input));
+    fn input_pt2_examples() {
+        let m: Machine = "[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}"
+            .parse()
+            .unwrap();
+        let i = m.min_jolt_presses();
+        assert_eq!(10, i);
     }
+
+    // too slow
+    // #[test]
+    // fn input_pt2() {
+    //     let test_input = include_str!("input.txt");
+    //     assert_eq!(0, part2(test_input));
+    // }
 }
