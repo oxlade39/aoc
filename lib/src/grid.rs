@@ -170,6 +170,25 @@ where
     }
 }
 
+impl<T: Clone> Grid<T> {
+    pub fn rotate_cw(&self) -> Grid<T> {
+        let h = self.height();
+        let w = self.width();
+
+        assert!(h > 0 && w > 0);
+
+        let mut rows = vec![vec![self.rows[0][0].clone(); h]; w];
+
+        for y in 0..h {
+            for x in 0..w {
+                rows[x][h - 1 - y] = self.rows[y][x].clone();
+            }
+        }
+
+        Grid { rows }
+    }
+}
+
 /// If the type contained within your `Grid` behaves differently
 /// if the grid is flipped, then you should implement this
 /// to perform that flip.
